@@ -15,7 +15,6 @@ enum TextExtractor {
     /// Extract plain text from an optional IntentFile (image) or return empty.
     static func from(imageFile: IntentFile?) throws -> String {
         guard let imageFile else { return "" }
-
         let data = imageFile.data
         let cgImage = try makeCGImage(from: data)
         return try recognizeText(from: cgImage)
@@ -23,9 +22,12 @@ enum TextExtractor {
 
     private static func makeCGImage(from data: Data) throws -> CGImage {
         let cfData = data as CFData
-        guard let src = CGImageSourceCreateWithData(cfData, nil),
-              let img = CGImageSourceCreateImageAtIndex(src, 0, nil) else {
-            throw NSError(domain: "TextExtractor", code: 10, userInfo: [NSLocalizedDescriptionKey: "Could not decode image data."])
+        guard
+            let src = CGImageSourceCreateWithData(cfData, nil),
+            let img = CGImageSourceCreateImageAtIndex(src, 0, nil)
+        else {
+            throw NSError(domain: "TextExtractor", code: 10,
+                          userInfo: [NSLocalizedDescriptionKey: "Could not decode image data."])
         }
         return img
     }

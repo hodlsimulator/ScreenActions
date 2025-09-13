@@ -1,19 +1,19 @@
 //
-//  ScreenActionsControlsControl.swift
+//  ScreenActionsControls.swift
 //  ScreenActionsControls
 //
 //  Created by . . on 9/13/25.
 //
 
-import AppIntents
 import SwiftUI
 import WidgetKit
+import AppIntents
 
 struct ScreenActionsControlsControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(
             kind: "com.conornolan.Screen-Actions.ScreenActionsControls",
-            provider: Provider()
+            provider: Provider18()
         ) { value in
             ControlWidgetToggle(
                 "Start Timer",
@@ -24,19 +24,16 @@ struct ScreenActionsControlsControl: ControlWidget {
             }
         }
         .displayName("Timer")
-        .description("A an example control that runs a timer.")
+        .description("An example control that runs a timer.")
     }
 }
 
 extension ScreenActionsControlsControl {
-    struct Provider: ControlValueProvider {
-        var previewValue: Bool {
-            false
-        }
-
+    struct Provider18: ControlValueProvider {
+        var previewValue: Bool { false }
         func currentValue() async throws -> Bool {
-            let isRunning = true // Check if the timer is running
-            return isRunning
+            // Check if the timer is running; mocked for demo
+            true
         }
     }
 }
@@ -48,7 +45,7 @@ struct StartTimerIntent: SetValueIntent {
     var value: Bool
 
     func perform() async throws -> some IntentResult {
-        // Start / stop the timer based on `value`.
-        return .result()
+        // Start/stop a timer based on 'value' (no-op in demo).
+        .result()
     }
 }

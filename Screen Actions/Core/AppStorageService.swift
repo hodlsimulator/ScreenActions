@@ -11,7 +11,6 @@ import Foundation
 /// Update the `appGroupID` if you ever rename the group.
 enum AppStorageService {
     static let appGroupID = "group.com.conornolan.screenactions"
-
     static let shared = AppStorageServiceImpl()
 
     struct Keys {
@@ -44,7 +43,9 @@ enum AppStorageService {
         }
 
         func containerURL() -> URL {
-            guard let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID) else {
+            guard let url = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID
+            ) else {
                 fatalError("App Group container not found. Check entitlements.")
             }
             return url

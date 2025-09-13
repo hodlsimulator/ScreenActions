@@ -9,7 +9,9 @@ import AppIntents
 
 struct CreateReminderIntent: AppIntent {
     static var title: LocalizedStringResource { "Create Reminder" }
-    static var description: IntentDescription { IntentDescription("Creates a reminder by detecting a date/time (if present) and using the first line as the title.") }
+    static var description: IntentDescription {
+        IntentDescription("Creates a reminder by detecting a date/time (if present) and using the first line as the title.")
+    }
     static var openAppWhenRun: Bool { false }
 
     @Parameter(title: "Text")

@@ -28,11 +28,13 @@ enum RemindersService {
     }
 
     private static func requestRemindersAccess(store: EKEventStore) async throws {
+        // iOS 26-only build: always use full-access API
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             store.requestFullAccessToReminders { granted, err in
                 if let err { cont.resume(throwing: err); return }
                 guard granted else {
-                    cont.resume(throwing: NSError(domain: "RemindersService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Reminders access not granted."]))
+                    cont.resume(throwing: NSError(domain: "RemindersService", code: 1,
+                                                  userInfo: [NSLocalizedDescriptionKey: "Reminders access not granted."]))
                     return
                 }
                 cont.resume(returning: ())

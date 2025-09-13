@@ -14,18 +14,20 @@ enum ContactsService {
         try await requestAccess(store: store)
 
         let c = CNMutableContact()
+
         if let given = dc.givenName { c.givenName = given }
         if let family = dc.familyName { c.familyName = family }
 
         c.emailAddresses = dc.emails.map {
-            CNLabeledValue<NSString>(label: CNLabelWork, value: NSString(string: $0))
+            CNLabeledValue(label: CNLabelWork, value: NSString(string: $0))
         }
+
         c.phoneNumbers = dc.phones.map {
-            CNLabeledValue<CNPhoneNumber>(label: CNLabelPhoneNumberMain, value: CNPhoneNumber(stringValue: $0))
+            CNLabeledValue(label: CNLabelPhoneNumberMain, value: CNPhoneNumber(stringValue: $0))
         }
 
         if let addr = dc.postalAddress {
-            c.postalAddresses = [CNLabeledValue<CNPostalAddress>(label: CNLabelWork, value: addr)]
+            c.postalAddresses = [CNLabeledValue(label: CNLabelWork, value: addr)]
         }
 
         let save = CNSaveRequest()
@@ -39,7 +41,8 @@ enum ContactsService {
             store.requestAccess(for: .contacts) { granted, err in
                 if let err { cont.resume(throwing: err); return }
                 guard granted else {
-                    cont.resume(throwing: NSError(domain: "ContactsService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Contacts access not granted."]))
+                    cont.resume(throwing: NSError(domain: "ContactsService", code: 1,
+                                                  userInfo: [NSLocalizedDescriptionKey: "Contacts access not granted."]))
                     return
                 }
                 cont.resume(returning: ())

@@ -9,7 +9,9 @@ import AppIntents
 
 struct AddToCalendarIntent: AppIntent {
     static var title: LocalizedStringResource { "Add to Calendar" }
-    static var description: IntentDescription { IntentDescription("Creates a calendar event by detecting a date/time in your text or image.") }
+    static var description: IntentDescription {
+        IntentDescription("Creates a calendar event by detecting a date/time in your text or image.")
+    }
     static var openAppWhenRun: Bool { false }
 
     @Parameter(title: "Text", description: "Paste text containing a date/time")

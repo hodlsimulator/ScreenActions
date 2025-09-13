@@ -8,17 +8,19 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var inputText: String = """
-Pick up dry cleaning on Friday 5pm, call Sarah +44 7700 900123, email sarah@example.com
-Invoice #2211 Total €48.90
-"""
+    @State private var inputText: String =
+    """
+    Pick up dry cleaning on Friday 5pm, call Sarah +44 7700 900123, email sarah@example.com
+    Invoice #2211
+    Total €48.90
+    """
     @State private var status: String = "Ready"
 
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
                 TextEditor(text: $inputText)
-                    .frame(minHeight: 180)
+                    .frame(minHeight: 220)
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(.secondary))
                     .padding(.horizontal)
 
