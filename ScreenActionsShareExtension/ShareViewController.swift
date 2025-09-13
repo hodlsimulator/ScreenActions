@@ -1,20 +1,23 @@
 //
-//  ActionViewController.swift
-//  ScreenActionsActionExtension
+//  ShareViewController.swift
+//  ScreenActionsShareExtension
 //
-//  Created by . . on 9/13/25.
+//  Created by . . on 13/09/2025.
 //
 
 import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
+import Vision
+import ImageIO
 import AppIntents
 
 @MainActor
-final class ActionViewController: UIViewController {
+final class ShareViewController: UIViewController {
     private var selectedText: String = ""
     private var pageTitle: String = ""
     private var pageURL: String = ""
+    private var pendingImageData: Data?
     private var host: UIHostingController<RootView>?
 
     override func viewDidLoad() {
@@ -23,6 +26,7 @@ final class ActionViewController: UIViewController {
         loadFromContext()
     }
 
+    // MARK: - Load inputs from NSExtensionContext
     private func loadFromContext() {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
             attachUI()
@@ -34,7 +38,7 @@ final class ActionViewController: UIViewController {
         for item in items {
             for provider in item.attachments ?? [] {
 
-                // 1) JS preprocessing dictionary (selection/title/url)
+                // 1) JS preprocessing dictionary (preferred)
                 if provider.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { [weak self] item, _ in
@@ -59,7 +63,7 @@ final class ActionViewController: UIViewController {
                     }
                 }
 
-                // 2) Plain text (prefer this over selection if present)
+                // 2) Plain text
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, _ in
@@ -73,7 +77,7 @@ final class ActionViewController: UIViewController {
                     }
                 }
 
-                // 3) URL (when no JS preprocessing ran)
+                // 3) URL
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
@@ -84,14 +88,46 @@ final class ActionViewController: UIViewController {
                         }
                     }
                 }
+
+                // 4) Image -> OCR text (optional)
+                if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
+                    group.enter()
+                    provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] item, _ in
+                        defer { group.leave() }
+                        guard let self else { return }
+                        if let data = item as? Data {
+                            Task { @MainActor in self.pendingImageData = data }
+                        } else if let url = item as? URL, let data = try? Data(contentsOf: url) {
+                            Task { @MainActor in self.pendingImageData = data }
+                        }
+                    }
+                }
             }
         }
 
         group.notify(queue: .main) { [weak self] in
-            self?.attachUI()
+            guard let self else { return }
+
+            // If we still have no text, try OCR off the main actor
+            if self.selectedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+               let data = self.pendingImageData,
+               let cg = SA_makeCGImage(from: data) {
+
+                DispatchQueue.global(qos: .userInitiated).async {
+                    let text = (try? SA_recognizeText(from: cg))?
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    DispatchQueue.main.async {
+                        if !text.isEmpty { self.selectedText = text }
+                        self.attachUI()
+                    }
+                }
+            } else {
+                self.attachUI()
+            }
         }
     }
 
+    // MARK: - Show SwiftUI UI
     private func attachUI() {
         let root = RootView(
             selection: selectedText.trimmingCharacters(in: .whitespacesAndNewlines),
@@ -118,7 +154,7 @@ final class ActionViewController: UIViewController {
     }
 }
 
-// MARK: - SwiftUI
+// MARK: - SwiftUI UI (same UX as Action extension)
 
 struct RootView: View {
     let selection: String
@@ -237,4 +273,26 @@ struct RootView: View {
         HStack { Image(systemName: systemImage); Text(title); Spacer() }
             .frame(maxWidth: .infinity)
     }
+}
+
+// MARK: - OCR helpers (file-private, nonisolated)
+
+fileprivate func SA_makeCGImage(from data: Data) -> CGImage? {
+    let cfData = data as CFData
+    guard
+        let src = CGImageSourceCreateWithData(cfData, nil),
+        let img = CGImageSourceCreateImageAtIndex(src, 0, nil)
+    else { return nil }
+    return img
+}
+
+fileprivate func SA_recognizeText(from image: CGImage) throws -> String {
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .accurate
+    request.usesLanguageCorrection = true
+    let handler = VNImageRequestHandler(cgImage: image, orientation: .up, options: [:])
+    try handler.perform([request])
+    let strings: [String] = request.results?
+        .compactMap { $0.topCandidates(1).first?.string } ?? []
+    return strings.joined(separator: "\n")
 }

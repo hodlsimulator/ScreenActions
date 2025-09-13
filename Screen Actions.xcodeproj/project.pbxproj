@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		E12A85132E75DBAE00E07869 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12A85122E75DBAD00E07869 /* UniformTypeIdentifiers.framework */; };
 		E12A851F2E75DBAE00E07869 /* ScreenActionsActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E12A85482E76045100E07869 /* ScreenActionsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E183E14A2E75ACF400E8D263 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E1492E75ACF400E8D263 /* WidgetKit.framework */; };
 		E183E14C2E75ACF400E8D263 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E14B2E75ACF400E8D263 /* SwiftUI.framework */; };
 		E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -21,6 +22,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = E12A85102E75DBAD00E07869;
 			remoteInfo = ScreenActionsActionExtension;
+		};
+		E12A85462E76045100E07869 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E183E12D2E75ABC700E8D263 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E12A853D2E76045100E07869;
+			remoteInfo = ScreenActionsShareExtension;
 		};
 		E183E1592E75ACFA00E8D263 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -40,6 +48,7 @@
 			files = (
 				E12A851F2E75DBAE00E07869 /* ScreenActionsActionExtension.appex in Embed Foundation Extensions */,
 				E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */,
+				E12A85482E76045100E07869 /* ScreenActionsShareExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -49,6 +58,7 @@
 /* Begin PBXFileReference section */
 		E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E12A85122E75DBAD00E07869 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
+		E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1352E75ABC700E8D263 /* Screen Actions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen Actions.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsControlsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1492E75ACF400E8D263 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -90,6 +100,30 @@
 			);
 			target = E12A85102E75DBAD00E07869 /* ScreenActionsActionExtension */;
 		};
+		E12A854C2E76045100E07869 /* Exceptions for "ScreenActionsShareExtension" folder in "ScreenActionsShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E12A853D2E76045100E07869 /* ScreenActionsShareExtension */;
+		};
+		E12A85522E76078A00E07869 /* Exceptions for "Screen Actions" folder in "ScreenActionsShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Core/AppStorageService.swift,
+				Core/CalendarService.swift,
+				Core/ContactsService.swift,
+				Core/CSVExporter.swift,
+				Core/DataDetectors.swift,
+				Core/RemindersService.swift,
+				Core/TextRecognition.swift,
+				Intents/AddToCalendarIntent.swift,
+				Intents/CreateReminderIntent.swift,
+				Intents/ExtractContactIntent.swift,
+				Intents/ReceiptToCSVIntent.swift,
+			);
+			target = E12A853D2E76045100E07869 /* ScreenActionsShareExtension */;
+		};
 		E183E15C2E75ACFA00E8D263 /* Exceptions for "ScreenActionsControls" folder in "ScreenActionsControlsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -108,11 +142,20 @@
 			path = ScreenActionsActionExtension;
 			sourceTree = "<group>";
 		};
+		E12A853F2E76045100E07869 /* ScreenActionsShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E12A854C2E76045100E07869 /* Exceptions for "ScreenActionsShareExtension" folder in "ScreenActionsShareExtension" target */,
+			);
+			path = ScreenActionsShareExtension;
+			sourceTree = "<group>";
+		};
 		E183E1372E75ABC700E8D263 /* Screen Actions */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				E12A85082E75D68600E07869 /* Exceptions for "Screen Actions" folder in "Screen Actions" target */,
 				E12A85292E75DE2500E07869 /* Exceptions for "Screen Actions" folder in "ScreenActionsActionExtension" target */,
+				E12A85522E76078A00E07869 /* Exceptions for "Screen Actions" folder in "ScreenActionsShareExtension" target */,
 			);
 			path = "Screen Actions";
 			sourceTree = "<group>";
@@ -133,6 +176,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				E12A85132E75DBAE00E07869 /* UniformTypeIdentifiers.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E12A853B2E76045100E07869 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -162,6 +212,7 @@
 				E183E1372E75ABC700E8D263 /* Screen Actions */,
 				E183E14D2E75ACF400E8D263 /* ScreenActionsControls */,
 				E12A85142E75DBAE00E07869 /* ScreenActionsActionExtension */,
+				E12A853F2E76045100E07869 /* ScreenActionsShareExtension */,
 				E183E1482E75ACF400E8D263 /* Frameworks */,
 				E183E1362E75ABC700E8D263 /* Products */,
 			);
@@ -173,6 +224,7 @@
 				E183E1352E75ABC700E8D263 /* Screen Actions.app */,
 				E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */,
 				E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */,
+				E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -212,6 +264,28 @@
 			productReference = E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		E12A853D2E76045100E07869 /* ScreenActionsShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E12A85492E76045100E07869 /* Build configuration list for PBXNativeTarget "ScreenActionsShareExtension" */;
+			buildPhases = (
+				E12A853A2E76045100E07869 /* Sources */,
+				E12A853B2E76045100E07869 /* Frameworks */,
+				E12A853C2E76045100E07869 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E12A853F2E76045100E07869 /* ScreenActionsShareExtension */,
+			);
+			name = ScreenActionsShareExtension;
+			packageProductDependencies = (
+			);
+			productName = ScreenActionsShareExtension;
+			productReference = E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		E183E1342E75ABC700E8D263 /* Screen Actions */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = E183E1402E75ABC900E8D263 /* Build configuration list for PBXNativeTarget "Screen Actions" */;
@@ -226,6 +300,7 @@
 			dependencies = (
 				E183E15A2E75ACFA00E8D263 /* PBXTargetDependency */,
 				E12A851E2E75DBAE00E07869 /* PBXTargetDependency */,
+				E12A85472E76045100E07869 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				E183E1372E75ABC700E8D263 /* Screen Actions */,
@@ -272,6 +347,9 @@
 					E12A85102E75DBAD00E07869 = {
 						CreatedOnToolsVersion = 26.0;
 					};
+					E12A853D2E76045100E07869 = {
+						CreatedOnToolsVersion = 26.0;
+					};
 					E183E1342E75ABC700E8D263 = {
 						CreatedOnToolsVersion = 26.0;
 					};
@@ -297,12 +375,20 @@
 				E183E1342E75ABC700E8D263 /* Screen Actions */,
 				E183E1462E75ACF400E8D263 /* ScreenActionsControlsExtension */,
 				E12A85102E75DBAD00E07869 /* ScreenActionsActionExtension */,
+				E12A853D2E76045100E07869 /* ScreenActionsShareExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		E12A850F2E75DBAD00E07869 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E12A853C2E76045100E07869 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -333,6 +419,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E12A853A2E76045100E07869 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E183E1312E75ABC700E8D263 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -354,6 +447,11 @@
 			isa = PBXTargetDependency;
 			target = E12A85102E75DBAD00E07869 /* ScreenActionsActionExtension */;
 			targetProxy = E12A851D2E75DBAE00E07869 /* PBXContainerItemProxy */;
+		};
+		E12A85472E76045100E07869 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E12A853D2E76045100E07869 /* ScreenActionsShareExtension */;
+			targetProxy = E12A85462E76045100E07869 /* PBXContainerItemProxy */;
 		};
 		E183E15A2E75ACFA00E8D263 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -387,7 +485,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -416,7 +514,65 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		E12A854A2E76045100E07869 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ScreenActionsShareExtension/ScreenActionsShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 92HEPEJ42Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ScreenActionsShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ScreenActionsShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.9.2;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.conornolan.Screen-Actions.ScreenActionsShareExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		E12A854B2E76045100E07869 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ScreenActionsShareExtension/ScreenActionsShareExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 92HEPEJ42Z;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ScreenActionsShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = ScreenActionsShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.9.2;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.conornolan.Screen-Actions.ScreenActionsShareExtension";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -696,6 +852,15 @@
 			buildConfigurations = (
 				E12A85212E75DBAE00E07869 /* Debug */,
 				E12A85222E75DBAE00E07869 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E12A85492E76045100E07869 /* Build configuration list for PBXNativeTarget "ScreenActionsShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E12A854A2E76045100E07869 /* Debug */,
+				E12A854B2E76045100E07869 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
