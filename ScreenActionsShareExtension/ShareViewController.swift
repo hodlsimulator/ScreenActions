@@ -14,36 +14,32 @@ import Vision
 import ImageIO
 import AppIntents
 
-// The actions you expose from the Share sheet.
-enum ScreenAction: String, CaseIterable {
-    case createReminder = "Create Reminder"
-    case addEvent      = "Add Calendar Event"
-    case extractContact = "Extract Contact"
-    case receiptCSV    = "Receipt → CSV"
-}
+// Import the shared helper (add the file to this target's membership).
+import Foundation
 
 @MainActor
 final class ShareViewController: SLComposeServiceViewController {
 
-    // Inputs gathered from Safari / host app.
     private var selectedText: String = ""
     private var pageTitle: String = ""
     private var pageURL: String = ""
     private var pendingImageData: Data?
 
-    // UI state
     private var chosenAction: ScreenAction = .createReminder
     private var actionConfigItem: SLComposeSheetConfigurationItem?
     private var previewConfigItem: SLComposeSheetConfigurationItem?
-
-    // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
         gatherInputsFromContext()
     }
 
-    // SLComposeServiceViewController requires these:
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        // ← This marks Step “Launched once from share sheet” when onboarding asked for it.
+        OnboardingProgress.pingFromShareExtension()
+    }
+
     override func isContentValid() -> Bool { true }
 
     override func didSelectPost() {
@@ -74,7 +70,6 @@ final class ShareViewController: SLComposeServiceViewController {
         }
     }
 
-    // Provide config rows (Action picker + Preview)
     override func configurationItems() -> [Any]! {
         let actionItem = SLComposeSheetConfigurationItem()
         actionItem?.title = "Action"
@@ -103,23 +98,12 @@ final class ShareViewController: SLComposeServiceViewController {
         return [actionItem, preview].compactMap { $0 }
     }
 
-    // MARK: - Input assembly
-
     private var inputText: String {
         var t = selectedText.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if t.isEmpty, !pageTitle.isEmpty {
-            t = pageTitle
-        }
-        if !pageURL.isEmpty {
-            t += (t.isEmpty ? "" : "\n") + pageURL
-        }
-
-        // Include anything the user typed into the compose text box.
+        if t.isEmpty, !pageTitle.isEmpty { t = pageTitle }
+        if !pageURL.isEmpty { t += (t.isEmpty ? "" : "\n") + pageURL }
         let userTyped = (self.contentText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        if !userTyped.isEmpty {
-            t += (t.isEmpty ? "" : "\n\n") + userTyped
-        }
+        if !userTyped.isEmpty { t += (t.isEmpty ? "" : "\n\n") + userTyped }
         return t
     }
 
@@ -136,7 +120,6 @@ final class ShareViewController: SLComposeServiceViewController {
         for item in items {
             for provider in item.attachments ?? [] {
 
-                // 1) JS preprocessing (selection/title/URL from Safari)
                 if provider.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { [weak self] item, _ in
@@ -161,7 +144,6 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
-                // 2) Plain text
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, _ in
@@ -173,7 +155,6 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
-                // 3) URL
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
@@ -183,7 +164,6 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
-                // 4) Image (for optional OCR)
                 if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] item, _ in
@@ -209,14 +189,19 @@ final class ShareViewController: SLComposeServiceViewController {
                !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 self.selectedText = text
             }
-
-            // Update the “Preview” row value.
             self.reloadConfigurationItems()
         }
     }
 }
 
-// MARK: - Picker + Preview UIs (small, simple)
+// MARK: - Actions + UI bits
+
+enum ScreenAction: String, CaseIterable {
+    case createReminder = "Create Reminder"
+    case addEvent      = "Add Calendar Event"
+    case extractContact = "Extract Contact"
+    case receiptCSV    = "Receipt → CSV"
+}
 
 final class ActionPickerViewController: UITableViewController {
     private var current: ScreenAction

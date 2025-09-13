@@ -131,6 +131,7 @@
 				Core/ContactsService.swift,
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
+				Core/OnboardingProgress.swift,
 				Core/RemindersService.swift,
 				Core/TextRecognition.swift,
 				Intents/AddToCalendarIntent.swift,
