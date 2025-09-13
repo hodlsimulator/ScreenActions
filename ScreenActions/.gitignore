@@ -1,0 +1,17 @@
+# Xcode & Swift
+DerivedData/
+build/
+*.xcuserdatad/
+*.xcscmblueprint
+*.xcworkspace/xcuserdata/
+# SwiftPM
+.swiftpm/
+.build/
+# macOS cruft
+.DS_Store
+# Fastlane (if added later)
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+# Logs
+*.log
