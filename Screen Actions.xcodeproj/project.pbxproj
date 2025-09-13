@@ -11,6 +11,9 @@
 		E12A851F2E75DBAE00E07869 /* ScreenActionsActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E12A85482E76045100E07869 /* ScreenActionsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E12A85762E760EBD00E07869 /* ScreenActionsWebExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A855E2E760EBD00E07869 /* ScreenActionsWebExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E12A85AD2E761C8700E07869 /* Social.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12A85AC2E761C8700E07869 /* Social.framework */; };
+		E12A85B12E7623CB00E07869 /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12A85B02E7623CB00E07869 /* EventKit.framework */; };
+		E12A85B32E7623DD00E07869 /* Contacts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12A85B22E7623DD00E07869 /* Contacts.framework */; };
 		E183E14A2E75ACF400E8D263 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E1492E75ACF400E8D263 /* WidgetKit.framework */; };
 		E183E14C2E75ACF400E8D263 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E14B2E75ACF400E8D263 /* SwiftUI.framework */; };
 		E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -69,6 +72,9 @@
 		E12A85122E75DBAD00E07869 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E12A855E2E760EBD00E07869 /* ScreenActionsWebExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsWebExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E12A85AC2E761C8700E07869 /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
+		E12A85B02E7623CB00E07869 /* EventKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = EventKit.framework; path = System/Library/Frameworks/EventKit.framework; sourceTree = SDKROOT; };
+		E12A85B22E7623DD00E07869 /* Contacts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Contacts.framework; path = System/Library/Frameworks/Contacts.framework; sourceTree = SDKROOT; };
 		E183E1352E75ABC700E8D263 /* Screen Actions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen Actions.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsControlsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1492E75ACF400E8D263 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -153,6 +159,13 @@
 			);
 			target = E12A855D2E760EBD00E07869 /* ScreenActionsWebExtension */;
 		};
+		E12A85AF2E76239600E07869 /* Exceptions for "ScreenActionsActionExtension" folder in "ScreenActionsShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				GetSelection.js,
+			);
+			target = E12A853D2E76045100E07869 /* ScreenActionsShareExtension */;
+		};
 		E183E15C2E75ACFA00E8D263 /* Exceptions for "ScreenActionsControls" folder in "ScreenActionsControlsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -167,6 +180,7 @@
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				E12A85232E75DBAE00E07869 /* Exceptions for "ScreenActionsActionExtension" folder in "ScreenActionsActionExtension" target */,
+				E12A85AF2E76239600E07869 /* Exceptions for "ScreenActionsActionExtension" folder in "ScreenActionsShareExtension" target */,
 			);
 			path = ScreenActionsActionExtension;
 			sourceTree = "<group>";
@@ -221,6 +235,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E12A85B12E7623CB00E07869 /* EventKit.framework in Frameworks */,
+				E12A85AD2E761C8700E07869 /* Social.framework in Frameworks */,
+				E12A85B32E7623DD00E07869 /* Contacts.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -279,6 +296,9 @@
 		E183E1482E75ACF400E8D263 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E12A85B22E7623DD00E07869 /* Contacts.framework */,
+				E12A85B02E7623CB00E07869 /* EventKit.framework */,
+				E12A85AC2E761C8700E07869 /* Social.framework */,
 				E183E1492E75ACF400E8D263 /* WidgetKit.framework */,
 				E183E14B2E75ACF400E8D263 /* SwiftUI.framework */,
 				E12A85122E75DBAD00E07869 /* UniformTypeIdentifiers.framework */,
