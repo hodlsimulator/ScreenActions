@@ -2,84 +2,57 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>Screen Actions</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.conornolan.Screen-Actions.ShareExtension</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>ScreenActionsShareExtension</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
 
-  <key>CFBundleDevelopmentRegion</key>
-  <string>en</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>Screen Actions needs access to your calendars to add events detected from shared text.</string>
+    <key>NSRemindersUsageDescription</key>
+    <string>Screen Actions needs access to your reminders to save tasks detected from shared text.</string>
+    <key>NSContactsUsageDescription</key>
+    <string>Screen Actions saves contacts you choose from shared text.</string>
 
-  <key>CFBundleDisplayName</key>
-  <string>Screen Actions</string>
-
-  <key>CFBundleExecutable</key>
-  <string>$(EXECUTABLE_NAME)</string>
-
-  <key>CFBundleIdentifier</key>
-  <string>com.conornolan.Screen-Actions.ShareExtension</string>
-
-  <key>CFBundleInfoDictionaryVersion</key>
-  <string>6.0</string>
-
-  <key>CFBundleName</key>
-  <string>ScreenActionsShareExtension</string>
-
-  <key>CFBundlePackageType</key>
-  <string>XPC!</string>
-
-  <key>CFBundleShortVersionString</key>
-  <string>1.0</string>
-
-  <key>CFBundleVersion</key>
-  <string>1</string>
-
-  <!-- Privacy usage strings for what this extension does -->
-  <key>NSCalendarsUsageDescription</key>
-  <string>Screen Actions needs access to your calendars to add events detected from shared text.</string>
-  <key>NSCalendarsFullAccessUsageDescription</key>
-  <string>Screen Actions adds events you choose from shared text.</string>
-
-  <key>NSRemindersUsageDescription</key>
-  <string>Screen Actions needs access to your reminders to save tasks detected from shared text.</string>
-  <key>NSRemindersFullAccessUsageDescription</key>
-  <string>Screen Actions creates reminders you choose from shared text.</string>
-
-  <key>NSContactsUsageDescription</key>
-  <string>Screen Actions saves contacts you choose from shared text.</string>
-
-  <!-- Share extension configuration -->
-  <key>NSExtension</key>
-  <dict>
-    <key>NSExtensionAttributes</key>
+    <key>NSExtension</key>
     <dict>
-      <!-- Required on newer hosts -->
-      <key>NSExtensionActivationDictionaryVersion</key>
-      <integer>2</integer>
-
-      <!-- Make the extension eligible for Safari shares of text/URLs/pages/images/files -->
-      <key>NSExtensionActivationRule</key>
-      <dict>
-        <key>NSExtensionActivationSupportsText</key>
-        <true/>
-        <key>NSExtensionActivationSupportsWebPageWithMaxCount</key>
-        <integer>1</integer>
-        <key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
-        <integer>1</integer>
-        <key>NSExtensionActivationSupportsImageWithMaxCount</key>
-        <integer>1</integer>
-        <key>NSExtensionActivationSupportsFileWithMaxCount</key>
-        <integer>1</integer>
-      </dict>
-
-      <!-- JS that runs in Safari to pass selection/title/URL -->
-      <key>NSExtensionJavaScriptPreprocessingFile</key>
-      <string>SAGetSelection</string>
+        <key>NSExtensionAttributes</key>
+        <dict>
+            <key>NSExtensionActivationDictionaryVersion</key>
+            <integer>2</integer>
+            <key>NSExtensionActivationRule</key>
+            <dict>
+                <key>NSExtensionActivationSupportsText</key>
+                <true/>
+                <key>NSExtensionActivationSupportsWebPageWithMaxCount</key>
+                <integer>1</integer>
+                <key>NSExtensionActivationSupportsWebURLWithMaxCount</key>
+                <integer>1</integer>
+                <key>NSExtensionActivationSupportsImageWithMaxCount</key>
+                <integer>1</integer>
+            </dict>
+            <!-- Must match the actual file name in the target -->
+            <key>NSExtensionJavaScriptPreprocessingFile</key>
+            <string>SAGetSelection</string>
+        </dict>
+        <key>NSExtensionPointIdentifier</key>
+        <string>com.apple.share-services</string>
+        <key>NSExtensionPrincipalClass</key>
+        <string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
     </dict>
-
-    <key>NSExtensionPointIdentifier</key>
-    <string>com.apple.share-services</string>
-
-    <!-- Use code, not storyboard -->
-    <key>NSExtensionPrincipalClass</key>
-    <string>$(PRODUCT_MODULE_NAME).ShareViewController</string>
-  </dict>
-
 </dict>
 </plist>

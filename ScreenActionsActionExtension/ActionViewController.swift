@@ -28,7 +28,6 @@ final class ActionViewController: UIViewController {
             attachUI()
             return
         }
-
         let group = DispatchGroup()
 
         for item in items {
@@ -50,9 +49,7 @@ final class ActionViewController: UIViewController {
                         let newURL = (results["url"] as? String) ?? ""
 
                         Task { @MainActor in
-                            if !newSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                self.selectedText = newSelection
-                            }
+                            if !newSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { self.selectedText = newSelection }
                             if !newTitle.isEmpty { self.pageTitle = newTitle }
                             if !newURL.isEmpty { self.pageURL = newURL }
                         }
@@ -67,9 +64,7 @@ final class ActionViewController: UIViewController {
                         guard let self, let s = item as? String else { return }
                         let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
-                        Task { @MainActor in
-                            self.selectedText = trimmed
-                        }
+                        Task { @MainActor in self.selectedText = trimmed }
                     }
                 }
 
@@ -79,9 +74,7 @@ final class ActionViewController: UIViewController {
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
                         defer { group.leave() }
                         guard let self, let url = item as? URL else { return }
-                        Task { @MainActor in
-                            self.pageURL = url.absoluteString
-                        }
+                        Task { @MainActor in self.pageURL = url.absoluteString }
                     }
                 }
             }
@@ -118,7 +111,7 @@ final class ActionViewController: UIViewController {
     }
 }
 
-// MARK: - SwiftUI
+// MARK: - SwiftUI (refined design)
 
 struct RootView: View {
     let selection: String
@@ -132,46 +125,58 @@ struct RootView: View {
 
     var body: some View {
         NavigationView {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 16) {
                 Group {
                     Text("Selected Text")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     ScrollView {
                         Text(selection.isEmpty ? "No selection found." : selection)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .textSelection(.enabled)
+                            .padding(12)
                     }
-                    .frame(maxHeight: 140)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.quaternary))
+                    .frame(maxHeight: 160)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
 
-                Divider().padding(.vertical, 6)
+                if !pageURL.isEmpty || !pageTitle.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        if !pageTitle.isEmpty {
+                            Text(pageTitle).font(.subheadline).bold()
+                        }
+                        if !pageURL.isEmpty {
+                            Text(pageURL)
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                        }
+                    }
+                    .padding(.top, 2)
+                }
+
+                Divider().padding(.vertical, 2)
 
                 VStack(spacing: 10) {
-                    Button {
-                        run {
-                            try await CreateReminderIntent.runStandalone(text: inputText)
-                        }
-                    } label: { rowLabel("Create Reminder", "checkmark.circle") }
+                    Button { run { try await CreateReminderIntent.runStandalone(text: inputText) } } label: {
+                        rowLabel("Create Reminder", "checkmark.circle")
+                    }
                     .buttonStyle(.borderedProminent)
 
-                    Button {
-                        run {
-                            try await AddToCalendarIntent.runStandalone(text: inputText)
-                        }
-                    } label: { rowLabel("Add Calendar Event", "calendar.badge.plus") }
+                    Button { run { try await AddToCalendarIntent.runStandalone(text: inputText) } } label: {
+                        rowLabel("Add Calendar Event", "calendar.badge.plus")
+                    }
                     .buttonStyle(.bordered)
 
-                    Button {
-                        run {
-                            try await ExtractContactIntent.runStandalone(text: inputText)
-                        }
-                    } label: { rowLabel("Extract Contact", "person.crop.circle.badge.plus") }
+                    Button { run { try await ExtractContactIntent.runStandalone(text: inputText) } } label: {
+                        rowLabel("Extract Contact", "person.crop.circle.badge.plus")
+                    }
                     .buttonStyle(.bordered)
 
-                    Button {
-                        runReceipt()
-                    } label: { rowLabel("Receipt → CSV", "doc.badge.plus") }
+                    Button { runReceipt() } label: {
+                        rowLabel("Receipt → CSV", "doc.badge.plus")
+                    }
                     .buttonStyle(.bordered)
                 }
 
@@ -180,11 +185,12 @@ struct RootView: View {
                         .font(.footnote)
                         .foregroundStyle(ok ? .green : .red)
                         .padding(.top, 6)
+                        .accessibilityLabel("Status")
                 }
 
-                Spacer()
+                Spacer(minLength: 0)
             }
-            .padding()
+            .padding(16)
             .navigationTitle("Screen Actions")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -194,19 +200,17 @@ struct RootView: View {
                 }
             }
             .overlay {
-                if isWorking { ProgressView().scaleEffect(1.2) }
+                if isWorking {
+                    ProgressView().scaleEffect(1.15)
+                }
             }
         }
     }
 
     private var inputText: String {
         var t = selection
-        if !pageTitle.isEmpty {
-            t = t.isEmpty ? pageTitle : t
-        }
-        if !pageURL.isEmpty {
-            t += "\n\(pageURL)"
-        }
+        if !pageTitle.isEmpty { t = t.isEmpty ? pageTitle : t }
+        if !pageURL.isEmpty { t += "\n\(pageURL)" }
         return t
     }
 
@@ -234,7 +238,12 @@ struct RootView: View {
 
     @ViewBuilder
     private func rowLabel(_ title: String, _ systemImage: String) -> some View {
-        HStack { Image(systemName: systemImage); Text(title); Spacer() }
-            .frame(maxWidth: .infinity)
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+            Text(title)
+            Spacer()
+        }
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
     }
 }

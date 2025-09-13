@@ -14,8 +14,12 @@ import Vision
 import ImageIO
 import AppIntents
 
-// Import the shared helper (add the file to this target's membership).
-import Foundation
+enum ScreenAction: String, CaseIterable {
+    case createReminder = "Create Reminder"
+    case addEvent      = "Add Calendar Event"
+    case extractContact = "Extract Contact"
+    case receiptCSV     = "Receipt → CSV"
+}
 
 @MainActor
 final class ShareViewController: SLComposeServiceViewController {
@@ -32,12 +36,6 @@ final class ShareViewController: SLComposeServiceViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         gatherInputsFromContext()
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        // ← This marks Step “Launched once from share sheet” when onboarding asked for it.
-        OnboardingProgress.pingFromShareExtension()
     }
 
     override func isContentValid() -> Bool { true }
@@ -98,10 +96,13 @@ final class ShareViewController: SLComposeServiceViewController {
         return [actionItem, preview].compactMap { $0 }
     }
 
+    // MARK: - Input assembly
+
     private var inputText: String {
         var t = selectedText.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty, !pageTitle.isEmpty { t = pageTitle }
         if !pageURL.isEmpty { t += (t.isEmpty ? "" : "\n") + pageURL }
+
         let userTyped = (self.contentText ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !userTyped.isEmpty { t += (t.isEmpty ? "" : "\n\n") + userTyped }
         return t
@@ -119,7 +120,7 @@ final class ShareViewController: SLComposeServiceViewController {
 
         for item in items {
             for provider in item.attachments ?? [] {
-
+                // Preprocessed JS results (selection/title/url)
                 if provider.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { [weak self] item, _ in
@@ -135,15 +136,14 @@ final class ShareViewController: SLComposeServiceViewController {
                         let newURL = (results["url"] as? String) ?? ""
 
                         Task { @MainActor in
-                            if !newSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                self.selectedText = newSelection
-                            }
+                            if !newSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { self.selectedText = newSelection }
                             if !newTitle.isEmpty { self.pageTitle = newTitle }
                             if !newURL.isEmpty { self.pageURL = newURL }
                         }
                     }
                 }
 
+                // Plain text
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, _ in
@@ -155,6 +155,7 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
+                // URL
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
@@ -164,6 +165,7 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
+                // Image (for OCR)
                 if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] item, _ in
@@ -181,7 +183,6 @@ final class ShareViewController: SLComposeServiceViewController {
 
         group.notify(queue: .main) { [weak self] in
             guard let self else { return }
-
             if self.selectedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                let data = self.pendingImageData,
                let cg = SA_makeCGImage(from: data),
@@ -194,14 +195,7 @@ final class ShareViewController: SLComposeServiceViewController {
     }
 }
 
-// MARK: - Actions + UI bits
-
-enum ScreenAction: String, CaseIterable {
-    case createReminder = "Create Reminder"
-    case addEvent      = "Add Calendar Event"
-    case extractContact = "Extract Contact"
-    case receiptCSV    = "Receipt → CSV"
-}
+// MARK: - Config sub-views
 
 final class ActionPickerViewController: UITableViewController {
     private var current: ScreenAction
@@ -216,9 +210,7 @@ final class ActionPickerViewController: UITableViewController {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        ScreenAction.allCases.count
-    }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { ScreenAction.allCases.count }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
@@ -242,13 +234,11 @@ final class ActionPickerViewController: UITableViewController {
 
 final class PreviewViewController: UIViewController {
     private let text: String
-
     init(text: String) {
         self.text = text
         super.init(nibName: nil, bundle: nil)
         self.title = "Preview"
     }
-
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func loadView() {
@@ -260,7 +250,7 @@ final class PreviewViewController: UIViewController {
     }
 }
 
-// MARK: - OCR helpers
+// MARK: - OCR helpers (nonisolated)
 
 fileprivate func SA_makeCGImage(from data: Data) -> CGImage? {
     let cfData = data as CFData
@@ -275,10 +265,8 @@ fileprivate func SA_recognizeText(from image: CGImage) throws -> String {
     let request = VNRecognizeTextRequest()
     request.recognitionLevel = .accurate
     request.usesLanguageCorrection = true
-
     let handler = VNImageRequestHandler(cgImage: image, orientation: .up, options: [:])
     try handler.perform([request])
-
     let strings: [String] = request.results?
         .compactMap { $0.topCandidates(1).first?.string } ?? []
     return strings.joined(separator: "\n")

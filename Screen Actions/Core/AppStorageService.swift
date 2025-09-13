@@ -7,13 +7,9 @@
 
 import Foundation
 
-/// Shared app storage in the App Group.
-/// Update the `appGroupID` if you ever rename the group.
 enum AppStorageService {
-
     static let appGroupID = "group.com.conornolan.screenactions"
 
-    /// Main-actor isolated singleton to satisfy Swift concurrency checks.
     @MainActor
     static let shared = AppStorageServiceImpl()
 
@@ -22,21 +18,18 @@ enum AppStorageService {
         static let exportCounter = "exportCounter"
     }
 
-    /// Main-actor isolated implementation. All access funnels through the main actor.
     @MainActor
     final class AppStorageServiceImpl {
-
-        /// UserDefaults for the App Group (constant reference; thread-safe per Apple).
         let defaults: UserDefaults
 
         init() {
-            guard let d = UserDefaults(suiteName: appGroupID) else {
-                fatalError("UserDefaults(suiteName:) failed. Check App Group entitlement: \(appGroupID)")
+            if let d = UserDefaults(suiteName: appGroupID) {
+                self.defaults = d
+            } else {
+                self.defaults = .standard
             }
-            self.defaults = d
         }
 
-        /// Sets up initial defaults on first run.
         func bootstrap() {
             if defaults.object(forKey: Keys.firstRun) == nil {
                 defaults.set(true, forKey: Keys.firstRun)
@@ -44,7 +37,6 @@ enum AppStorageService {
             }
         }
 
-        /// Returns a monotonically increasing export filename with timestamp.
         func nextExportFilename(prefix: String, ext: String) -> String {
             let n = defaults.integer(forKey: Keys.exportCounter) + 1
             defaults.set(n, forKey: Keys.exportCounter)
@@ -52,14 +44,15 @@ enum AppStorageService {
             return "\(prefix)_\(n)_\(ts).\(ext)"
         }
 
-        /// The App Group container URL (creates it if needed).
         func containerURL() -> URL {
-            guard let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID
-            ) else {
-                fatalError("App Group container not found. Check entitlements.")
+            if let url = FileManager.default
+                .containerURL(forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID) {
+                return url
             }
-            return url
+            let fallback = FileManager.default.temporaryDirectory
+                .appendingPathComponent("ScreenActionsFallback", isDirectory: true)
+            try? FileManager.default.createDirectory(at: fallback, withIntermediateDirectories: true)
+            return fallback
         }
     }
 }
