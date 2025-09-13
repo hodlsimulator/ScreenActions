@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Screen Actions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <style>
+    body { font: -apple-system-body; margin: 12px; width: 280px; }
+    .box { border: 1px solid #ddd; border-radius: 8px; padding: 8px; max-height: 120px; overflow: auto; }
+    .row { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
+    button { padding: 10px; border-radius: 10px; border: 1px solid #ccc; background: #f8f8f8; font: -apple-system-body; }
+    button.primary { background: #eaeefc; border-color: #ccd3ff; }
+    #status { margin-top: 8px; font-size: 12px; }
+    .ok { color: #067d17; } .err { color: #b00020; }
+  </style>
+</head>
+<body>
+  <div>
+    <div style="font-size:12px;color:#666;">Selected Text</div>
+    <div id="sel" class="box">Loading…</div>
+  </div>
+
+  <div class="row">
+    <button id="btn-rem" class="primary">Create Reminder</button>
+    <button id="btn-cal">Add Calendar Event</button>
+    <button id="btn-ctc">Extract Contact</button>
+    <button id="btn-csv">Receipt → CSV</button>
+  </div>
+
+  <div id="status"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
+

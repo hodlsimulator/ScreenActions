@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Screen Actions",
+  "version": "1.0",
+  "description": "One-tap actions: reminder, calendar, contact, and receipt → CSV.",
+  "permissions": ["activeTab", "scripting", "clipboardWrite", "nativeMessaging"],
+  "host_permissions": ["<all_urls>"],
+  "action": { "default_title": "Screen Actions", "default_popup": "popup.html" },
+  "background": { "service_worker": "background.js" }
+}
