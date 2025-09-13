@@ -9,13 +9,21 @@ import SwiftUI
 
 @main
 struct Screen_ActionsApp: App {
-    init() {
-        AppStorageService.shared.bootstrap()
-    }
+    @AppStorage(ShareOnboardingKeys.completed) private var hasCompletedShareOnboarding = false
+    @State private var showShareOnboarding = false
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    // Show once after install/update until dismissed.
+                    if !hasCompletedShareOnboarding {
+                        showShareOnboarding = true
+                    }
+                }
+                .sheet(isPresented: $showShareOnboarding) {
+                    ShareOnboardingView(isPresented: $showShareOnboarding)
+                }
         }
     }
 }

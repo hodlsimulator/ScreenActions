@@ -4,8 +4,6 @@
 //
 //  Created by . . on 9/13/25.
 //
-//  Target: iOS 26+ (system-driven Liquid Glass)
-//
 
 import SwiftUI
 
@@ -13,6 +11,11 @@ struct ContentView: View {
     @State private var inputText: String = ""
     @State private var status: String = "Ready"
     @FocusState private var isEditorFocused: Bool
+
+    // Onboarding + Settings
+    @AppStorage(ShareOnboardingKeys.completed) private var hasCompletedShareOnboarding = false
+    @State private var showShareOnboarding = false
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -25,7 +28,6 @@ struct ContentView: View {
                                 .padding(.top, 8)
                                 .accessibilityHidden(true)
                         }
-
                         TextEditor(text: $inputText)
                             .frame(minHeight: 180)
                             .focused($isEditorFocused)
@@ -46,37 +48,48 @@ struct ContentView: View {
             }
             .navigationTitle("Screen Actions")
             .toolbar {
-                // Bottom actions — system will style these (Liquid Glass on iOS 26)
-                ToolbarItemGroup(placement: .bottomBar) {
+                // Trailing gear for Settings
+                ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Task { await addToCalendar() }
+                        showSettings = true
                     } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
+                }
+
+                // Bottom actions — system-styled (matches your main screen)
+                ToolbarItemGroup(placement: .bottomBar) {
+                    Button { Task { await addToCalendar() } } label: {
                         Label("Add to Calendar", systemImage: "calendar.badge.plus")
                     }
-
-                    Button {
-                        Task { await createReminder() }
-                    } label: {
+                    Button { Task { await createReminder() } } label: {
                         Label("Create Reminder", systemImage: "checkmark.circle.badge.plus")
                     }
-
-                    Button {
-                        Task { await extractContact() }
-                    } label: {
+                    Button { Task { await extractContact() } } label: {
                         Label("Extract Contact", systemImage: "person.crop.rectangle.badge.plus")
                     }
-
-                    Button {
-                        Task { await receiptToCSV() }
-                    } label: {
+                    Button { Task { await receiptToCSV() } } label: {
                         Label("Receipt → CSV", systemImage: "doc.text.magnifyingglass")
                     }
                 }
 
-                // Keyboard toolbar for convenience
+                // Keyboard toolbar
                 ToolbarItemGroup(placement: .keyboard) {
                     Spacer()
                     Button("Done") { isEditorFocused = false }
+                }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
+            }
+            .sheet(isPresented: $showShareOnboarding) {
+                ShareOnboardingView(isPresented: $showShareOnboarding)
+            }
+            .onAppear {
+                // Show once after install/update until dismissed.
+                if !hasCompletedShareOnboarding {
+                    showShareOnboarding = true
                 }
             }
         }
