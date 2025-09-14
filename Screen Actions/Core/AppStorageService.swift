@@ -7,8 +7,11 @@
 
 import Foundation
 
-/// Crash-proof: no App Group anywhere (install-safe while signing is sorted).
+/// Shared storage.
+/// - App: uses App Group if available (safe fallback to standard if not).
+/// - Extensions: always use `.standard` + private temp directory (no entitlements needed).
 enum AppStorageService {
+    static let appGroupID = "group.com.conornolan.screenactions"
 
     @MainActor static let shared = AppStorageServiceImpl()
 
@@ -19,9 +22,16 @@ enum AppStorageService {
 
     @MainActor
     final class AppStorageServiceImpl {
-        let defaults: UserDefaults = .standard
+        private let isExtension: Bool = Bundle.main.bundleURL.pathExtension == "appex"
+        let defaults: UserDefaults
 
-        init() { }
+        init() {
+            if isExtension {
+                self.defaults = .standard
+            } else {
+                self.defaults = UserDefaults(suiteName: appGroupID) ?? .standard
+            }
+        }
 
         func bootstrap() {
             if defaults.object(forKey: Keys.firstRun) == nil {
@@ -37,8 +47,13 @@ enum AppStorageService {
             return "\(prefix)_\(n)_\(ts).\(ext)"
         }
 
-        /// Always a private temp dir — no group container required.
+        /// App: App Group container when available; otherwise temp.
+        /// Extensions: always temp (no sandbox extensions needed).
         func containerURL() -> URL {
+            if !isExtension,
+               let url = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID) {
+                return url
+            }
             let dir = FileManager.default.temporaryDirectory
                 .appendingPathComponent("ScreenActionsTemp", isDirectory: true)
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)

@@ -7,10 +7,21 @@
 
 import Foundation
 
-/// Crash-proof: always use standard defaults (no App Group).
+/// Crash-proof shared state.
+/// - In the main app: use the App Group when available.
+/// - In extensions: always use `.standard` (never crash / never require entitlements).
 public enum OnboardingProgress {
+    public static let appGroupID = "group.com.conornolan.screenactions"
 
-    private static var defaults: UserDefaults { .standard }
+    private static var isExtension: Bool {
+        Bundle.main.bundleURL.pathExtension == "appex"
+    }
+
+    /// Use App Group only in the app; fall back to standard everywhere else.
+    private static var defaults: UserDefaults {
+        if isExtension { return .standard }
+        return UserDefaults(suiteName: appGroupID) ?? .standard
+    }
 
     private enum K {
         static let step1DidOpenInAppShare = "SA.step1DidOpenInAppShare"
@@ -25,14 +36,17 @@ public enum OnboardingProgress {
         get { defaults.bool(forKey: K.step1DidOpenInAppShare) }
         set { defaults.set(newValue, forKey: K.step1DidOpenInAppShare) }
     }
+
     public static var step2DidOpenMoreAndEdit: Bool {
         get { defaults.bool(forKey: K.step2DidOpenMoreAndEdit) }
         set { defaults.set(newValue, forKey: K.step2DidOpenMoreAndEdit) }
     }
+
     public static var step3DidAddToFavourites: Bool {
         get { defaults.bool(forKey: K.step3DidAddToFavourites) }
         set { defaults.set(newValue, forKey: K.step3DidAddToFavourites) }
     }
+
     public static var step5DidMoveToFront: Bool {
         get { defaults.bool(forKey: K.step5DidMoveToFront) }
         set { defaults.set(newValue, forKey: K.step5DidMoveToFront) }
