@@ -1,30 +1,27 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>Screen Actions</title>
-  <link rel="stylesheet" href="popup.css">
-</head>
-<body>
-  <header>
-    <img src="images/icon-48.png" alt="" width="24" height="24">
+  <head>
+    <meta charset="utf-8">
+    <title>Screen Actions</title>
+    <link rel="stylesheet" href="popup.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
     <h1>Screen Actions</h1>
-  </header>
 
-  <section class="card">
-    <label>Selected Text</label>
-    <div id="sel" class="selection" aria-live="polite">(Loading…)</div>
-  </section>
+    <h2>Selected Text</h2>
+    <pre id="sel">(Loading…)</pre>
 
-  <section class="buttons">
-    <button id="btn-rem" class="primary">Create Reminder</button>
-    <button id="btn-cal">Add Calendar Event</button>
-    <button id="btn-ctc">Extract Contact</button>
-    <button id="btn-csv">Receipt → CSV</button>
-  </section>
+    <div class="buttons">
+      <button id="btn-auto">Auto Detect</button>
+      <button id="btn-rem">Create Reminder</button>
+      <button id="btn-cal">Add Calendar Event</button>
+      <button id="btn-ctc">Extract Contact</button>
+      <button id="btn-csv">Receipt → CSV</button>
+    </div>
 
-  <p id="status" class="status" role="status" aria-live="polite"></p>
+    <div id="status" class="status">(Idle)</div>
 
-  <script src="popup.js"></script>
-</body>
+    <script src="popup.js"></script>
+  </body>
 </html>

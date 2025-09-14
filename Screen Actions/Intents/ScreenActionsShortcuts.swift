@@ -10,9 +10,19 @@ import AppIntents
 struct ScreenActionsShortcuts: AppShortcutsProvider {
     static var shortcutTileColor: ShortcutTileColor { .blue }
 
-    // iOS 26: implement using the builder (no array literal)
+    // iOS 26: builder-based declaration
     @AppShortcutsBuilder
     static var appShortcuts: [AppShortcut] {
+        AppShortcut(
+            intent: AutoDetectIntent(),
+            phrases: [
+                "Auto detect with \(.applicationName)",
+                "Do the right thing with \(.applicationName)"
+            ],
+            shortTitle: "Auto Detect",
+            systemImageName: "wand.and.stars"
+        )
+
         AppShortcut(
             intent: AddToCalendarIntent(),
             phrases: [

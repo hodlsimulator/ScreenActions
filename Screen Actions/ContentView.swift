@@ -37,7 +37,6 @@ struct ContentView: View {
                             .accessibilityLabel("Input text")
                     }
                 }
-
                 Section("Status") {
                     Text(status)
                         .font(.footnote)
@@ -50,26 +49,39 @@ struct ContentView: View {
             .toolbar {
                 // Trailing gear for Settings
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gearshape")
-                    }
-                    .accessibilityLabel("Settings")
+                    Button { showSettings = true } label: { Image(systemName: "gearshape") }
+                        .accessibilityLabel("Settings")
                 }
 
-                // Bottom actions — system-styled (matches your main screen)
+                // Bottom actions
                 ToolbarItemGroup(placement: .bottomBar) {
-                    Button { Task { await addToCalendar() } } label: {
+                    Button {
+                        Task { await autoDetect() }
+                    } label: {
+                        Label("Auto Detect", systemImage: "wand.and.stars")
+                    }
+
+                    Button {
+                        Task { await addToCalendar() }
+                    } label: {
                         Label("Add to Calendar", systemImage: "calendar.badge.plus")
                     }
-                    Button { Task { await createReminder() } } label: {
+
+                    Button {
+                        Task { await createReminder() }
+                    } label: {
                         Label("Create Reminder", systemImage: "checkmark.circle.badge.plus")
                     }
-                    Button { Task { await extractContact() } } label: {
+
+                    Button {
+                        Task { await extractContact() }
+                    } label: {
                         Label("Extract Contact", systemImage: "person.crop.rectangle.badge.plus")
                     }
-                    Button { Task { await receiptToCSV() } } label: {
+
+                    Button {
+                        Task { await receiptToCSV() }
+                    } label: {
                         Label("Receipt → CSV", systemImage: "doc.text.magnifyingglass")
                     }
                 }
@@ -80,22 +92,23 @@ struct ContentView: View {
                     Button("Done") { isEditorFocused = false }
                 }
             }
-            .sheet(isPresented: $showSettings) {
-                SettingsView()
-            }
-            .sheet(isPresented: $showShareOnboarding) {
-                ShareOnboardingView(isPresented: $showShareOnboarding)
-            }
+            .sheet(isPresented: $showSettings) { SettingsView() }
+            .sheet(isPresented: $showShareOnboarding) { ShareOnboardingView(isPresented: $showShareOnboarding) }
             .onAppear {
-                // Show once after install/update until dismissed.
-                if !hasCompletedShareOnboarding {
-                    showShareOnboarding = true
-                }
+                if !hasCompletedShareOnboarding { showShareOnboarding = true }
             }
         }
     }
 
     // MARK: - Intent helpers
+    private func autoDetect() async {
+        do {
+            let result = try await AutoDetectIntent.runStandalone(text: inputText)
+            status = result
+        } catch {
+            status = "Auto error: \(error.localizedDescription)"
+        }
+    }
 
     private func addToCalendar() async {
         do {

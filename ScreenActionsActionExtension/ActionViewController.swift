@@ -13,11 +13,9 @@ import UniformTypeIdentifiers
 
 @MainActor
 final class ActionViewController: UIViewController {
-
     private var selectedText: String = ""
     private var pageTitle: String = ""
     private var pageURL: String = ""
-
     private var host: UIHostingController<SAActionPanelView>?
 
     override func viewDidLoad() {
@@ -32,41 +30,28 @@ final class ActionViewController: UIViewController {
     }
 
     private func loadFromContext() {
-        guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
-            attachUI()
-            return
-        }
-
+        guard let items = extensionContext?.inputItems as? [NSExtensionItem] else { attachUI(); return }
         let group = DispatchGroup()
-
         for item in items {
             for provider in item.attachments ?? [] {
-
                 // 1) JS preprocessing dictionary (selection/title/url)
                 if provider.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { [weak self] item, _ in
                         defer { group.leave() }
-                        guard
-                            let self,
-                            let dict = item as? NSDictionary,
-                            let results = dict[NSExtensionJavaScriptPreprocessingResultsKey] as? [String: Any]
-                        else { return }
-
+                        guard let self,
+                              let dict = item as? NSDictionary,
+                              let results = dict[NSExtensionJavaScriptPreprocessingResultsKey] as? [String: Any] else { return }
                         let newSelection = (results["selection"] as? String) ?? ""
                         let newTitle = (results["title"] as? String) ?? ""
                         let newURL = (results["url"] as? String) ?? ""
-
                         Task { @MainActor in
-                            if !newSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                self.selectedText = newSelection
-                            }
+                            if !newSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { self.selectedText = newSelection }
                             if !newTitle.isEmpty { self.pageTitle = newTitle }
                             if !newURL.isEmpty { self.pageURL = newURL }
                         }
                     }
                 }
-
                 // 2) Plain text
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     group.enter()
@@ -78,7 +63,6 @@ final class ActionViewController: UIViewController {
                         Task { @MainActor in self.selectedText = trimmed }
                     }
                 }
-
                 // 3) URL
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     group.enter()
@@ -90,10 +74,7 @@ final class ActionViewController: UIViewController {
                 }
             }
         }
-
-        group.notify(queue: .main) { [weak self] in
-            self?.attachUI()
-        }
+        group.notify(queue: .main) { [weak self] in self?.attachUI() }
     }
 
     private func attachUI() {
@@ -106,7 +87,6 @@ final class ActionViewController: UIViewController {
             out.userInfo = ["ScreenActionsResult": message]
             self?.extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
         }
-
         let host = UIHostingController(rootView: root)
         addChild(host)
         host.view.translatesAutoresizingMaskIntoConstraints = false

@@ -12,11 +12,10 @@ import EventKit
 
 @MainActor
 final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
-
     func beginRequest(with context: NSExtensionContext) {
         guard
             let item = context.inputItems.first as? NSExtensionItem,
-            let userInfo = item.userInfo,                                 // FIX: no pointless cast
+            let userInfo = item.userInfo,
             let body = userInfo[SFExtensionMessageKey] as? [String: Any]
         else {
             reply(context, ["ok": false, "message": "Bad message."])
@@ -34,6 +33,8 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             do {
                 let result: [String: Any]
                 switch action {
+                case "autoDetect":
+                    result = try await handleAutoDetect(text: text, title: title, selection: selection)
                 case "createReminder":
                     result = try await handleCreateReminder(text: text, title: title, selection: selection)
                 case "addEvent":
@@ -52,8 +53,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         }
     }
 
-    // MARK: - Helpers (instance methods so no 'Self.' lookups)
-
+    // MARK: - Helpers
     private func reply(_ context: NSExtensionContext, _ payload: [String: Any]) {
         let response = NSExtensionItem()
         response.userInfo = [SFExtensionMessageKey: payload]
@@ -68,6 +68,30 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     }
 
     // MARK: - Actions (reuse your Core services)
+    private func handleAutoDetect(text: String, title: String, selection: String) async throws -> [String: Any] {
+        let decision = ActionRouter.route(text: text)
+        switch decision.kind {
+        case .receipt:
+            let csv = CSVExporter.makeReceiptCSV(from: text)
+            let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
+            let fileURL = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
+            return ["ok": true, "message": "Auto → CSV exported.", "fileURL": fileURL.absoluteString]
+        case .contact:
+            let detected = ContactParser.detect(in: text)
+            let id = try await ContactsService.save(contact: detected)
+            return ["ok": true, "message": "Auto → Contact saved (\(id))."]
+        case .event:
+            guard let range = decision.dateRange ?? DateParser.firstDateRange(in: text) else {
+                return try await handleCreateReminder(text: text, title: title, selection: selection)
+            }
+            let preferredTitle = selection.components(separatedBy: .newlines).first?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? (title.isEmpty ? "Event" : title)
+            let id = try await CalendarService.addEvent(title: preferredTitle, start: range.start, end: range.end, notes: text)
+            return ["ok": true, "message": "Auto → Event created (\(id))."]
+        case .reminder:
+            return try await handleCreateReminder(text: text, title: title, selection: selection)
+        }
+    }
 
     private func handleCreateReminder(text: String, title: String, selection: String) async throws -> [String: Any] {
         let preferredTitle = selection.components(separatedBy: .newlines).first?

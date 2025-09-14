@@ -24,15 +24,10 @@ async function runAction(action) {
     const payload = await getPageContext();
     document.getElementById("sel").textContent =
       payload.selection?.trim() || payload.title || "(No selection)";
-
-    const response = await browser.runtime.sendNativeMessage(NATIVE_APP_ID, {
-      action,
-      payload
-    });
-
+    const response = await browser.runtime.sendNativeMessage(NATIVE_APP_ID, { action, payload });
     if (response?.ok) {
       setStatus(response.message || "Done.", true);
-      if (action === "receiptCSV" && response.fileURL) {
+      if ((action === "receiptCSV" || action === "autoDetect") && response.fileURL) {
         await navigator.clipboard.writeText(response.fileURL);
       }
     } else {
@@ -51,7 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch {
     document.getElementById("sel").textContent = "(Unable to read page)";
   }
-
+  document.getElementById("btn-auto").addEventListener("click", () => runAction("autoDetect"));
   document.getElementById("btn-rem").addEventListener("click", () => runAction("createReminder"));
   document.getElementById("btn-cal").addEventListener("click", () => runAction("addEvent"));
   document.getElementById("btn-ctc").addEventListener("click", () => runAction("extractContact"));

@@ -94,6 +94,7 @@
 		E12A85292E75DE2500E07869 /* Exceptions for "Screen Actions" folder in "ScreenActionsActionExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Core/ActionRouter.swift,
 				Core/AppEnvironment.swift,
 				Core/AppStorageService.swift,
 				Core/CalendarService.swift,
@@ -106,6 +107,7 @@
 				Core/SAActionPanelView.swift,
 				Core/TextRecognition.swift,
 				Intents/AddToCalendarIntent.swift,
+				Intents/AutoDetectIntent.swift,
 				Intents/CreateReminderIntent.swift,
 				Intents/ExtractContactIntent.swift,
 				Intents/ReceiptToCSVIntent.swift,
@@ -123,6 +125,7 @@
 		E12A85522E76078A00E07869 /* Exceptions for "Screen Actions" folder in "ScreenActionsShareExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Core/ActionRouter.swift,
 				Core/AppEnvironment.swift,
 				Core/AppStorageService.swift,
 				Core/CalendarService.swift,
@@ -135,6 +138,7 @@
 				Core/SAActionPanelView.swift,
 				Core/TextRecognition.swift,
 				Intents/AddToCalendarIntent.swift,
+				Intents/AutoDetectIntent.swift,
 				Intents/CreateReminderIntent.swift,
 				Intents/ExtractContactIntent.swift,
 				Intents/ReceiptToCSVIntent.swift,
@@ -151,6 +155,7 @@
 		E12A85AB2E76184B00E07869 /* Exceptions for "Screen Actions" folder in "ScreenActionsWebExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Core/ActionRouter.swift,
 				Core/AppEnvironment.swift,
 				Core/AppStorageService.swift,
 				Core/CalendarService.swift,

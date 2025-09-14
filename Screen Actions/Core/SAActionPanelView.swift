@@ -31,7 +31,6 @@ public struct SAActionPanelView: View {
     public var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 16) {
-
                 Group {
                     Text("Selected Text")
                         .font(.caption)
@@ -49,9 +48,7 @@ public struct SAActionPanelView: View {
 
                 if !pageTitle.isEmpty || !pageURL.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        if !pageTitle.isEmpty {
-                            Text(pageTitle).font(.subheadline).bold()
-                        }
+                        if !pageTitle.isEmpty { Text(pageTitle).font(.subheadline).bold() }
                         if !pageURL.isEmpty {
                             Text(pageURL)
                                 .font(.footnote)
@@ -105,9 +102,7 @@ public struct SAActionPanelView: View {
                     }
                 }
             }
-            .overlay {
-                if isWorking { ProgressView().scaleEffect(1.15) }
-            }
+            .overlay { if isWorking { ProgressView().scaleEffect(1.15) } }
         }
     }
 
@@ -119,28 +114,16 @@ public struct SAActionPanelView: View {
 
     private var inputText: String {
         var t = selection
-        if !pageTitle.isEmpty {
-            t = t.isEmpty ? pageTitle : t
-        }
-        if !pageURL.isEmpty {
-            t += "\n\(pageURL)"
-        }
+        if !pageTitle.isEmpty { t = t.isEmpty ? pageTitle : t }
+        if !pageURL.isEmpty { t += "\n\(pageURL)" }
         return t
     }
 
     private func run(_ op: @escaping () async throws -> String) {
-        isWorking = true
-        status = nil
-        ok = false
+        isWorking = true; status = nil; ok = false
         Task { @MainActor in
-            do {
-                let message = try await op()
-                status = message
-                ok = true
-            } catch {
-                status = error.localizedDescription
-                ok = false
-            }
+            do { let message = try await op(); status = message; ok = true }
+            catch { status = error.localizedDescription; ok = false }
             isWorking = false
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
@@ -173,12 +156,10 @@ import Foundation
 private func createReminder(text: String) async throws -> String {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return "Provide text first." }
-
     let title = trimmed
         .components(separatedBy: .newlines)
         .first?
         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Todo"
-
     let due = DateParser.firstDateRange(in: trimmed)?.start
     let id = try await RemindersService.addReminder(title: title, due: due, notes: trimmed)
     return "Reminder created (\(id))."
@@ -188,12 +169,10 @@ private func addToCalendar(text: String) async throws -> String {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return "Provide text first." }
     guard let range = DateParser.firstDateRange(in: trimmed) else { return "No date found." }
-
     let title = trimmed
         .components(separatedBy: .newlines)
         .first?
         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Event"
-
     let id = try await CalendarService.addEvent(title: title, start: range.start, end: range.end, notes: trimmed)
     return "Event created (\(id))."
 }
@@ -201,14 +180,9 @@ private func addToCalendar(text: String) async throws -> String {
 private func extractContact(text: String) async throws -> String {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return "Provide text first." }
-
     let detected = ContactParser.detect(in: trimmed)
-    let hasSomething = (detected.givenName?.isEmpty == false) ||
-                       !detected.emails.isEmpty ||
-                       !detected.phones.isEmpty ||
-                       (detected.postalAddress != nil)
+    let hasSomething = (detected.givenName?.isEmpty == false) || !detected.emails.isEmpty || !detected.phones.isEmpty || (detected.postalAddress != nil)
     guard hasSomething else { return "No contact details found." }
-
     let id = try await ContactsService.save(contact: detected)
     return "Contact saved (\(id))."
 }
@@ -217,7 +191,6 @@ private func extractContact(text: String) async throws -> String {
 private func exportReceiptCSV(text: String) async throws -> (String, URL) {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return ("Provide text first.", AppStorageService.shared.containerURL()) }
-
     let csv = CSVExporter.makeReceiptCSV(from: trimmed)
     let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
     let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
