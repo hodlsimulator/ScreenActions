@@ -94,7 +94,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				ScreenActionsActionExtension.entitlements,
 			);
 			target = E12A85102E75DBAD00E07869 /* ScreenActionsActionExtension */;
 		};
@@ -120,6 +119,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				SAGetSelection.js,
 			);
 			target = E12A853D2E76045100E07869 /* ScreenActionsShareExtension */;
 		};
@@ -160,6 +160,13 @@
 			);
 			target = E12A855D2E760EBD00E07869 /* ScreenActionsWebExtension */;
 		};
+		E12A889E2E765EB800E07869 /* Exceptions for "ScreenActionsShareExtension" folder in "ScreenActionsActionExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				SAGetSelection.js,
+			);
+			target = E12A85102E75DBAD00E07869 /* ScreenActionsActionExtension */;
+		};
 		E183E15C2E75ACFA00E8D263 /* Exceptions for "ScreenActionsControls" folder in "ScreenActionsControlsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -181,6 +188,7 @@
 		E12A853F2E76045100E07869 /* ScreenActionsShareExtension */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				E12A889E2E765EB800E07869 /* Exceptions for "ScreenActionsShareExtension" folder in "ScreenActionsActionExtension" target */,
 				E12A854C2E76045100E07869 /* Exceptions for "ScreenActionsShareExtension" folder in "ScreenActionsShareExtension" target */,
 			);
 			path = ScreenActionsShareExtension;
