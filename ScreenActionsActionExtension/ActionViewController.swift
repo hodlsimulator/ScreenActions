@@ -6,13 +6,17 @@
 //
 //  Matches main app design via the shared action panel.
 //
+//  Hosts the shared SwiftUI panel and preloads selection/title/url
+//  via the JavaScript preprocessing result (GetSelection.js).
+//
 
 import UIKit
 import SwiftUI
-import UniformTypeIdentifiers
+import MobileCoreServices
 
 @MainActor
 final class ActionViewController: UIViewController {
+
     private var selectedText: String = ""
     private var pageTitle: String = ""
     private var pageURL: String = ""
@@ -21,7 +25,7 @@ final class ActionViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        loadFromContext()
+        loadFromJavaScriptPayload()
     }
 
     override func viewDidLayoutSubviews() {
@@ -29,57 +33,34 @@ final class ActionViewController: UIViewController {
         updatePreferredContentSize()
     }
 
-    private func loadFromContext() {
-        guard let items = extensionContext?.inputItems as? [NSExtensionItem] else { attachUI(); return }
-        let group = DispatchGroup()
-        for item in items {
-            for provider in item.attachments ?? [] {
-                // 1) JS preprocessing dictionary (selection/title/url)
-                if provider.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
-                    group.enter()
-                    provider.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { [weak self] item, _ in
-                        defer { group.leave() }
-                        guard let self,
-                              let dict = item as? NSDictionary,
-                              let results = dict[NSExtensionJavaScriptPreprocessingResultsKey] as? [String: Any] else { return }
-                        let newSelection = (results["selection"] as? String) ?? ""
-                        let newTitle = (results["title"] as? String) ?? ""
-                        let newURL = (results["url"] as? String) ?? ""
-                        Task { @MainActor in
-                            if !newSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { self.selectedText = newSelection }
-                            if !newTitle.isEmpty { self.pageTitle = newTitle }
-                            if !newURL.isEmpty { self.pageURL = newURL }
-                        }
-                    }
-                }
-                // 2) Plain text
-                if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
-                    group.enter()
-                    provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, _ in
-                        defer { group.leave() }
-                        guard let self, let s = item as? String else { return }
-                        let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { return }
-                        Task { @MainActor in self.selectedText = trimmed }
-                    }
-                }
-                // 3) URL
-                if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
-                    group.enter()
-                    provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
-                        defer { group.leave() }
-                        guard let self, let url = item as? URL else { return }
-                        Task { @MainActor in self.pageURL = url.absoluteString }
-                    }
-                }
-            }
+    // MARK: - Read JS preprocessing results
+
+    private func loadFromJavaScriptPayload() {
+        guard let item = (extensionContext?.inputItems.first as? NSExtensionItem),
+              let dict = item.userInfo?[NSExtensionJavaScriptPreprocessingResultsKey] as? [String: Any]
+        else {
+            attachUI()
+            return
         }
-        group.notify(queue: .main) { [weak self] in self?.attachUI() }
+
+        if let s = dict["selection"] as? String, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            selectedText = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        if let t = dict["title"] as? String {
+            pageTitle = t
+        }
+        if let u = dict["url"] as? String {
+            pageURL = u
+        }
+
+        attachUI()
     }
+
+    // MARK: - Host SwiftUI
 
     private func attachUI() {
         let root = SAActionPanelView(
-            selection: selectedText.trimmingCharacters(in: .whitespacesAndNewlines),
+            selection: selectedText,
             pageTitle: pageTitle,
             pageURL: pageURL
         ) { [weak self] message in
@@ -87,6 +68,7 @@ final class ActionViewController: UIViewController {
             out.userInfo = ["ScreenActionsResult": message]
             self?.extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
         }
+
         let host = UIHostingController(rootView: root)
         addChild(host)
         host.view.translatesAutoresizingMaskIntoConstraints = false
@@ -107,7 +89,7 @@ final class ActionViewController: UIViewController {
         let w = max(320, view.bounds.width)
         let target = CGSize(width: w, height: UIView.layoutFittingCompressedSize.height)
         let size = host.sizeThatFits(in: target)
-        let h = max(320, min(640, size.height + 20))
+        let h = max(360, min(680, size.height + 20))
         preferredContentSize = CGSize(width: w, height: h)
     }
 }

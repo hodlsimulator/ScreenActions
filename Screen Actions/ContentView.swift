@@ -4,6 +4,9 @@
 //
 //  Created by . . on 9/13/25.
 //
+//  App home with inline editors for the four actions.
+//  Auto Detect remains a quick action; the four buttons now open editors.
+//
 
 import SwiftUI
 
@@ -16,6 +19,12 @@ struct ContentView: View {
     @AppStorage(ShareOnboardingKeys.completed) private var hasCompletedShareOnboarding = false
     @State private var showShareOnboarding = false
     @State private var showSettings = false
+
+    // Editors
+    @State private var showEvent = false
+    @State private var showReminder = false
+    @State private var showContact = false
+    @State private var showCSV = false
 
     var body: some View {
         NavigationStack {
@@ -37,6 +46,7 @@ struct ContentView: View {
                             .accessibilityLabel("Input text")
                     }
                 }
+
                 Section("Status") {
                     Text(status)
                         .font(.footnote)
@@ -55,33 +65,19 @@ struct ContentView: View {
 
                 // Bottom actions
                 ToolbarItemGroup(placement: .bottomBar) {
-                    Button {
-                        Task { await autoDetect() }
-                    } label: {
+                    Button { Task { await autoDetect() } } label: {
                         Label("Auto Detect", systemImage: "wand.and.stars")
                     }
-
-                    Button {
-                        Task { await addToCalendar() }
-                    } label: {
+                    Button { showEvent = true } label: {
                         Label("Add to Calendar", systemImage: "calendar.badge.plus")
                     }
-
-                    Button {
-                        Task { await createReminder() }
-                    } label: {
+                    Button { showReminder = true } label: {
                         Label("Create Reminder", systemImage: "checkmark.circle.badge.plus")
                     }
-
-                    Button {
-                        Task { await extractContact() }
-                    } label: {
+                    Button { showContact = true } label: {
                         Label("Extract Contact", systemImage: "person.crop.rectangle.badge.plus")
                     }
-
-                    Button {
-                        Task { await receiptToCSV() }
-                    } label: {
+                    Button { showCSV = true } label: {
                         Label("Receipt → CSV", systemImage: "doc.text.magnifyingglass")
                     }
                 }
@@ -94,55 +90,46 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
             .sheet(isPresented: $showShareOnboarding) { ShareOnboardingView(isPresented: $showShareOnboarding) }
+
+            // Editors
+            .sheet(isPresented: $showEvent) {
+                EventEditorView(sourceText: inputText, onCancel: { showEvent = false }) { message in
+                    showEvent = false
+                    status = message
+                }
+            }
+            .sheet(isPresented: $showReminder) {
+                ReminderEditorView(sourceText: inputText, onCancel: { showReminder = false }) { message in
+                    showReminder = false
+                    status = message
+                }
+            }
+            .sheet(isPresented: $showContact) {
+                ContactEditorView(sourceText: inputText, onCancel: { showContact = false }) { message in
+                    showContact = false
+                    status = message
+                }
+            }
+            .sheet(isPresented: $showCSV) {
+                ReceiptCSVPreviewView(sourceText: inputText, onCancel: { showCSV = false }) { message in
+                    showCSV = false
+                    status = message
+                }
+            }
+
             .onAppear {
                 if !hasCompletedShareOnboarding { showShareOnboarding = true }
             }
         }
     }
 
-    // MARK: - Intent helpers
+    // MARK: - Quick Auto (unchanged)
     private func autoDetect() async {
         do {
             let result = try await AutoDetectIntent.runStandalone(text: inputText)
             status = result
         } catch {
             status = "Auto error: \(error.localizedDescription)"
-        }
-    }
-
-    private func addToCalendar() async {
-        do {
-            let result = try await AddToCalendarIntent.runStandalone(text: inputText)
-            status = result
-        } catch {
-            status = "Calendar error: \(error.localizedDescription)"
-        }
-    }
-
-    private func createReminder() async {
-        do {
-            let result = try await CreateReminderIntent.runStandalone(text: inputText)
-            status = result
-        } catch {
-            status = "Reminders error: \(error.localizedDescription)"
-        }
-    }
-
-    private func extractContact() async {
-        do {
-            let result = try await ExtractContactIntent.runStandalone(text: inputText)
-            status = result
-        } catch {
-            status = "Contacts error: \(error.localizedDescription)"
-        }
-    }
-
-    private func receiptToCSV() async {
-        do {
-            let (msg, _) = try await ReceiptToCSVIntent.runStandalone(text: inputText)
-            status = msg
-        } catch {
-            status = "CSV error: \(error.localizedDescription)"
         }
     }
 }

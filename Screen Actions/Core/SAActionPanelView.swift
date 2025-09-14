@@ -5,7 +5,8 @@
 //  Created by . . on 9/14/25.
 //
 //  Shared action panel used by the app + extensions.
-//  This version removes the AppIntents dependency and calls Core services directly.
+//  Keeps Auto Detect and direct-run helpers (from A),
+//  and adds inline editors & previews (for B).
 //
 
 import SwiftUI
@@ -18,9 +19,16 @@ public struct SAActionPanelView: View {
     public let pageURL: String
     public let onDone: (String) -> Void
 
+    // Status / progress
     @State private var isWorking = false
     @State private var status: String?
     @State private var ok = false
+
+    // Inline editors (B)
+    @State private var showEvent = false
+    @State private var showReminder = false
+    @State private var showContact = false
+    @State private var showCSV = false
 
     public init(selection: String, pageTitle: String, pageURL: String, onDone: @escaping (String) -> Void) {
         self.selection = selection
@@ -32,6 +40,7 @@ public struct SAActionPanelView: View {
     public var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 16) {
+                // Selection preview
                 Group {
                     Text("Selected Text")
                         .font(.caption)
@@ -47,11 +56,10 @@ public struct SAActionPanelView: View {
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
 
+                // Page context
                 if !pageTitle.isEmpty || !pageURL.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        if !pageTitle.isEmpty {
-                            Text(pageTitle).font(.subheadline).bold()
-                        }
+                        if !pageTitle.isEmpty { Text(pageTitle).font(.subheadline).bold() }
                         if !pageURL.isEmpty {
                             Text(pageURL)
                                 .font(.footnote)
@@ -64,41 +72,63 @@ public struct SAActionPanelView: View {
 
                 Divider().padding(.vertical, 2)
 
+                // Actions
                 VStack(spacing: 10) {
-                    // NEW: Auto Detect (primary)
+                    // Primary: Auto Detect (direct-run)
                     Button { runAuto() } label: {
                         rowLabel("Auto Detect", "wand.and.stars")
                     }
                     .buttonStyle(.borderedProminent)
 
-                    // Manual actions
-                    Button {
-                        run { try await createReminder(text: inputText) }
-                    } label: {
+                    // Manual actions → open editors (B)
+                    Button { showReminder = true } label: {
                         rowLabel("Create Reminder", "checkmark.circle")
                     }
                     .buttonStyle(.bordered)
+                    // Optional quick path: direct-run without editing
+                    .contextMenu {
+                        Button {
+                            run { try await createReminder(text: inputText) }
+                        } label: {
+                            Label("Save Now (no edit)", systemImage: "bolt.fill")
+                        }
+                    }
 
-                    Button {
-                        run { try await addToCalendar(text: inputText) }
-                    } label: {
+                    Button { showEvent = true } label: {
                         rowLabel("Add Calendar Event", "calendar.badge.plus")
                     }
                     .buttonStyle(.bordered)
+                    .contextMenu {
+                        Button {
+                            run { try await addToCalendar(text: inputText) }
+                        } label: {
+                            Label("Save Now (no edit)", systemImage: "bolt.fill")
+                        }
+                    }
 
-                    Button {
-                        run { try await extractContact(text: inputText) }
-                    } label: {
+                    Button { showContact = true } label: {
                         rowLabel("Extract Contact", "person.crop.circle.badge.plus")
                     }
                     .buttonStyle(.bordered)
+                    .contextMenu {
+                        Button {
+                            run { try await extractContact(text: inputText) }
+                        } label: {
+                            Label("Save Now (no edit)", systemImage: "bolt.fill")
+                        }
+                    }
 
-                    Button {
-                        runReceipt()
-                    } label: {
+                    Button { showCSV = true } label: {
                         rowLabel("Receipt → CSV", "doc.badge.plus")
                     }
                     .buttonStyle(.bordered)
+                    .contextMenu {
+                        Button {
+                            runReceipt()
+                        } label: {
+                            Label("Export Now (no edit)", systemImage: "bolt.fill")
+                        }
+                    }
                 }
 
                 if let status {
@@ -119,6 +149,52 @@ public struct SAActionPanelView: View {
                         onDone(status ?? (ok ? "Done" : "Cancelled"))
                     }
                 }
+            }
+
+            // Inline editors (B)
+            .sheet(isPresented: $showEvent) {
+                EventEditorView(
+                    sourceText: inputText,
+                    onCancel: { showEvent = false },
+                    onSaved: { message in
+                        showEvent = false
+                        status = message; ok = true
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }
+                )
+            }
+            .sheet(isPresented: $showReminder) {
+                ReminderEditorView(
+                    sourceText: inputText,
+                    onCancel: { showReminder = false },
+                    onSaved: { message in
+                        showReminder = false
+                        status = message; ok = true
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }
+                )
+            }
+            .sheet(isPresented: $showContact) {
+                ContactEditorView(
+                    sourceText: inputText,
+                    onCancel: { showContact = false },
+                    onSaved: { message in
+                        showContact = false
+                        status = message; ok = true
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }
+                )
+            }
+            .sheet(isPresented: $showCSV) {
+                ReceiptCSVPreviewView(
+                    sourceText: inputText,
+                    onCancel: { showCSV = false },
+                    onExported: { message in
+                        showCSV = false
+                        status = message; ok = true
+                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                    }
+                )
             }
             .overlay {
                 if isWorking { ProgressView().scaleEffect(1.15) }
@@ -167,7 +243,7 @@ public struct SAActionPanelView: View {
         }
     }
 
-    // NEW: Auto Detect, using ActionRouter + Core services (no AppIntents dependency)
+    // Auto Detect (direct-run; keeps A’s behaviour)
     private func runAuto() {
         run {
             let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -237,7 +313,7 @@ public struct SAActionPanelView: View {
     }
 }
 
-// MARK: - Actions (Core-service implementations, no AppIntents)
+// MARK: - Direct-run helpers (kept for parity and context menus)
 
 private func createReminder(text: String) async throws -> String {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
