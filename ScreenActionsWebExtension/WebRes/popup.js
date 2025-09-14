@@ -1,3 +1,5 @@
+const NATIVE_APP_ID = "com.conornolan.Screen-Actions";
+
 async function getPageContext() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   const [{ result }] = await browser.scripting.executeScript({
@@ -14,7 +16,7 @@ async function getPageContext() {
 function setStatus(text, ok) {
   const s = document.getElementById("status");
   s.textContent = text;
-  s.className = ok ? "ok" : "err";
+  s.className = ok ? "status ok" : "status err";
 }
 
 async function runAction(action) {
@@ -23,16 +25,13 @@ async function runAction(action) {
     document.getElementById("sel").textContent =
       payload.selection?.trim() || payload.title || "(No selection)";
 
-    // Native messaging to Swift handler
-    const response = await browser.runtime.sendNativeMessage("application.id", {
+    const response = await browser.runtime.sendNativeMessage(NATIVE_APP_ID, {
       action,
       payload
     });
 
     if (response?.ok) {
       setStatus(response.message || "Done.", true);
-
-      // If a CSV was produced, copy its URL to the clipboard for quick paste
       if (action === "receiptCSV" && response.fileURL) {
         await navigator.clipboard.writeText(response.fileURL);
       }
