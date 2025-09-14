@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Shared app storage via App Group, with SAFE fallbacks in extensions.
 enum AppStorageService {
     static let appGroupID = "group.com.conornolan.screenactions"
 
@@ -26,6 +27,7 @@ enum AppStorageService {
             if let d = UserDefaults(suiteName: appGroupID) {
                 self.defaults = d
             } else {
+                // Fallback so extensions never crash if the group isn't ready yet
                 self.defaults = .standard
             }
         }
@@ -44,9 +46,11 @@ enum AppStorageService {
             return "\(prefix)_\(n)_\(ts).\(ext)"
         }
 
+        /// App Group container when available; otherwise a private temp dir.
         func containerURL() -> URL {
-            if let url = FileManager.default
-                .containerURL(forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID) {
+            if let url = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID
+            ) {
                 return url
             }
             let fallback = FileManager.default.temporaryDirectory

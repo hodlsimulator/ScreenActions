@@ -7,10 +7,12 @@
 
 import Foundation
 
+/// Shared onboarding state so the app and the extensions can talk.
+/// IMPORTANT: Never crash if the App Group isn't available yet (first run / provisioning).
 public enum OnboardingProgress {
     public static let appGroupID = "group.com.conornolan.screenactions"
 
-    /// Use App Group when available; otherwise fall back so the share sheet never dies.
+    /// Use App Group when available; otherwise fall back safely so the share sheet never dies.
     private static var defaults: UserDefaults {
         if let d = UserDefaults(suiteName: appGroupID) {
             return d
@@ -18,6 +20,7 @@ public enum OnboardingProgress {
         return .standard
     }
 
+    // Keys
     private enum K {
         static let step1DidOpenInAppShare = "SA.step1DidOpenInAppShare"
         static let step2DidOpenMoreAndEdit = "SA.step2DidOpenMoreAndEdit"
@@ -27,6 +30,7 @@ public enum OnboardingProgress {
         static let lastPingTime = "SA.onboarding.lastPingTime"
     }
 
+    // MARK: Step flags
     public static var step1DidOpenInAppShare: Bool {
         get { defaults.bool(forKey: K.step1DidOpenInAppShare) }
         set { defaults.set(newValue, forKey: K.step1DidOpenInAppShare) }
@@ -47,6 +51,7 @@ public enum OnboardingProgress {
         set { defaults.set(newValue, forKey: K.step5DidMoveToFront) }
     }
 
+    // MARK: Ping flow
     public static func beginExpectedPingWindow() {
         defaults.set(true, forKey: K.expectedPing)
         defaults.removeObject(forKey: K.lastPingTime)
