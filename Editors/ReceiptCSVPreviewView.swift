@@ -9,12 +9,12 @@
 //
 
 import SwiftUI
-import UniformTypeIdentifiers
+import UIKit
 
 private struct ReceiptItem: Identifiable, Hashable {
     let id = UUID()
     var title: String
-    var amount: String // allow empty; keep as string to support £/$/€ quickly
+    var amount: String // keep as string to support €, £, $ quickly
 }
 
 @MainActor
@@ -33,8 +33,20 @@ public struct ReceiptCSVPreviewView: View {
         self.onExported = onExported
     }
 
+    // Break the heavy .disabled(...) condition into a fast computed var
+    private var canExport: Bool {
+        if isExporting { return false }
+        if items.isEmpty { return false }
+        // If every row is completely blank, disable
+        let allBlank = items.allSatisfy {
+            $0.title.trimmingCharacters(in: .whitespaces).isEmpty &&
+            $0.amount.trimmingCharacters(in: .whitespaces).isEmpty
+        }
+        return !allBlank
+    }
+
     public var body: some View {
-        NavigationStack {
+        NavigationView {
             Form {
                 Section("Items") {
                     if items.isEmpty {
@@ -50,6 +62,7 @@ public struct ReceiptCSVPreviewView: View {
                         }
                     }
                     .onDelete { idx in items.remove(atOffsets: idx) }
+
                     Button {
                         items.append(.init(title: "", amount: ""))
                     } label: {
@@ -84,16 +97,15 @@ public struct ReceiptCSVPreviewView: View {
                             Task { await exportCSV(openShare: true) }
                         } label: { Label("Export & Open In…", systemImage: "square.and.arrow.up") }
                     } label: { Text("Export") }
-                    .disabled(isExporting || items.isEmpty || items.allSatisfy { $0.title.trimmingCharacters(in: .whitespaces).isEmpty && $0.amount.trimmingCharacters(in: .whitespaces).isEmpty })
+                    .disabled(!canExport)
                 }
             }
             .overlay { if isExporting { ProgressView().scaleEffect(1.2) } }
-            .sheet(item: Binding(get: {
-                shareURL.map { ShareWrapper(url: $0) }
-            }, set: { wrapper in
-                shareURL = wrapper?.url
-            })) { wrapper in
-                ActivityView(activityItems: [wrapper.url])
+            .sheet(item: Binding(
+                get: { shareURL.map { ShareWrapper(url: $0) } },
+                set: { shareURL = $0?.url }
+            )) { share in
+                InlineActivityView(activityItems: [share.url])
             }
         }
     }
@@ -107,9 +119,7 @@ public struct ReceiptCSVPreviewView: View {
             let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
             let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
             onExported("CSV exported (\(url.lastPathComponent)).")
-            if openShare {
-                shareURL = url
-            }
+            if openShare { shareURL = url }
         } catch {
             self.error = error.localizedDescription
         }
@@ -134,7 +144,6 @@ public struct ReceiptCSVPreviewView: View {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .filter { !$0.isEmpty }
 
-        // Same pattern family as CSVExporter; capture symbol + 0.00
         let pattern = #"([€£$])\s?([0-9]+(?:\.[0-9]{2})?)"#
         let regex = try? NSRegularExpression(pattern: pattern)
 
@@ -144,15 +153,13 @@ public struct ReceiptCSVPreviewView: View {
                 let ns = line as NSString
                 let range = NSRange(location: 0, length: ns.length)
                 if let m = regex.firstMatch(in: line, options: [], range: range),
-                   m.numberOfRanges >= 3
-                {
+                   m.numberOfRanges >= 3 {
                     let sym = ns.substring(with: m.range(at: 1))
                     let amt = ns.substring(with: m.range(at: 2))
                     amount = "\(sym)\(amt)"
                 }
             }
-            let title = line
-            return ReceiptItem(title: title, amount: amount)
+            return ReceiptItem(title: line, amount: amount)
         }
     }
 
@@ -160,4 +167,13 @@ public struct ReceiptCSVPreviewView: View {
         let id = UUID()
         let url: URL
     }
+}
+
+// Local share sheet so we don’t depend on ActivityView.swift
+private struct InlineActivityView: UIViewControllerRepresentable {
+    let activityItems: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
+    }
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }

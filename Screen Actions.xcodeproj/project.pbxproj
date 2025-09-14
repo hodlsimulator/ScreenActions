@@ -179,7 +179,6 @@
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
 				Core/RemindersService.swift,
-				Core/SAActionPanelView.swift,
 			);
 			target = E12A855D2E760EBD00E07869 /* ScreenActionsWebExtension */;
 		};
@@ -289,7 +288,7 @@
 				E115D2722E7775D800C8F5EE /* ContactEditorView.swift */,
 			);
 			path = Editors;
-			sourceTree = "<group>";
+			sourceTree = SOURCE_ROOT;
 		};
 		E183E12C2E75ABC700E8D263 = {
 			isa = PBXGroup;
@@ -347,8 +346,6 @@
 				E12A85142E75DBAE00E07869 /* ScreenActionsActionExtension */,
 			);
 			name = ScreenActionsActionExtension;
-			packageProductDependencies = (
-			);
 			productName = ScreenActionsActionExtension;
 			productReference = E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -369,8 +366,6 @@
 				E12A853F2E76045100E07869 /* ScreenActionsShareExtension */,
 			);
 			name = ScreenActionsShareExtension;
-			packageProductDependencies = (
-			);
 			productName = ScreenActionsShareExtension;
 			productReference = E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -391,8 +386,6 @@
 				E12A855F2E760EBD00E07869 /* ScreenActionsWebExtension */,
 			);
 			name = ScreenActionsWebExtension;
-			packageProductDependencies = (
-			);
 			productName = ScreenActionsWebExtension;
 			productReference = E12A855E2E760EBD00E07869 /* ScreenActionsWebExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -419,8 +412,6 @@
 				E183E1372E75ABC700E8D263 /* Screen Actions */,
 			);
 			name = "Screen Actions";
-			packageProductDependencies = (
-			);
 			productName = "Screen Actions";
 			productReference = E183E1352E75ABC700E8D263 /* Screen Actions.app */;
 			productType = "com.apple.product-type.application";
@@ -441,8 +432,6 @@
 				E183E14D2E75ACF400E8D263 /* ScreenActionsControls */,
 			);
 			name = ScreenActionsControlsExtension;
-			packageProductDependencies = (
-			);
 			productName = ScreenActionsControlsExtension;
 			productReference = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
