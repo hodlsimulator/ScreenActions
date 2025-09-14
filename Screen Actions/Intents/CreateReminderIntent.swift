@@ -51,7 +51,8 @@ extension CreateReminderIntent {
     static func runStandalone(text: String) async throws -> String {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return "Provide text first." }
-        let title = trimmed.components(separatedBy: .newlines).first.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? "Todo"
+        let title = trimmed.components(separatedBy: .newlines).first
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? "Todo"
         let due = DateParser.firstDateRange(in: trimmed)?.start
         let id = try await RemindersService.shared.addReminder(title: title, due: due, notes: trimmed)
         return "Reminder created (\(id))."

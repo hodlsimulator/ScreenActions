@@ -1,27 +1,32 @@
 <!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>Screen Actions</title>
-    <link rel="stylesheet" href="popup.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
-  <body>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Screen Actions</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="images/toolbar-icon.svg" alt="" width="16" height="16">
     <h1>Screen Actions</h1>
+  </header>
 
-    <h2>Selected Text</h2>
-    <pre id="sel">(Loading…)</pre>
+  <div class="card">
+    <label for="sel">Selected Text</label>
+    <pre id="sel" class="selection">(Loading…)</pre>
+  </div>
 
-    <div class="buttons">
-      <button id="btn-auto">Auto Detect</button>
-      <button id="btn-rem">Create Reminder</button>
-      <button id="btn-cal">Add Calendar Event</button>
-      <button id="btn-ctc">Extract Contact</button>
-      <button id="btn-csv">Receipt → CSV</button>
-    </div>
+  <div class="buttons">
+    <button id="btn-auto" class="primary">Auto Detect</button>
+    <button id="btn-rem">Create Reminder</button>
+    <button id="btn-cal">Add Calendar Event</button>
+    <button id="btn-ctc">Extract Contact</button>
+    <button id="btn-csv">Receipt → CSV</button>
+  </div>
 
-    <div id="status" class="status">(Idle)</div>
+  <p id="status" class="status">(Idle)</p>
 
-    <script src="popup.js"></script>
-  </body>
+  <script src="popup.js"></script>
+</body>
 </html>

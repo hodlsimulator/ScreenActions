@@ -29,9 +29,11 @@ struct AutoDetectIntent: AppIntent {
         } else {
             sourceText = try TextExtractor.from(imageFile: image)
         }
+
         guard !sourceText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw $text.needsValueError("Provide text or an image with text.")
         }
+
         let message = try await AutoDetectIntent.runStandalone(text: sourceText)
         return .result(value: message, dialog: "Done.")
     }
@@ -45,6 +47,7 @@ extension AutoDetectIntent {
         guard !text.isEmpty else { return "Provide text first." }
 
         let decision = ActionRouter.route(text: text)
+
         switch decision.kind {
         case .receipt:
             let csv = CSVExporter.makeReceiptCSV(from: text)

@@ -45,10 +45,7 @@ extension ReceiptToCSVIntent {
     @MainActor
     static func runStandalone(text: String) async throws -> (String, URL) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            return ("Provide text first.", AppStorageService.shared.containerURL())
-        }
-
+        guard !trimmed.isEmpty else { return ("Provide text first.", AppStorageService.shared.containerURL()) }
         let csv = CSVExporter.makeReceiptCSV(from: trimmed)
         let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
         let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)

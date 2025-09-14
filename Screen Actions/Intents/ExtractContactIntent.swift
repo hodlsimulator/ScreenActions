@@ -35,12 +35,10 @@ struct ExtractContactIntent: AppIntent {
         }
 
         let detected = ContactParser.detect(in: sourceText)
-        let hasSomething =
-            (detected.givenName?.isEmpty == false) ||
-            !detected.emails.isEmpty ||
-            !detected.phones.isEmpty ||
-            (detected.postalAddress != nil)
-
+        let hasSomething = (detected.givenName?.isEmpty == false)
+            || !detected.emails.isEmpty
+            || !detected.phones.isEmpty
+            || (detected.postalAddress != nil)
         guard hasSomething else {
             return .result(value: "No contact details found.", dialog: "No contact details found.")
         }
@@ -56,12 +54,10 @@ extension ExtractContactIntent {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return "Provide text first." }
         let detected = ContactParser.detect(in: trimmed)
-        let hasSomething =
-            (detected.givenName?.isEmpty == false) ||
-            !detected.emails.isEmpty ||
-            !detected.phones.isEmpty ||
-            (detected.postalAddress != nil)
-
+        let hasSomething = (detected.givenName?.isEmpty == false)
+            || !detected.emails.isEmpty
+            || !detected.phones.isEmpty
+            || (detected.postalAddress != nil)
         guard hasSomething else { return "No contact details found." }
         let id = try await ContactsService.save(contact: detected)
         return "Contact saved (\(id))."
