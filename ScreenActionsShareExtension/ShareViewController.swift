@@ -4,21 +4,25 @@
 //
 //  Created by . . on 13/09/2025.
 //
+//  Hosts the shared SwiftUI panel. Includes a tiny onboarding bridge
+//  so this file does not depend on OnboardingProgress being in target membership.
+//
 
 import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
 import Vision
 import ImageIO
-import AppIntents
 
 @MainActor
 final class ShareViewController: UIViewController {
+
     private var selectedText: String = ""
     private var pageTitle: String = ""
     private var pageURL: String = ""
     private var pendingImageData: Data?
-    private var host: UIHostingController<RootView>?
+
+    private var host: UIHostingController<SAActionPanelView>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,7 +30,13 @@ final class ShareViewController: UIViewController {
         loadFromContext()
     }
 
-    // MARK: - Load inputs from NSExtensionContext
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        SAOnboardingBridge.pingFromShareExtensionIfExpected()
+    }
+
+    // MARK: - Read inputs from NSExtensionContext
+
     private func loadFromContext() {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
             attachUI()
@@ -38,7 +48,7 @@ final class ShareViewController: UIViewController {
         for item in items {
             for provider in item.attachments ?? [] {
 
-                // 1) JS preprocessing dictionary (preferred)
+                // 1) JS preprocessing dictionary (selection/title/url)
                 if provider.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { [weak self] item, _ in
@@ -71,9 +81,7 @@ final class ShareViewController: UIViewController {
                         guard let self, let s = item as? String else { return }
                         let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { return }
-                        Task { @MainActor in
-                            self.selectedText = trimmed
-                        }
+                        Task { @MainActor in self.selectedText = trimmed }
                     }
                 }
 
@@ -83,9 +91,7 @@ final class ShareViewController: UIViewController {
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
                         defer { group.leave() }
                         guard let self, let url = item as? URL else { return }
-                        Task { @MainActor in
-                            self.pageURL = url.absoluteString
-                        }
+                        Task { @MainActor in self.pageURL = url.absoluteString }
                     }
                 }
 
@@ -108,11 +114,11 @@ final class ShareViewController: UIViewController {
         group.notify(queue: .main) { [weak self] in
             guard let self else { return }
 
-            // If we still have no text, try OCR off the main actor
+            // If we still have no text, try OCR off the main actor.
             if self.selectedText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                let data = self.pendingImageData,
-               let cg = SA_makeCGImage(from: data) {
-
+               let cg = SA_makeCGImage(from: data)
+            {
                 DispatchQueue.global(qos: .userInitiated).async {
                     let text = (try? SA_recognizeText(from: cg))?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -127,9 +133,10 @@ final class ShareViewController: UIViewController {
         }
     }
 
-    // MARK: - Show SwiftUI UI
+    // MARK: - Host SwiftUI
+
     private func attachUI() {
-        let root = RootView(
+        let root = SAActionPanelView(
             selection: selectedText.trimmingCharacters(in: .whitespacesAndNewlines),
             pageTitle: pageTitle,
             pageURL: pageURL
@@ -154,134 +161,12 @@ final class ShareViewController: UIViewController {
     }
 }
 
-// MARK: - SwiftUI UI (same UX as Action extension)
-
-struct RootView: View {
-    let selection: String
-    let pageTitle: String
-    let pageURL: String
-    let onDone: (String) -> Void
-
-    @State private var isWorking = false
-    @State private var status: String?
-    @State private var ok = false
-
-    var body: some View {
-        NavigationView {
-            VStack(alignment: .leading, spacing: 14) {
-                Group {
-                    Text("Selected Text")
-                        .font(.caption).foregroundStyle(.secondary)
-                    ScrollView {
-                        Text(selection.isEmpty ? "No selection found." : selection)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .textSelection(.enabled)
-                    }
-                    .frame(maxHeight: 140)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(.quaternary))
-                }
-
-                Divider().padding(.vertical, 6)
-
-                VStack(spacing: 10) {
-                    Button {
-                        run {
-                            try await CreateReminderIntent.runStandalone(text: inputText)
-                        }
-                    } label: { rowLabel("Create Reminder", "checkmark.circle") }
-                    .buttonStyle(.borderedProminent)
-
-                    Button {
-                        run {
-                            try await AddToCalendarIntent.runStandalone(text: inputText)
-                        }
-                    } label: { rowLabel("Add Calendar Event", "calendar.badge.plus") }
-                    .buttonStyle(.bordered)
-
-                    Button {
-                        run {
-                            try await ExtractContactIntent.runStandalone(text: inputText)
-                        }
-                    } label: { rowLabel("Extract Contact", "person.crop.circle.badge.plus") }
-                    .buttonStyle(.bordered)
-
-                    Button {
-                        runReceipt()
-                    } label: { rowLabel("Receipt → CSV", "doc.badge.plus") }
-                    .buttonStyle(.bordered)
-                }
-
-                if let status {
-                    Text(status)
-                        .font(.footnote)
-                        .foregroundStyle(ok ? .green : .red)
-                        .padding(.top, 6)
-                }
-
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Screen Actions")
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(ok ? "Done" : "Cancel") {
-                        onDone(status ?? (ok ? "Done" : "Cancelled"))
-                    }
-                }
-            }
-            .overlay {
-                if isWorking { ProgressView().scaleEffect(1.2) }
-            }
-        }
-    }
-
-    private var inputText: String {
-        var t = selection
-        if !pageTitle.isEmpty {
-            t = t.isEmpty ? pageTitle : t
-        }
-        if !pageURL.isEmpty {
-            t += "\n\(pageURL)"
-        }
-        return t
-    }
-
-    private func run(_ op: @escaping () async throws -> String) {
-        isWorking = true; status = nil; ok = false
-        Task {
-            do {
-                let message = try await op()
-                status = message; ok = true
-            } catch {
-                status = error.localizedDescription; ok = false
-            }
-            isWorking = false
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-        }
-    }
-
-    private func runReceipt() {
-        run {
-            let (msg, url) = try await ReceiptToCSVIntent.runStandalone(text: inputText)
-            UIPasteboard.general.url = url
-            return "\(msg) (\(url.lastPathComponent))"
-        }
-    }
-
-    @ViewBuilder
-    private func rowLabel(_ title: String, _ systemImage: String) -> some View {
-        HStack { Image(systemName: systemImage); Text(title); Spacer() }
-            .frame(maxWidth: .infinity)
-    }
-}
-
 // MARK: - OCR helpers (file-private, nonisolated)
 
 fileprivate func SA_makeCGImage(from data: Data) -> CGImage? {
     let cfData = data as CFData
-    guard
-        let src = CGImageSourceCreateWithData(cfData, nil),
-        let img = CGImageSourceCreateImageAtIndex(src, 0, nil)
+    guard let src = CGImageSourceCreateWithData(cfData, nil),
+          let img = CGImageSourceCreateImageAtIndex(src, 0, nil)
     else { return nil }
     return img
 }
@@ -295,4 +180,18 @@ fileprivate func SA_recognizeText(from image: CGImage) throws -> String {
     let strings: [String] = request.results?
         .compactMap { $0.topCandidates(1).first?.string } ?? []
     return strings.joined(separator: "\n")
+}
+
+// MARK: - Onboarding (bridge – mirrors OnboardingProgress keys)
+
+private enum SAOnboardingBridge {
+    private static let expectedKey = "SA.onboarding.expectedPing"
+    private static let lastPingKey = "SA.onboarding.lastPingTime"
+
+    static func pingFromShareExtensionIfExpected() {
+        let d = UserDefaults.standard
+        guard d.bool(forKey: expectedKey) else { return }
+        d.set(Date().timeIntervalSince1970, forKey: lastPingKey)
+        d.set(false, forKey: expectedKey)
+    }
 }

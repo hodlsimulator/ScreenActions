@@ -101,6 +101,7 @@
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
 				Core/RemindersService.swift,
+				Core/SAActionPanelView.swift,
 				Core/TextRecognition.swift,
 				Intents/AddToCalendarIntent.swift,
 				Intents/CreateReminderIntent.swift,
@@ -127,6 +128,7 @@
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
 				Core/RemindersService.swift,
+				Core/SAActionPanelView.swift,
 				Core/TextRecognition.swift,
 				Intents/AddToCalendarIntent.swift,
 				Intents/CreateReminderIntent.swift,
@@ -152,6 +154,7 @@
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
 				Core/RemindersService.swift,
+				Core/SAActionPanelView.swift,
 			);
 			target = E12A855D2E760EBD00E07869 /* ScreenActionsWebExtension */;
 		};
