@@ -35,6 +35,11 @@ final class ShareViewController: UIViewController {
         SAOnboardingBridge.pingFromShareExtensionIfExpected()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updatePreferredContentSize()
+    }
+
     // MARK: - Read inputs from NSExtensionContext
 
     private func loadFromContext() {
@@ -158,6 +163,16 @@ final class ShareViewController: UIViewController {
         ])
         host.didMove(toParent: self)
         self.host = host
+        updatePreferredContentSize()
+    }
+
+    private func updatePreferredContentSize() {
+        guard let host else { return }
+        let w = max(320, view.bounds.width)
+        let target = CGSize(width: w, height: UIView.layoutFittingCompressedSize.height)
+        let size = host.sizeThatFits(in: target)
+        let h = max(320, min(640, size.height + 20)) // clamp to sensible sheet heights
+        preferredContentSize = CGSize(width: w, height: h)
     }
 }
 

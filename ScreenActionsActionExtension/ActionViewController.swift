@@ -10,7 +10,6 @@
 import UIKit
 import SwiftUI
 import UniformTypeIdentifiers
-import AppIntents
 
 @MainActor
 final class ActionViewController: UIViewController {
@@ -25,6 +24,11 @@ final class ActionViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         loadFromContext()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updatePreferredContentSize()
     }
 
     private func loadFromContext() {
@@ -115,5 +119,15 @@ final class ActionViewController: UIViewController {
         ])
         host.didMove(toParent: self)
         self.host = host
+        updatePreferredContentSize()
+    }
+
+    private func updatePreferredContentSize() {
+        guard let host else { return }
+        let w = max(320, view.bounds.width)
+        let target = CGSize(width: w, height: UIView.layoutFittingCompressedSize.height)
+        let size = host.sizeThatFits(in: target)
+        let h = max(320, min(640, size.height + 20))
+        preferredContentSize = CGSize(width: w, height: h)
     }
 }
