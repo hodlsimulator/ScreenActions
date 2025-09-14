@@ -7,8 +7,7 @@
 
 import Foundation
 
-/// Shared onboarding state so the app and the extensions can talk.
-/// IMPORTANT: Never crash if the App Group isn't available yet (first run / provisioning).
+/// Never crash if the App Group isn't available yet (first run / provisioning).
 public enum OnboardingProgress {
     public static let appGroupID = "group.com.conornolan.screenactions"
 
@@ -20,7 +19,6 @@ public enum OnboardingProgress {
         return .standard
     }
 
-    // Keys
     private enum K {
         static let step1DidOpenInAppShare = "SA.step1DidOpenInAppShare"
         static let step2DidOpenMoreAndEdit = "SA.step2DidOpenMoreAndEdit"
@@ -30,28 +28,23 @@ public enum OnboardingProgress {
         static let lastPingTime = "SA.onboarding.lastPingTime"
     }
 
-    // MARK: Step flags
     public static var step1DidOpenInAppShare: Bool {
         get { defaults.bool(forKey: K.step1DidOpenInAppShare) }
         set { defaults.set(newValue, forKey: K.step1DidOpenInAppShare) }
     }
-
     public static var step2DidOpenMoreAndEdit: Bool {
         get { defaults.bool(forKey: K.step2DidOpenMoreAndEdit) }
         set { defaults.set(newValue, forKey: K.step2DidOpenMoreAndEdit) }
     }
-
     public static var step3DidAddToFavourites: Bool {
         get { defaults.bool(forKey: K.step3DidAddToFavourites) }
         set { defaults.set(newValue, forKey: K.step3DidAddToFavourites) }
     }
-
     public static var step5DidMoveToFront: Bool {
         get { defaults.bool(forKey: K.step5DidMoveToFront) }
         set { defaults.set(newValue, forKey: K.step5DidMoveToFront) }
     }
 
-    // MARK: Ping flow
     public static func beginExpectedPingWindow() {
         defaults.set(true, forKey: K.expectedPing)
         defaults.removeObject(forKey: K.lastPingTime)

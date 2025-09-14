@@ -48,9 +48,8 @@ enum AppStorageService {
 
         /// App Group container when available; otherwise a private temp dir.
         func containerURL() -> URL {
-            if let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID
-            ) {
+            if let url = FileManager.default
+                .containerURL(forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID) {
                 return url
             }
             let fallback = FileManager.default.temporaryDirectory
