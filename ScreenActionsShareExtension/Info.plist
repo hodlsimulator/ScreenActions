@@ -45,7 +45,7 @@
                 <key>NSExtensionActivationSupportsImageWithMaxCount</key>
                 <integer>1</integer>
             </dict>
-            <!-- NOTE: No JavaScript preprocessing here (that’s for Action extensions). -->
+            <!-- IMPORTANT: removed NSExtensionJavaScriptPreprocessingFile -->
         </dict>
         <key>NSExtensionPointIdentifier</key>
         <string>com.apple.share-services</string>

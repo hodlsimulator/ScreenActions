@@ -35,11 +35,9 @@ final class ShareViewController: SLComposeServiceViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do not ping onboarding; do not touch App Groups in an extension.
         gatherInputsFromContext()
     }
 
-    // Keep the sheet enabled always; we validate inside actions.
     override func isContentValid() -> Bool { true }
 
     override func didSelectPost() {
@@ -58,7 +56,6 @@ final class ShareViewController: SLComposeServiceViewController {
                     UIPasteboard.general.url = url
                     message = "\(msg) (\(url.lastPathComponent))"
                 }
-
                 let out = NSExtensionItem()
                 out.userInfo = ["ScreenActionsResult": message]
                 extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
@@ -98,7 +95,7 @@ final class ShareViewController: SLComposeServiceViewController {
         return [actionItem, preview].compactMap { $0 }
     }
 
-    // MARK: - Build input
+    // MARK: Input assembly
 
     private var inputText: String {
         var t = selectedText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -112,11 +109,10 @@ final class ShareViewController: SLComposeServiceViewController {
 
     private var inputTextPreview: String {
         let s = inputText
-        if s.count <= 60 { return s.isEmpty ? "(No text)" : s }
-        return String(s.prefix(60)) + "…"
+        return s.count <= 60 ? (s.isEmpty ? "(No text)" : s) : String(s.prefix(60)) + "…"
     }
 
-    // MARK: - Read from NSItemProvider only (no JS)
+    // MARK: Read from NSItemProvider only (no JavaScript preprocessor here)
     private func gatherInputsFromContext() {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else { return }
         let group = DispatchGroup()
@@ -136,7 +132,7 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
-                // URL (never try to read network content here)
+                // URL (never fetch it here)
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
@@ -146,19 +142,17 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
-                // Image (handle Data or UIImage; file URLs only)
+                // Image (Data / UIImage / file URLs only — no network reads)
                 if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] item, _ in
                         defer { group.leave() }
                         guard let self else { return }
-
                         if let data = item as? Data {
                             Task { @MainActor in self.pendingImageData = data }
                         } else if let image = item as? UIImage, let data = image.pngData() {
                             Task { @MainActor in self.pendingImageData = data }
-                        } else if let url = item as? URL, url.isFileURL,
-                                  let data = try? Data(contentsOf: url) {
+                        } else if let url = item as? URL, url.isFileURL, let data = try? Data(contentsOf: url) {
                             Task { @MainActor in self.pendingImageData = data }
                         }
                     }
@@ -180,7 +174,7 @@ final class ShareViewController: SLComposeServiceViewController {
     }
 }
 
-// MARK: - Config sub-views (same UI as before)
+// MARK: - Config sub-views
 
 final class ActionPickerViewController: UITableViewController {
     private var current: ScreenAction
@@ -195,7 +189,6 @@ final class ActionPickerViewController: UITableViewController {
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { ScreenAction.allCases.count }
-
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell(style: .default, reuseIdentifier: nil)
         let a = ScreenAction.allCases[indexPath.row]
@@ -203,7 +196,6 @@ final class ActionPickerViewController: UITableViewController {
         cell.accessoryType = (a == current) ? .checkmark : .none
         return cell
     }
-
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let a = ScreenAction.allCases[indexPath.row]
         current = a
@@ -218,13 +210,8 @@ final class ActionPickerViewController: UITableViewController {
 
 final class PreviewViewController: UIViewController {
     private let text: String
-    init(text: String) {
-        self.text = text
-        super.init(nibName: nil, bundle: nil)
-        self.title = "Preview"
-    }
+    init(text: String) { self.text = text; super.init(nibName: nil, bundle: nil); self.title = "Preview" }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
-
     override func loadView() {
         let tv = UITextView(frame: .zero, textContainer: nil)
         tv.isEditable = false
@@ -238,10 +225,8 @@ final class PreviewViewController: UIViewController {
 
 fileprivate func SA_makeCGImage(from data: Data) -> CGImage? {
     let cfData = data as CFData
-    guard
-        let src = CGImageSourceCreateWithData(cfData, nil),
-        let img = CGImageSourceCreateImageAtIndex(src, 0, nil)
-    else { return nil }
+    guard let src = CGImageSourceCreateWithData(cfData, nil),
+          let img = CGImageSourceCreateImageAtIndex(src, 0, nil) else { return nil }
     return img
 }
 
@@ -251,7 +236,6 @@ fileprivate func SA_recognizeText(from image: CGImage) throws -> String {
     request.usesLanguageCorrection = true
     let handler = VNImageRequestHandler(cgImage: image, orientation: .up, options: [:])
     try handler.perform([request])
-    let strings: [String] = request.results?
-        .compactMap { $0.topCandidates(1).first?.string } ?? []
+    let strings: [String] = request.results?.compactMap { $0.topCandidates(1).first?.string } ?? []
     return strings.joined(separator: "\n")
 }
