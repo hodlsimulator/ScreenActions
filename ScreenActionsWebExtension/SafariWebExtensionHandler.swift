@@ -86,7 +86,12 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             }
             let preferredTitle = selection.components(separatedBy: .newlines).first?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? (title.isEmpty ? "Event" : title)
-            let id = try await CalendarService.addEvent(title: preferredTitle, start: range.start, end: range.end, notes: text)
+            let id = try await CalendarService.shared.addEvent(
+                title: preferredTitle,
+                start: range.start,
+                end: range.end,
+                notes: text
+            )
             return ["ok": true, "message": "Auto → Event created (\(id))."]
         case .reminder:
             return try await handleCreateReminder(text: text, title: title, selection: selection)
@@ -97,7 +102,11 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         let preferredTitle = selection.components(separatedBy: .newlines).first?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? (title.isEmpty ? "Reminder" : title)
         let due = DateParser.firstDateRange(in: text)?.start
-        let id = try await RemindersService.addReminder(title: preferredTitle, due: due, notes: text)
+        let id = try await RemindersService.shared.addReminder(
+            title: preferredTitle,
+            due: due,
+            notes: text
+        )
         return ["ok": true, "message": "Reminder created (\(id))."]
     }
 
@@ -107,7 +116,12 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         }
         let preferredTitle = selection.components(separatedBy: .newlines).first?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? (title.isEmpty ? "Event" : title)
-        let id = try await CalendarService.addEvent(title: preferredTitle, start: range.start, end: range.end, notes: text)
+        let id = try await CalendarService.shared.addEvent(
+            title: preferredTitle,
+            start: range.start,
+            end: range.end,
+            notes: text
+        )
         return ["ok": true, "message": "Event created (\(id))."]
     }
 

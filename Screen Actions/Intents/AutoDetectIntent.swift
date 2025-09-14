@@ -66,7 +66,12 @@ extension AutoDetectIntent {
             if let range = decision.dateRange ?? DateParser.firstDateRange(in: text) {
                 let title = text.components(separatedBy: .newlines).first?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Event"
-                let id = try await CalendarService.addEvent(title: title, start: range.start, end: range.end, notes: text)
+                let id = try await CalendarService.shared.addEvent(
+                    title: title,
+                    start: range.start,
+                    end: range.end,
+                    notes: text
+                )
                 return "Auto → Event created (\(id))."
             } else {
                 fallthrough
@@ -76,7 +81,11 @@ extension AutoDetectIntent {
             let title = text.components(separatedBy: .newlines).first?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Todo"
             let due = DateParser.firstDateRange(in: text)?.start
-            let id = try await RemindersService.addReminder(title: title, due: due, notes: text)
+            let id = try await RemindersService.shared.addReminder(
+                title: title,
+                due: due,
+                notes: text
+            )
             return "Auto → Reminder created (\(id))."
         }
     }

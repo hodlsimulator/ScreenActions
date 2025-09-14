@@ -38,12 +38,20 @@ struct AddToCalendarIntent: AppIntent {
         }
 
         let title = makeTitle(from: sourceText)
-        let id = try await CalendarService.addEvent(title: title, start: range.start, end: range.end, notes: sourceText)
+        let id = try await CalendarService.shared.addEvent(
+            title: title,
+            start: range.start,
+            end: range.end,
+            notes: sourceText
+        )
         return .result(value: "Event created (\(id)).", dialog: "Event created.")
     }
 
     private func makeTitle(from text: String) -> String {
-        let first = text.components(separatedBy: .newlines).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let first = text
+            .components(separatedBy: .newlines)
+            .first?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if first.isEmpty { return "Event" }
         return first.count > 64 ? String(first.prefix(64)) : first
     }
@@ -55,8 +63,16 @@ extension AddToCalendarIntent {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return "Provide text first." }
         guard let range = DateParser.firstDateRange(in: trimmed) else { return "No date found." }
-        let title = trimmed.components(separatedBy: .newlines).first.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? "Event"
-        let id = try await CalendarService.addEvent(title: title, start: range.start, end: range.end, notes: trimmed)
+        let title = trimmed
+            .components(separatedBy: .newlines)
+            .first?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Event"
+        let id = try await CalendarService.shared.addEvent(
+            title: title,
+            start: range.start,
+            end: range.end,
+            notes: trimmed
+        )
         return "Event created (\(id))."
     }
 }

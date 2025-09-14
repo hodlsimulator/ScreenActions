@@ -161,7 +161,7 @@ private func createReminder(text: String) async throws -> String {
         .first?
         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Todo"
     let due = DateParser.firstDateRange(in: trimmed)?.start
-    let id = try await RemindersService.addReminder(title: title, due: due, notes: trimmed)
+    let id = try await RemindersService.shared.addReminder(title: title, due: due, notes: trimmed)
     return "Reminder created (\(id))."
 }
 
@@ -173,7 +173,7 @@ private func addToCalendar(text: String) async throws -> String {
         .components(separatedBy: .newlines)
         .first?
         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Event"
-    let id = try await CalendarService.addEvent(title: title, start: range.start, end: range.end, notes: trimmed)
+    let id = try await CalendarService.shared.addEvent(title: title, start: range.start, end: range.end, notes: trimmed)
     return "Event created (\(id))."
 }
 

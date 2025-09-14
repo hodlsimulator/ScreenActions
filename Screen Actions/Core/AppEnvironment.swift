@@ -9,10 +9,11 @@ import Foundation
 
 @inline(__always)
 func isRunningInExtension() -> Bool {
-    return Bundle.main.bundleURL.pathExtension == "appex"
+    Bundle.main.bundleURL.pathExtension == "appex"
 }
 
-/// Use this in any shared storage code.
+/// Use this in shared storage code so extensions never depend on App Groups.
+@inline(__always)
 func safeGroupDefaults(groupID: String) -> UserDefaults {
     if isRunningInExtension() { return .standard }
     return UserDefaults(suiteName: groupID) ?? .standard

@@ -35,7 +35,7 @@ struct CreateReminderIntent: AppIntent {
 
         let title = makeTitle(from: sourceText)
         let due = DateParser.firstDateRange(in: sourceText)?.start
-        let id = try await RemindersService.addReminder(title: title, due: due, notes: sourceText)
+        let id = try await RemindersService.shared.addReminder(title: title, due: due, notes: sourceText)
         return .result(value: "Reminder created (\(id)).", dialog: "Reminder created.")
     }
 
@@ -53,7 +53,7 @@ extension CreateReminderIntent {
         guard !trimmed.isEmpty else { return "Provide text first." }
         let title = trimmed.components(separatedBy: .newlines).first.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? "Todo"
         let due = DateParser.firstDateRange(in: trimmed)?.start
-        let id = try await RemindersService.addReminder(title: title, due: due, notes: trimmed)
+        let id = try await RemindersService.shared.addReminder(title: title, due: due, notes: trimmed)
         return "Reminder created (\(id))."
     }
 }

@@ -84,6 +84,7 @@ final class ShareViewController: UIViewController {
                         } else if let url = item as? URL, url.isFileURL, let data = try? Data(contentsOf: url) {
                             Task { @MainActor in self.pendingImageData = data }
                         }
+                        // NOTE: Intentionally do NOT fetch network URLs here.
                     }
                 }
             }
