@@ -7,9 +7,8 @@
 
 import Foundation
 
-/// Main app uses the App Group.  Extensions use standard defaults + a private temp dir.
+/// Crash-proof: no App Group anywhere (install-safe while signing is sorted).
 enum AppStorageService {
-    static let appGroupID = "group.com.conornolan.screenactions"
 
     @MainActor static let shared = AppStorageServiceImpl()
 
@@ -20,16 +19,9 @@ enum AppStorageService {
 
     @MainActor
     final class AppStorageServiceImpl {
-        private let isExtension: Bool = Bundle.main.bundleURL.pathExtension == "appex"
-        let defaults: UserDefaults
+        let defaults: UserDefaults = .standard
 
-        init() {
-            if isExtension {
-                self.defaults = .standard
-            } else {
-                self.defaults = UserDefaults(suiteName: appGroupID) ?? .standard
-            }
-        }
+        init() { }
 
         func bootstrap() {
             if defaults.object(forKey: Keys.firstRun) == nil {
@@ -45,21 +37,10 @@ enum AppStorageService {
             return "\(prefix)_\(n)_\(ts).\(ext)"
         }
 
-        /// App: App Group container; Extension: private temp dir (never crashes).
+        /// Always a private temp dir — no group container required.
         func containerURL() -> URL {
-            if isExtension {
-                let dir = FileManager.default.temporaryDirectory
-                    .appendingPathComponent("ScreenActionsFallback", isDirectory: true)
-                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-                return dir
-            }
-            if let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID
-            ) {
-                return url
-            }
             let dir = FileManager.default.temporaryDirectory
-                .appendingPathComponent("ScreenActionsFallback", isDirectory: true)
+                .appendingPathComponent("ScreenActionsTemp", isDirectory: true)
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             return dir
         }
