@@ -19,37 +19,6 @@
 		E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		E12A851D2E75DBAE00E07869 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E183E12D2E75ABC700E8D263 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E12A85102E75DBAD00E07869;
-			remoteInfo = ScreenActionsActionExtension;
-		};
-		E12A85462E76045100E07869 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E183E12D2E75ABC700E8D263 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E12A853D2E76045100E07869;
-			remoteInfo = ScreenActionsShareExtension;
-		};
-		E12A85742E760EBD00E07869 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E183E12D2E75ABC700E8D263 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E12A855D2E760EBD00E07869;
-			remoteInfo = ScreenActionsWebExtension;
-		};
-		E183E1592E75ACFA00E8D263 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E183E12D2E75ABC700E8D263 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E183E1462E75ACF400E8D263;
-			remoteInfo = ScreenActionsControlsExtension;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXCopyFilesBuildPhase section */
 		E183E1602E75ACFA00E8D263 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -390,10 +359,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				E183E15A2E75ACFA00E8D263 /* PBXTargetDependency */,
-				E12A851E2E75DBAE00E07869 /* PBXTargetDependency */,
-				E12A85472E76045100E07869 /* PBXTargetDependency */,
-				E12A85752E760EBD00E07869 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				E183E1372E75ABC700E8D263 /* Screen Actions */,
@@ -552,29 +517,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		E12A851E2E75DBAE00E07869 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E12A85102E75DBAD00E07869 /* ScreenActionsActionExtension */;
-			targetProxy = E12A851D2E75DBAE00E07869 /* PBXContainerItemProxy */;
-		};
-		E12A85472E76045100E07869 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E12A853D2E76045100E07869 /* ScreenActionsShareExtension */;
-			targetProxy = E12A85462E76045100E07869 /* PBXContainerItemProxy */;
-		};
-		E12A85752E760EBD00E07869 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E12A855D2E760EBD00E07869 /* ScreenActionsWebExtension */;
-			targetProxy = E12A85742E760EBD00E07869 /* PBXContainerItemProxy */;
-		};
-		E183E15A2E75ACFA00E8D263 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = E183E1462E75ACF400E8D263 /* ScreenActionsControlsExtension */;
-			targetProxy = E183E1592E75ACFA00E8D263 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		E12A85212E75DBAE00E07869 /* Debug */ = {
