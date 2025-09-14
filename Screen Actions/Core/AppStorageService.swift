@@ -7,12 +7,11 @@
 
 import Foundation
 
-/// Shared app storage via App Group, with SAFE fallbacks in extensions.
+/// Main app uses the App Group.  Extensions use standard defaults + a private temp dir.
 enum AppStorageService {
     static let appGroupID = "group.com.conornolan.screenactions"
 
-    @MainActor
-    static let shared = AppStorageServiceImpl()
+    @MainActor static let shared = AppStorageServiceImpl()
 
     struct Keys {
         static let firstRun = "firstRun"
@@ -21,14 +20,14 @@ enum AppStorageService {
 
     @MainActor
     final class AppStorageServiceImpl {
+        private let isExtension: Bool = Bundle.main.bundleURL.pathExtension == "appex"
         let defaults: UserDefaults
 
         init() {
-            if let d = UserDefaults(suiteName: appGroupID) {
-                self.defaults = d
-            } else {
-                // Fallback so extensions never crash if the group isn't ready yet
+            if isExtension {
                 self.defaults = .standard
+            } else {
+                self.defaults = UserDefaults(suiteName: appGroupID) ?? .standard
             }
         }
 
@@ -46,16 +45,23 @@ enum AppStorageService {
             return "\(prefix)_\(n)_\(ts).\(ext)"
         }
 
-        /// App Group container when available; otherwise a private temp dir.
+        /// App: App Group container; Extension: private temp dir (never crashes).
         func containerURL() -> URL {
-            if let url = FileManager.default
-                .containerURL(forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID) {
+            if isExtension {
+                let dir = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("ScreenActionsFallback", isDirectory: true)
+                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                return dir
+            }
+            if let url = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: AppStorageService.appGroupID
+            ) {
                 return url
             }
-            let fallback = FileManager.default.temporaryDirectory
+            let dir = FileManager.default.temporaryDirectory
                 .appendingPathComponent("ScreenActionsFallback", isDirectory: true)
-            try? FileManager.default.createDirectory(at: fallback, withIntermediateDirectories: true)
-            return fallback
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            return dir
         }
     }
 }

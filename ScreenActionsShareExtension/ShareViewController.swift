@@ -16,7 +16,7 @@ import AppIntents
 
 enum ScreenAction: String, CaseIterable {
     case createReminder = "Create Reminder"
-    case addEvent      = "Add Calendar Event"
+    case addEvent       = "Add Calendar Event"
     case extractContact = "Extract Contact"
     case receiptCSV     = "Receipt → CSV"
 }
@@ -35,13 +35,15 @@ final class ShareViewController: SLComposeServiceViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        // Do not ping onboarding; do not touch App Groups in an extension.
         gatherInputsFromContext()
     }
 
+    // Keep the sheet enabled always; we validate inside actions.
     override func isContentValid() -> Bool { true }
 
     override func didSelectPost() {
-        Task {
+        Task { [inputText] in
             do {
                 let message: String
                 switch chosenAction {
@@ -59,11 +61,11 @@ final class ShareViewController: SLComposeServiceViewController {
 
                 let out = NSExtensionItem()
                 out.userInfo = ["ScreenActionsResult": message]
-                self.extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
+                extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
             } catch {
                 let out = NSExtensionItem()
                 out.userInfo = ["ScreenActionsError": error.localizedDescription]
-                self.extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
+                extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
             }
         }
     }
@@ -96,7 +98,7 @@ final class ShareViewController: SLComposeServiceViewController {
         return [actionItem, preview].compactMap { $0 }
     }
 
-    // MARK: - Input assembly
+    // MARK: - Build input
 
     private var inputText: String {
         var t = selectedText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -114,36 +116,15 @@ final class ShareViewController: SLComposeServiceViewController {
         return String(s.prefix(60)) + "…"
     }
 
+    // MARK: - Read from NSItemProvider only (no JS)
     private func gatherInputsFromContext() {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else { return }
         let group = DispatchGroup()
 
         for item in items {
             for provider in item.attachments ?? [] {
-                // Preprocessed JS results (selection/title/url)
-                if provider.hasItemConformingToTypeIdentifier(UTType.propertyList.identifier) {
-                    group.enter()
-                    provider.loadItem(forTypeIdentifier: UTType.propertyList.identifier, options: nil) { [weak self] item, _ in
-                        defer { group.leave() }
-                        guard
-                            let self,
-                            let dict = item as? NSDictionary,
-                            let results = dict[NSExtensionJavaScriptPreprocessingResultsKey] as? [String: Any]
-                        else { return }
 
-                        let newSelection = (results["selection"] as? String) ?? ""
-                        let newTitle = (results["title"] as? String) ?? ""
-                        let newURL = (results["url"] as? String) ?? ""
-
-                        Task { @MainActor in
-                            if !newSelection.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { self.selectedText = newSelection }
-                            if !newTitle.isEmpty { self.pageTitle = newTitle }
-                            if !newURL.isEmpty { self.pageURL = newURL }
-                        }
-                    }
-                }
-
-                // Plain text
+                // Text
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, _ in
@@ -155,7 +136,7 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
-                // URL
+                // URL (never try to read network content here)
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
@@ -165,15 +146,19 @@ final class ShareViewController: SLComposeServiceViewController {
                     }
                 }
 
-                // Image (for OCR)
+                // Image (handle Data or UIImage; file URLs only)
                 if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] item, _ in
                         defer { group.leave() }
                         guard let self else { return }
+
                         if let data = item as? Data {
                             Task { @MainActor in self.pendingImageData = data }
-                        } else if let url = item as? URL, let data = try? Data(contentsOf: url) {
+                        } else if let image = item as? UIImage, let data = image.pngData() {
+                            Task { @MainActor in self.pendingImageData = data }
+                        } else if let url = item as? URL, url.isFileURL,
+                                  let data = try? Data(contentsOf: url) {
                             Task { @MainActor in self.pendingImageData = data }
                         }
                     }
@@ -195,7 +180,7 @@ final class ShareViewController: SLComposeServiceViewController {
     }
 }
 
-// MARK: - Config sub-views
+// MARK: - Config sub-views (same UI as before)
 
 final class ActionPickerViewController: UITableViewController {
     private var current: ScreenAction
@@ -207,7 +192,6 @@ final class ActionPickerViewController: UITableViewController {
         super.init(style: .insetGrouped)
         self.title = "Choose Action"
     }
-
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { ScreenAction.allCases.count }
@@ -250,7 +234,7 @@ final class PreviewViewController: UIViewController {
     }
 }
 
-// MARK: - OCR helpers (nonisolated)
+// MARK: - OCR helpers
 
 fileprivate func SA_makeCGImage(from data: Data) -> CGImage? {
     let cfData = data as CFData

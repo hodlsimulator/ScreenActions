@@ -7,16 +7,19 @@
 
 import Foundation
 
-/// Never crash if the App Group isn't available yet (first run / provisioning).
+/// Never crash if the App Group isn't available yet.
+/// In extensions we avoid App Group entirely to prevent share-sheet deaths.
 public enum OnboardingProgress {
     public static let appGroupID = "group.com.conornolan.screenactions"
 
-    /// Use App Group when available; otherwise fall back safely so the share sheet never dies.
+    private static var isExtension: Bool {
+        Bundle.main.bundleURL.pathExtension == "appex"
+    }
+
+    /// Use App Group only in the main app; use standard defaults in extensions.
     private static var defaults: UserDefaults {
-        if let d = UserDefaults(suiteName: appGroupID) {
-            return d
-        }
-        return .standard
+        if isExtension { return .standard }
+        return UserDefaults(suiteName: appGroupID) ?? .standard
     }
 
     private enum K {

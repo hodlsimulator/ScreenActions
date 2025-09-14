@@ -119,6 +119,7 @@
 		E12A854C2E76045100E07869 /* Exceptions for "ScreenActionsShareExtension" folder in "ScreenActionsShareExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				"/Localized: MainInterface.storyboard",
 				Info.plist,
 			);
 			target = E12A853D2E76045100E07869 /* ScreenActionsShareExtension */;

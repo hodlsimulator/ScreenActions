@@ -45,9 +45,7 @@
                 <key>NSExtensionActivationSupportsImageWithMaxCount</key>
                 <integer>1</integer>
             </dict>
-            <!-- Must match the actual file name in the target -->
-            <key>NSExtensionJavaScriptPreprocessingFile</key>
-            <string>SAGetSelection</string>
+            <!-- NOTE: No JavaScript preprocessing here (that’s for Action extensions). -->
         </dict>
         <key>NSExtensionPointIdentifier</key>
         <string>com.apple.share-services</string>
