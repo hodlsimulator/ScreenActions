@@ -1,6 +1,6 @@
 # Screen Actions
 
-On-device App Intents that act on whatever’s on screen: quickly add calendar events and reminders, pull out contact details, and turn receipt text into a CSV you can share. iPhone only.
+On-device App Intents that act on what’s on screen: quickly add calendar events and reminders, pull out contact details, and turn receipt text into a CSV you can share. iPhone only.
 
 - **Bundle ID:** `com.conornolan.Screen-Actions`
 - **App Group:** `group.com.conornolan.screenactions`
@@ -10,13 +10,10 @@ On-device App Intents that act on whatever’s on screen: quickly add calendar e
 - **Minimum OS:** iOS **26**.
 - **Devices:** Apple Intelligence-compatible iPhones only:
   - **iPhone 15 Pro** and **iPhone 15 Pro Max**
-  - **All iPhone 16 models and later** (this includes the iPhone 17 family)
-- **Apple Intelligence:** Make sure Apple Intelligence is enabled (Settings → **Apple Intelligence & Siri**). Your **device language** and **Siri language** must be set to a supported language. Apple notes that downloading on-device models may require ~**7 GB** free space.
-- **Capabilities:** Calendars, Reminders, Contacts, and the App Group **`group.com.conornolan.screenactions`** must be enabled.
-- **Notes for EU users:** Some Apple Intelligence features vary by region and language. See Apple’s support page for the latest details.
-
-> For Apple’s current device/OS requirements for Apple Intelligence, see:  
-> https://support.apple.com/121115
+  - **All iPhone 16 models and later** (including the iPhone 17 family)
+- **Apple Intelligence:** Enable in **Settings → Apple Intelligence & Siri**. Device language and Siri language must be set to a supported language. Apple notes on-device models may need ~**7 GB** free space.
+- **Capabilities:** Calendars, Reminders, Contacts, and App Group **`group.com.conornolan.screenactions`** must be enabled.
+- **Region notes:** Some Apple Intelligence features vary by region/language.
 
 ## What you can do
 
@@ -42,7 +39,7 @@ All actions run on-device using Apple frameworks (e.g. **Vision** for OCR and `N
    - App target bundle ID: **com.conornolan.Screen-Actions**
    - App Group: **group.com.conornolan.screenactions**
 3. Select an Apple Intelligence-compatible iPhone on **iOS 26** and **Run**.
-4. (If needed) Enable Apple Intelligence in **Settings → Apple Intelligence & Siri** so on-device features are available.
+4. (If needed) Turn on **Apple Intelligence** in **Settings → Apple Intelligence & Siri**.
 
 ## Permissions used (Info.plist)
 
@@ -67,7 +64,7 @@ Designed to process data locally on your device. Exports are written to the App 
 
 - If extensions don’t appear, clean build, reinstall to device, then enable the relevant extension in Settings/Safari.
 - If CSV isn’t visible, check the App Group path above and that the App Group entitlement matches exactly.
-- If Apple Intelligence options aren’t visible, confirm your device is supported and languages are set as per Apple’s guidance.
+- If Apple Intelligence options aren’t visible, confirm your device is supported, language settings match, and there’s sufficient free space.
 
 ---
 © 2025. All rights reserved.
