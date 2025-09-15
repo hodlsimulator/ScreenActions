@@ -66,9 +66,8 @@ Exports are written to:
 - ✅ Date parsing: `DateParser.firstDateRange` (`NSDataDetector`). — GitHub
 - ✅ Contact parsing: `ContactParser.detect`. — GitHub
 - ✅ OCR utilities for images (Vision). — GitHub
-- ✅ CSV export (v1) + App Group/Temp routing. — GitHub +1
-- ✅ Services: create EK events/reminders; save contacts. — GitHub +2
-- GitHub +2
+- ✅ CSV export (v1) + App Group/Temp routing. — GitHub
+- ✅ Services: create EK events/reminders; save contacts. — GitHub
 
 **Auto-Detect (router + intent)**
 - ✅ Heuristic router picks receipt/contact/event/reminder and returns optional date range. — GitHub
@@ -89,7 +88,7 @@ Exports are written to:
 **Safari Web Extension**
 - ✅ Popup shows 5 buttons (Auto Detect + four manual). — GitHub
 - ✅ Native handler supports `autoDetect`, `createReminder`, `addEvent`, `extractContact`, `receiptCSV`. — GitHub
-- ⚠️ No context-menu actions yet; background is minimal; manifest has no `contextMenus` permission. — GitHub +1
+- ⚠️ No context-menu actions yet; background is minimal; manifest has no `contextMenus` permission. — GitHub
 
 **Shortcuts**
 - ✅ Tiles for all five, including Auto Detect (phrases + colour). — GitHub
@@ -101,9 +100,7 @@ Exports are written to:
 - ✅ Calendars/Reminders/Contacts usage strings present. — GitHub
 
 **Delta since last plan**
-- ✅ Auto Detect is now wired everywhere: App toolbar, Share Extension, Action Extension, Safari popup/handler, and Shortcuts tile. — GitHub +6  
-  GitHub +6  
-  GitHub +6
+- ✅ Auto Detect is now wired everywhere: App toolbar, Share Extension, Action Extension, Safari popup/handler, and Shortcuts tile. — GitHub
 - ✅ Inline editors exist and are integrated in both extensions via the shared panel (Event/Reminder/Contact editors + CSV preview). App still uses direct-run. — GitHub
 
 ---
@@ -111,13 +108,10 @@ Exports are written to:
 ### What’s left (A–N)
 
 **A) Auto Detect parity across surfaces**  
-- ✅ Done (see Delta). Acceptance passes: all surfaces call the same router. — GitHub +2  
-  GitHub +2
+- ✅ Done (see Delta). Acceptance passes: all surfaces call the same router. — GitHub
 
 **B) Inline editors & previews**  
-- ✅ Extensions: implemented (sheets for Event/Reminder/Contact; CSV preview with “Open in…”). — GitHub +4  
-  GitHub +4  
-  GitHub +4  
+- ✅ Extensions: implemented (sheets for Event/Reminder/Contact; CSV preview with “Open in…”). — GitHub  
 - ⏳ App: add the same “edit-first” path (either reuse the panel or present the editor sheets from `ContentView`).  
   **Acceptance:** “Edit first” in app + both extensions; Cancel cleanly returns (already handled in panel).
 
@@ -128,7 +122,7 @@ Exports are written to:
 - ⛳ Regex airline+flight; IATA origin/destination; tz inference as in (C); title “BA284 LHR → SFO”; terminals/gate in notes. (New parser.)
 
 **E) Bills & subscriptions (recurring reminders)**  
-- ⛳ Currency + recurrence keywords → `EKRecurrenceRule`; map “monthly/annual/… due <date>”.
+- ⛳ Currency + recurrence keywords → `EKRecurrenceRule`; map “monthly/annual/… due <date>`.
 
 **F) Parcel tracking helper**  
 - ⛳ Tracking pattern library (UPS/FedEx/DHL/Royal Mail/An Post); carrier deep links; optional delivery-day reminder.
@@ -149,23 +143,21 @@ Exports are written to:
 - ⛳ Persist last 20 actions in App Group; undo via EventKit/CNContact delete; deep link to created item.
 
 **L) Safari extension upgrades**  
-- ⏳ Add `contextMenus` items for right-click text; optional page screenshot when no selection; manifest permission + service-worker handlers. (Native handler already supports `autoDetect`.) — GitHub +1
+- ⏳ Add `contextMenus` items for right-click text; optional page screenshot when no selection; manifest permission + service-worker handlers. (Native handler already supports `autoDetect`.) — GitHub
 
 **M) Internationalisation & locale smarts**  
-- ⏳ Ensure parsing respects `Locale.current` for dates/currency/addresses; add tests for en-IE/en-GB/en-US. (Router/Detectors already lean on `NSDataDetector`; formalise tests.) — GitHub +1
+- ⏳ Ensure parsing respects `Locale.current` for dates/currency/addresses; add tests for en-IE/en-GB/en-US. (Router/Detectors already lean on `NSDataDetector`; formalise tests.) — GitHub
 
 **N) Reliability & UX polish**  
 - ⏳ Unify service calls; consistent error dialogs/toasts; OSLog categories exist (UI/Core/Extension).  
-- ⏳ App Intents: audit `ReturnsValue` generic usage to silence any generic-type warnings. — GitHub +4  
-  GitHub +4  
-  GitHub +4
+- ⏳ App Intents: audit `ReturnsValue` generic usage to silence any generic-type warnings. — GitHub
 
 ---
 
 ### Suggested sequencing
 
 **Next patch**
-- Finish **B** (App inline editors): reuse `SAActionPanelView` in-app or present the editor sheets from `ContentView`. — GitHub +1  
+- Finish **B** (App inline editors): reuse `SAActionPanelView` in-app or present the editor sheets from `ContentView`. — GitHub  
 - Start **L** (Safari context menus): add `contextMenus` permission + handlers; wire to existing native actions. — GitHub
 
 **Then**
