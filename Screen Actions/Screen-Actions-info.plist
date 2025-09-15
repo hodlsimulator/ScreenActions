@@ -40,7 +40,7 @@
   <key>LSRequiresIPhoneOS</key>
   <true/>
 
-  <!-- Launch screen (Xcode will use LaunchScreen storyboard or default if empty dict) -->
+  <!-- Launch screen -->
   <key>UILaunchScreen</key>
   <dict/>
 
@@ -57,13 +57,17 @@
     <string>UIInterfaceOrientationLandscapeRight</string>
   </array>
 
-  <!-- Privacy / capabilities already in your project -->
+  <!-- Privacy / capabilities -->
   <key>NSCalendarsFullAccessUsageDescription</key>
   <string>This lets Screen Actions add events to your calendars.</string>
   <key>NSRemindersFullAccessUsageDescription</key>
   <string>This lets Screen Actions create reminders for you.</string>
   <key>NSContactsUsageDescription</key>
   <string>This lets Screen Actions save contacts from text.</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>To add Arrive/Leave alerts for event locations.</string>
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>To notify you when you arrive at or leave event locations, even if the app is closed.</string>
   <key>NSSupportsLiveActivities</key>
   <true/>
 </dict>
