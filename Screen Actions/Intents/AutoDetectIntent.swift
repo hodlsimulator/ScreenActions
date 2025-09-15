@@ -57,10 +57,10 @@ extension AutoDetectIntent {
 
         case .contact:
             let detected = ContactParser.detect(in: text)
-            let has = (detected.givenName?.isEmpty == false)
-                || !detected.emails.isEmpty
-                || !detected.phones.isEmpty
-                || (detected.postalAddress != nil)
+            let has = (detected.givenName?.isEmpty == false) ||
+                      !detected.emails.isEmpty ||
+                      !detected.phones.isEmpty ||
+                      (detected.postalAddress != nil)
             guard has else { return "Auto → Contact: No contact details found." }
             let id = try await ContactsService.save(contact: detected)
             return "Auto → Contact saved (\(id))."

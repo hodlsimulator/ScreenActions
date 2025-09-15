@@ -12,7 +12,7 @@
 - **Capabilities:** Calendars, Reminders, Contacts, and App Group **`group.com.conornolan.screenactions`** must be enabled.
 
 ## What you can do
-- **Add to Calendar** — Detects dates/times in text and creates an event.
+- **Add to Calendar** — Detects dates/times in text and creates an event *(optional location & alert)*.
 - **Create Reminder** — Finds tasks/deadlines and makes a reminder.
 - **Extract Contact** — Pulls names, emails, phones, and addresses into Contacts.
 - **Receipt → CSV** — Parses receipt-like text to a shareable CSV.
@@ -44,7 +44,8 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
 ## How it works (high level)
 - **Text capture:** via share/action/web extensions (`SAGetSelection.js` / `GetSelection.js`) and `ActionViewController.swift`.
 - **OCR (optional):** Vision recognises text from images (`TextRecognition.swift`).
-- **Parsing:** `NSDataDetector` pulls dates, phones, and addresses (`DataDetectors.swift`).
+- **Parsing:** `NSDataDetector` pulls dates, phones, and addresses (`DataDetectors.swift`).  
+- **Location hint (events):** simple heuristics extract places from text (postal address detection plus “at/@/in …” phrases).  
 - **CSV export:** `CSVExporter.writeCSVToAppGroup(...)` writes into the App Group’s `Exports/` folder.
 
 ## Storage
@@ -68,6 +69,7 @@ Exports are written to:
 - ✅ OCR utilities for images (Vision). — GitHub
 - ✅ CSV export (v1) + App Group/Temp routing. — GitHub
 - ✅ Services: create EK events/reminders; save contacts. — GitHub
+- ✅ **Events:** basic location (string) & alert minutes supported via `CalendarService.addEvent(...)`. — GitHub
 
 **Auto-Detect (router + intent)**
 - ✅ Heuristic router picks receipt/contact/event/reminder and returns optional date range. — GitHub
@@ -102,6 +104,8 @@ Exports are written to:
 **Delta since last plan**
 - ✅ Auto Detect is now wired everywhere: App toolbar, Share Extension, Action Extension, Safari popup/handler, and Shortcuts tile. — GitHub
 - ✅ Inline editors exist and are integrated in both extensions via the shared panel (Event/Reminder/Contact editors + CSV preview). App still uses direct-run. — GitHub
+- ✅ **Add to Calendar now supports optional `Location` and `Alert Minutes Before` parameters; events write to `event.location`.** — GitHub
+- ✅ **iOS 26 clean-up:** removed deprecated `CLGeocoder` / legacy placemark APIs from core; time-zone inference deferred to a MapKit-only path. — GitHub
 
 ---
 
@@ -115,8 +119,8 @@ Exports are written to:
 - ⏳ App: add the same “edit-first” path (either reuse the panel or present the editor sheets from `ContentView`).  
   **Acceptance:** “Edit first” in app + both extensions; Cancel cleanly returns (already handled in panel).
 
-**C) Rich Event Builder (tz, location, travel time)**  
-- ⛳ Implement `MKLocalSearch` → coords → inferred TZ; optional Maps ETA alarm; extend AddToCalendar intent params; write to `EKEvent` fields. (CalendarService currently basic.) — GitHub
+**C) Rich Event Builder (tz, travel time)**  
+- ⏳ Next: `MKReverseGeocodingRequest` for time-zone inference; optional travel-time alarm; write structured location. (Location string & alerts are already in place.) — GitHub
 
 **D) Flights & itineraries**  
 - ⛳ Regex airline+flight; IATA origin/destination; tz inference as in (C); title “BA284 LHR → SFO”; terminals/gate in notes. (New parser.)
@@ -150,7 +154,7 @@ Exports are written to:
 
 **N) Reliability & UX polish**  
 - ⏳ Unify service calls; consistent error dialogs/toasts; OSLog categories exist (UI/Core/Extension).  
-- ⏳ App Intents: audit `ReturnsValue` generic usage to silence any generic-type warnings. — GitHub
+- ⏳ App Intents: audit `ReturnsValue<String>` usage to keep the generic surface tidy. — GitHub
 
 ---
 
@@ -161,7 +165,7 @@ Exports are written to:
 - Start **L** (Safari context menus): add `contextMenus` permission + handlers; wire to existing native actions. — GitHub
 
 **Then**
-- **C + D** (event enrichments + flights) → **G + H** (receipts v2 + PDF OCR) → **K + L** (history + Safari upgrades) → **M + N** (locale + reliability).
+- **C** (tz + travel time) → **D** (flights) → **G + H** (receipts v2 + PDF OCR) → **K + L** (history + Safari upgrades) → **M + N** (locale + reliability).
 
 ---
 

@@ -21,7 +21,7 @@ struct CreateReminderIntent: AppIntent {
     var image: IntentFile?
 
     @MainActor
-    func perform() async throws -> some IntentResult & ReturnsValue<String> {
+    func perform() async throws -> some IntentResult & ProvidesDialog & ReturnsValue<String> {
         let sourceText: String
         if let t = text, !t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             sourceText = t
@@ -51,9 +51,11 @@ extension CreateReminderIntent {
     static func runStandalone(text: String) async throws -> String {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return "Provide text first." }
+
         let title = trimmed.components(separatedBy: .newlines).first
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? "Todo"
         let due = DateParser.firstDateRange(in: trimmed)?.start
+
         let id = try await RemindersService.shared.addReminder(title: title, due: due, notes: trimmed)
         return "Reminder created (\(id))."
     }
