@@ -81,6 +81,7 @@
 		E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderEditorView.swift; sourceTree = "<group>"; };
 		E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptCSVPreviewView.swift; sourceTree = "<group>"; };
 		E115D2722E7775D800C8F5EE /* ContactEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactEditorView.swift; sourceTree = "<group>"; };
+		E115D92E2E77917400C8F5EE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E12A85122E75DBAD00E07869 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UniformTypeIdentifiers.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -293,6 +294,7 @@
 		E183E12C2E75ABC700E8D263 = {
 			isa = PBXGroup;
 			children = (
+				E115D92E2E77917400C8F5EE /* README.md */,
 				E115D2682E776F5A00C8F5EE /* Editors */,
 				E183E1622E75B2A100E8D263 /* ScreenActionsControlsExtension.entitlements */,
 				E183E1372E75ABC700E8D263 /* Screen Actions */,
