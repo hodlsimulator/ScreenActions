@@ -9,15 +9,15 @@
 - **Minimum OS:** iOS **26**.
 - **Devices:** iPhones with **Apple Intelligence** support (e.g. iPhone 15 Pro/Pro Max, the iPhone 16 family, the iPhone 17 family, and newer).
 - **Apple Intelligence:** Turn on in **Settings → Apple Intelligence & Siri**; availability varies by language/region.
-- **Capabilities:** Calendars, Reminders, Contacts, and App Group **`group.com.conornolan.screenactions`** must be enabled.
+- **Capabilities:** Calendars, Reminders, Contacts, **Location (When In Use)**, and App Group **`group.com.conornolan.screenactions`** must be enabled.
 
 ## What you can do
-- **Add to Calendar** — Detects dates/times in text and creates an event *(optional location & alert)*.
+- **Add to Calendar** — Detects dates/times in text and creates an event *(optional location, alert, travel-time alarm, and geofenced arrive/leave notifications)*.
 - **Create Reminder** — Finds tasks/deadlines and makes a reminder.
 - **Extract Contact** — Pulls names, emails, phones, and addresses into Contacts.
 - **Receipt → CSV** — Parses receipt-like text to a shareable CSV.
 
-All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventKit, Contacts).
+All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventKit, Contacts, MapKit).
 
 ## Targets in this project
 - **Screen Actions (App)** — main SwiftUI app.
@@ -39,13 +39,16 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
 - `NSCalendarsFullAccessUsageDescription` — lets the app add events.
 - `NSRemindersFullAccessUsageDescription` — lets the app create reminders.
 - `NSContactsUsageDescription` — lets the app save contacts.
+- `NSLocationWhenInUseUsageDescription` — used for travel-time and geofenced arrive/leave notifications.
+- `NSLocationAlwaysAndWhenInUseUsageDescription` — allows geofence notifications even if the app is closed.
 - `NSSupportsLiveActivities` — enables live activities (where supported).
 
 ## How it works (high level)
 - **Text capture:** via share/action/web extensions (`SAGetSelection.js` / `GetSelection.js`) and `ActionViewController.swift`.
 - **OCR (optional):** Vision recognises text from images (`TextRecognition.swift`).
 - **Parsing:** `NSDataDetector` pulls dates, phones, and addresses (`DataDetectors.swift`).  
-- **Location hint (events):** simple heuristics extract places from text (postal address detection plus “at/@/in …” phrases).  
+- **Location hint (events):** heuristics extract places from text (postal address detection plus “at/@/in …” phrases).  
+- **Calendar:** `CalendarService` writes `event.location`, structured location (`EKStructuredLocation`), optional **travel-time alarm**, and can register **geofenced arrive/leave** alerts via `GeofencingManager`.
 - **CSV export:** `CSVExporter.writeCSVToAppGroup(...)` writes into the App Group’s `Exports/` folder.
 
 ## Storage
@@ -69,7 +72,8 @@ Exports are written to:
 - ✅ OCR utilities for images (Vision). — GitHub
 - ✅ CSV export (v1) + App Group/Temp routing. — GitHub
 - ✅ Services: create EK events/reminders; save contacts. — GitHub
-- ✅ **Events:** basic location (string) & alert minutes supported via `CalendarService.addEvent(...)`. — GitHub
+- ✅ **Events:** location string + **structured location (`EKStructuredLocation`)**, **travel-time alarm**, and **optional geofencing (enter/exit)** via `GeofencingManager`. — GitHub
+- ✅ **iOS 26 clean-up:** removed deprecated placemark APIs; MapKit 26 (`MKMapItem.location`, `timeZone`). — GitHub
 
 **Auto-Detect (router + intent)**
 - ✅ Heuristic router picks receipt/contact/event/reminder and returns optional date range. — GitHub
@@ -99,13 +103,13 @@ Exports are written to:
 - ✅ Share-sheet pinning flow wired (checklist + “ping” bridge). — GitHub
 
 **Permissions / Info.plist**
-- ✅ Calendars/Reminders/Contacts usage strings present. — GitHub
+- ✅ Calendars/Reminders/Contacts/Location usage strings present. — GitHub
 
 **Delta since last plan**
 - ✅ Auto Detect is now wired everywhere: App toolbar, Share Extension, Action Extension, Safari popup/handler, and Shortcuts tile. — GitHub
 - ✅ Inline editors exist and are integrated in both extensions via the shared panel (Event/Reminder/Contact editors + CSV preview). App still uses direct-run. — GitHub
-- ✅ **Add to Calendar now supports optional `Location` and `Alert Minutes Before` parameters; events write to `event.location`.** — GitHub
-- ✅ **iOS 26 clean-up:** removed deprecated `CLGeocoder` / legacy placemark APIs from core; time-zone inference deferred to a MapKit-only path. — GitHub
+- ✅ **Add to Calendar:** now supports optional **Location**, **Alert Minutes Before**, **structured location**, **travel-time alarm**, and **geofenced arrive/leave**. — GitHub
+- ✅ **iOS 26 clean-up:** switched to MapKit 26 (`MKMapItem.location`, `MKMapItem.timeZone`), removed deprecated placemark APIs. — GitHub
 
 ---
 
@@ -120,7 +124,8 @@ Exports are written to:
   **Acceptance:** “Edit first” in app + both extensions; Cancel cleanly returns (already handled in panel).
 
 **C) Rich Event Builder (tz, travel time)**  
-- ⏳ Next: `MKReverseGeocodingRequest` for time-zone inference; optional travel-time alarm; write structured location. (Location string & alerts are already in place.) — GitHub
+- ✅ Use `MKMapItem.timeZone` when available; **structured location + travel-time alarm + optional geofencing** are in.  
+- ⏳ Fallback **`MKReverseGeocodingRequest`** when MapKit lacks a time zone; UI toggles for travel-time/geofencing.
 
 **D) Flights & itineraries**  
 - ⛳ Regex airline+flight; IATA origin/destination; tz inference as in (C); title “BA284 LHR → SFO”; terminals/gate in notes. (New parser.)
@@ -158,14 +163,14 @@ Exports are written to:
 
 ---
 
-### Suggested sequencing
+## Suggested sequencing
 
 **Next patch**
 - Finish **B** (App inline editors): reuse `SAActionPanelView` in-app or present the editor sheets from `ContentView`. — GitHub  
 - Start **L** (Safari context menus): add `contextMenus` permission + handlers; wire to existing native actions. — GitHub
 
 **Then**
-- **C** (tz + travel time) → **D** (flights) → **G + H** (receipts v2 + PDF OCR) → **K + L** (history + Safari upgrades) → **M + N** (locale + reliability).
+- **C** (tz fallback + toggles) → **D** (flights) → **G + H** (receipts v2 + PDF OCR) → **K + L** (history + Safari upgrades) → **M + N** (locale + reliability).
 
 ---
 

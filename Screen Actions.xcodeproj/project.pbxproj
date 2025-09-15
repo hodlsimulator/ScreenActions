@@ -119,6 +119,7 @@
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
 				Core/DesignSystem.swift,
+				Core/GeofencingManager.swift,
 				Core/Logger.swift,
 				Core/RemindersService.swift,
 				Core/SAActionPanelView.swift,
@@ -150,6 +151,7 @@
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
 				Core/DesignSystem.swift,
+				Core/GeofencingManager.swift,
 				Core/Logger.swift,
 				Core/RemindersService.swift,
 				Core/SAActionPanelView.swift,
@@ -179,6 +181,7 @@
 				Core/ContactsService.swift,
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
+				Core/GeofencingManager.swift,
 				Core/RemindersService.swift,
 			);
 			target = E12A855D2E760EBD00E07869 /* ScreenActionsWebExtension */;
