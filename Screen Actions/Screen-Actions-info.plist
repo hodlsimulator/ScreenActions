@@ -2,73 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <!-- Bundle basics -->
-  <key>CFBundleDevelopmentRegion</key>
-  <string>$(DEVELOPMENT_LANGUAGE)</string>
-  <key>CFBundleDisplayName</key>
-  <string>Screen Actions</string>
-  <key>CFBundleExecutable</key>
-  <string>$(EXECUTABLE_NAME)</string>
-  <key>CFBundleIdentifier</key>
-  <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-  <key>CFBundleInfoDictionaryVersion</key>
-  <string>6.0</string>
-  <key>CFBundleName</key>
-  <string>$(PRODUCT_NAME)</string>
-  <key>CFBundlePackageType</key>
-  <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
-
-  <!-- Versioning -->
-  <key>CFBundleShortVersionString</key>
-  <string>$(MARKETING_VERSION)</string>
-  <key>CFBundleVersion</key>
-  <string>$(CURRENT_PROJECT_VERSION)</string>
-
-  <!-- App icon (must be present for iOS 11+ validation) -->
-  <key>CFBundleIconName</key>
-  <string>AppIcon</string>
-  <key>CFBundleIcons</key>
-  <dict>
-    <key>CFBundlePrimaryIcon</key>
-    <dict>
-      <key>CFBundleIconName</key>
-      <string>AppIcon</string>
-    </dict>
-  </dict>
-
-  <!-- iOS app flags -->
-  <key>LSRequiresIPhoneOS</key>
-  <true/>
-
-  <!-- Launch screen -->
-  <key>UILaunchScreen</key>
-  <dict/>
-
-  <!-- Orientations -->
-  <key>UISupportedInterfaceOrientations</key>
-  <array>
-    <string>UIInterfaceOrientationPortrait</string>
-  </array>
-  <key>UISupportedInterfaceOrientations~ipad</key>
-  <array>
-    <string>UIInterfaceOrientationPortrait</string>
-    <string>UIInterfaceOrientationPortraitUpsideDown</string>
-    <string>UIInterfaceOrientationLandscapeLeft</string>
-    <string>UIInterfaceOrientationLandscapeRight</string>
-  </array>
-
-  <!-- Privacy / capabilities -->
-  <key>NSCalendarsFullAccessUsageDescription</key>
-  <string>This lets Screen Actions add events to your calendars.</string>
-  <key>NSRemindersFullAccessUsageDescription</key>
-  <string>This lets Screen Actions create reminders for you.</string>
-  <key>NSContactsUsageDescription</key>
-  <string>This lets Screen Actions save contacts from text.</string>
-  <key>NSLocationWhenInUseUsageDescription</key>
-  <string>To add Arrive/Leave alerts for event locations.</string>
-  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-  <string>To notify you when you arrive at or leave event locations, even if the app is closed.</string>
-  <key>NSSupportsLiveActivities</key>
-  <true/>
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
+	<key>CFBundleIcons</key>
+	<dict>
+		<key>CFBundlePrimaryIcon</key>
+		<dict>
+			<key>CFBundleIconName</key>
+			<string>AppIcon</string>
+		</dict>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
+	<key>UILaunchScreen</key>
+	<dict/>
 </dict>
 </plist>
