@@ -5,11 +5,21 @@
 - **Bundle ID:** `com.conornolan.Screen-Actions`  
 - **App Group:** `group.com.conornolan.screenactions`
 
+---
+
+## What’s new (16 Sep 2025)
+
+- **Geofencing implemented (under the hood).** Region monitoring for **arrive/leave** with local notifications is wired and available to the event builder; UI toggles land next.  
+- **Safari Web Extension working.** Popup actions call into the native handler via Safari’s native messaging; background worker kept minimal for now.  
+- **Inline editors in the app.** Event, Reminder, Contact, and Receipt-to-CSV editors are now presented in-app as sheets (not just in extensions).
+
+---
+
 ## Requirements & compatibility
 - **Minimum OS:** iOS **26**.
 - **Devices:** iPhones with **Apple Intelligence** support (e.g. iPhone 15 Pro/Pro Max, the iPhone 16 family, the iPhone 17 family, and newer).
 - **Apple Intelligence:** Turn on in **Settings → Apple Intelligence & Siri**; availability varies by language/region.
-- **Capabilities:** Calendars, Reminders, Contacts, **Location (When In Use)**, and App Group **`group.com.conornolan.screenactions`** must be enabled.
+- **Capabilities:** Calendars, Reminders, Contacts, **Location (When In Use)**, **Always & When In Use** (for geofencing), and App Group **`group.com.conornolan.screenactions`** must be enabled.
 
 ## What you can do
 - **Add to Calendar** — Detects dates/times in text and creates an event *(optional location, alert, travel-time alarm, and geofenced arrive/leave notifications)*.
@@ -20,11 +30,11 @@
 All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventKit, Contacts, MapKit).
 
 ## Targets in this project
-- **Screen Actions (App)** — main SwiftUI app.
-- **ScreenActionsActionExtension** — action extension (grabs selected text via `GetSelection.js`).
-- **ScreenActionsShareExtension** — share-sheet flow to pass text/images into actions.
+- **Screen Actions (App)** — main SwiftUI app with inline editors and a bottom toolbar.
+- **ScreenActionsActionExtension** — action extension (grabs selected text via `GetSelection.js`) and hosts the shared panel.
+- **ScreenActionsShareExtension** — share-sheet flow to pass text/images; OCRs images then hosts the shared panel.
 - **ScreenActionsControls** — widget/live activity utilities.
-- **ScreenActionsWebExtension** — Safari Web Extension resources (macOS Safari focused).
+- **ScreenActionsWebExtension** — Safari Web Extension (iOS & macOS): popup UI + native messaging; context menus planned (macOS-only).
 
 ## Build & run
 1. Open **`Screen Actions.xcodeproj`** in Xcode.
@@ -34,6 +44,7 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
    - App Group: **group.com.conornolan.screenactions**
 4. Run on an Apple Intelligence-capable iPhone on **iOS 26**.
 5. (If needed) Enable **Apple Intelligence** in **Settings → Apple Intelligence & Siri**.
+6. To use the Safari Web Extension on device: enable it in **Settings → Safari → Extensions → Screen Actions**.
 
 ## Permissions used (Info.plist)
 - `NSCalendarsFullAccessUsageDescription` — lets the app add events.
@@ -52,125 +63,89 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
 - **CSV export:** `CSVExporter.writeCSVToAppGroup(...)` writes into the App Group’s `Exports/` folder.
 
 ## Storage
-Exports are written to:
+Exports are written to:  
 `~/Library/Group Containers/group.com.conornolan.screenactions/Exports`
 
+*(Extensions fall back to a private temp folder if the App Group isn’t present; the app uses the App Group when available.)*
+
 ## Troubleshooting
-- If extensions don’t appear, clean build, reinstall to device, then enable the relevant extension in Settings/Safari.
+- If extensions don’t appear, clean build, reinstall to device, then enable the relevant extension in **Settings → Safari → Extensions**.
 - If CSV isn’t visible, check the App Group path above and that the App Group entitlement matches exactly.
 - If Apple Intelligence options aren’t visible, confirm your device is supported, language settings match, and there’s sufficient free space.
 
 ---
 
-## Roadmap
+## Roadmap (updated 16 Sep 2025)
 
-### Where we are (15 Sep 2025)
+### Core (on-device)
+- ✅ Date parsing: `DateParser.firstDateRange` (`NSDataDetector`).
+- ✅ Contact parsing: `ContactParser.detect`.
+- ✅ OCR utilities for images (Vision).
+- ✅ CSV export (v1) + App Group/Temp routing.
+- ✅ Services: create EK events/reminders; save contacts.
+- ✅ **Events:** location string + **structured location (`EKStructuredLocation`)**, **travel-time alarm**, and **optional geofencing (enter/exit)** via `GeofencingManager`.
+- ✅ **iOS 26 clean-up:** MapKit 26 (`MKMapItem.location`, `timeZone`)—removed deprecated placemark APIs.
 
-**Core (on-device)**
-- ✅ Date parsing: `DateParser.firstDateRange` (`NSDataDetector`). — GitHub
-- ✅ Contact parsing: `ContactParser.detect`. — GitHub
-- ✅ OCR utilities for images (Vision). — GitHub
-- ✅ CSV export (v1) + App Group/Temp routing. — GitHub
-- ✅ Services: create EK events/reminders; save contacts. — GitHub
-- ✅ **Events:** location string + **structured location (`EKStructuredLocation`)**, **travel-time alarm**, and **optional geofencing (enter/exit)** via `GeofencingManager`. — GitHub
-- ✅ **iOS 26 clean-up:** removed deprecated placemark APIs; MapKit 26 (`MKMapItem.location`, `timeZone`). — GitHub
+### Auto-Detect (router + intent)
+- ✅ Heuristic router picks receipt/contact/event/reminder and returns optional date range.
+- ✅ App Intent: `AutoDetectIntent` calls the router; also exposes `runStandalone`.
 
-**Auto-Detect (router + intent)**
-- ✅ Heuristic router picks receipt/contact/event/reminder and returns optional date range. — GitHub
-- ✅ App Intent: `AutoDetectIntent` calls the router; also exposes `runStandalone`. — GitHub
+### App UI (main app)
+- ✅ Text editor + bottom toolbar for the five actions.
+- ✅ **Inline editors** for Event/Reminder/Contact and **Receipt-to-CSV preview** presented as sheets.
 
-**App UI (main app)**
-- ✅ Text editor + bottom toolbar for: Auto Detect, Add to Calendar, Create Reminder, Extract Contact, Receipt → CSV. (Direct-run path; no inline editors here yet.) — GitHub
+### Unified action panel (extensions)
+- ✅ `SAActionPanelView` shared by Action/Share extensions with inline editors and direct-run context menus.
 
-**Unified action panel (used by extensions)**
-- ✅ `SAActionPanelView` with Auto Detect primary; manual actions open inline editors (Event/Reminder/Contact/CSV preview). Includes direct-run context menu shortcuts. — GitHub
+### Safari Web Extension
+- ✅ Popup shows 5 buttons (Auto Detect + four manual).
+- ✅ Native handler supports `autoDetect`, `createReminder`, `addEvent`, `extractContact`, `receiptCSV`.
+- ⚠️ No context-menu actions yet; background is minimal; **manifest lacks `contextMenus` permission**.
 
-**Share Extension (UI)**
-- ✅ Hosts `SAActionPanelView`; falls back to Vision OCR for images before showing the panel. — GitHub
+### Shortcuts
+- ✅ Tiles for all five, including Auto Detect (phrases + colour).
 
-**Action Extension (UI)**
-- ✅ Hosts `SAActionPanelView`; preloads selection/title/url from JS. — GitHub
+### Internationalisation & locale smarts
+- ⏳ Respect `Locale.current` for dates/currency/addresses; tests for en-IE/en-GB/en-US.
 
-**Safari Web Extension**
-- ✅ Popup shows 5 buttons (Auto Detect + four manual). — GitHub
-- ✅ Native handler supports `autoDetect`, `createReminder`, `addEvent`, `extractContact`, `receiptCSV`. — GitHub
-- ⚠️ No context-menu actions yet; background is minimal; manifest has no `contextMenus` permission. — GitHub
+### Reliability & UX polish
+- ⏳ Unify service calls; consistent error dialogs/toasts; tidy OSLog categories across UI/Core/Extensions.
+- ⏳ App Intents: audit `ReturnsValue` usage to keep the generic surface tidy.
 
-**Shortcuts**
-- ✅ Tiles for all five, including Auto Detect (phrases + colour). — GitHub
-
-**Onboarding**
-- ✅ Share-sheet pinning flow wired (checklist + “ping” bridge). — GitHub
-
-**Permissions / Info.plist**
-- ✅ Calendars/Reminders/Contacts/Location usage strings present. — GitHub
-
-**Delta since last plan**
-- ✅ Auto Detect is now wired everywhere: App toolbar, Share Extension, Action Extension, Safari popup/handler, and Shortcuts tile. — GitHub
-- ✅ Inline editors exist and are integrated in both extensions via the shared panel (Event/Reminder/Contact editors + CSV preview). App still uses direct-run. — GitHub
-- ✅ **Add to Calendar:** now supports optional **Location**, **Alert Minutes Before**, **structured location**, **travel-time alarm**, and **geofenced arrive/leave**. — GitHub
-- ✅ **iOS 26 clean-up:** switched to MapKit 26 (`MKMapItem.location`, `MKMapItem.timeZone`), removed deprecated placemark APIs. — GitHub
+### Add-on features
+- ⛳ Flights & itineraries: airline+flight regex; IATA origin/destination; tz inference; title `BA284 LHR → SFO`.
+- ⛳ Bills & subscriptions: keywords → `EKRecurrenceRule`.
+- ⛳ Parcel tracking helper: patterns for UPS/FedEx/DHL/Royal Mail/An Post; carrier links; delivery-day reminder.
+- ⛳ Receipt parser v2 (subtotal/tax/tip/total + categories, multi-currency).
+- ⛳ PDF & multi-page OCR (PDFKit → Vision).
+- ⛳ Barcode & QR decoder (tickets/URLs/Wi-Fi); suggest actions.
+- ⛳ Live camera **Scan Mode** (Data Scanner) → route via `ActionRouter`.
+- ⛳ History & Undo: persist last 20 actions; undo via EventKit/CNContact delete.
 
 ---
 
-### What’s left (A–N)
+## Action plan (clear next steps)
 
-**A) Auto Detect parity across surfaces**  
-- ✅ Done (see Delta). Acceptance passes: all surfaces call the same router. — GitHub
+**Next patch (ship together):**
+1. **Expose geofencing in the Event editor**  
+   - UI: toggles for **“Notify on arrival”**, **“Notify on departure”**, and a **radius** slider (50–2,000 m).  
+   - Wire through `CalendarService.addEvent(…, geofenceProximity:, geofenceRadius:)`.  
+   - Prompt for **Always** location when a toggle is enabled, with a brief explainer.
+2. **Safari context menus (macOS)**  
+   - Add `contextMenus` permission in `manifest.json`; create five items in `background.js`.  
+   - On click: capture `selectionText` or fall back to title/URL; call `sendNativeMessage`.  
+   - Guard iOS (no context menus) → rely on popup and Share sheet.
+3. **Time-zone fallback**  
+   - If `MKMapItem.timeZone` is nil, reverse-geocode for a best-effort zone (toggle in Event editor).  
+   - Persist last-used **alert minutes** as a convenience default.
 
-**B) Inline editors & previews**  
-- ✅ Extensions: implemented (sheets for Event/Reminder/Contact; CSV preview with “Open in…”). — GitHub  
-- ⏳ App: add the same “edit-first” path (either reuse the panel or present the editor sheets from `ContentView`).  
-  **Acceptance:** “Edit first” in app + both extensions; Cancel cleanly returns (already handled in panel).
-
-**C) Rich Event Builder (tz, travel time)**  
-- ✅ Use `MKMapItem.timeZone` when available; **structured location + travel-time alarm + optional geofencing** are in.  
-- ⏳ Fallback **`MKReverseGeocodingRequest`** when MapKit lacks a time zone; UI toggles for travel-time/geofencing.
-
-**D) Flights & itineraries**  
-- ⛳ Regex airline+flight; IATA origin/destination; tz inference as in (C); title “BA284 LHR → SFO”; terminals/gate in notes. (New parser.)
-
-**E) Bills & subscriptions (recurring reminders)**  
-- ⛳ Currency + recurrence keywords → `EKRecurrenceRule`; map “monthly/annual/… due <date>`.
-
-**F) Parcel tracking helper**  
-- ⛳ Tracking pattern library (UPS/FedEx/DHL/Royal Mail/An Post); carrier deep links; optional delivery-day reminder.
-
-**G) Receipt parser v2 (subtotal/tax/tip/total + categories, multi-currency)**  
-- ⛳ Extend current `CSVExporter` (v1 is line-based with simple currency regex). — GitHub
-
-**H) PDF & multi-page OCR**  
-- ⛳ PDFKit rasterise pages → Vision OCR (current OCR is image-only). — GitHub
-
-**I) Barcode & QR decoder (tickets/URLs/Wi-Fi)**  
-- ⛳ Vision barcodes; schema handlers (URL, vCard, Wi-Fi); suggest actions.
-
-**J) Live camera “Scan Mode”**  
-- ⛳ `DataScannerViewController` (text + barcodes) → route via `ActionRouter`.
-
-**K) History & Undo**  
-- ⛳ Persist last 20 actions in App Group; undo via EventKit/CNContact delete; deep link to created item.
-
-**L) Safari extension upgrades**  
-- ⏳ Add `contextMenus` items for right-click text; optional page screenshot when no selection; manifest permission + service-worker handlers. (Native handler already supports `autoDetect`.) — GitHub
-
-**M) Internationalisation & locale smarts**  
-- ⏳ Ensure parsing respects `Locale.current` for dates/currency/addresses; add tests for en-IE/en-GB/en-US. (Router/Detectors already lean on `NSDataDetector`; formalise tests.) — GitHub
-
-**N) Reliability & UX polish**  
-- ⏳ Unify service calls; consistent error dialogs/toasts; OSLog categories exist (UI/Core/Extension).  
-- ⏳ App Intents: audit `ReturnsValue<String>` usage to keep the generic surface tidy. — GitHub
-
----
-
-## Suggested sequencing
-
-**Next patch**
-- Finish **B** (App inline editors): reuse `SAActionPanelView` in-app or present the editor sheets from `ContentView`. — GitHub  
-- Start **L** (Safari context menus): add `contextMenus` permission + handlers; wire to existing native actions. — GitHub
-
-**Then**
-- **C** (tz fallback + toggles) → **D** (flights) → **G + H** (receipts v2 + PDF OCR) → **K + L** (history + Safari upgrades) → **M + N** (locale + reliability).
+**Then (sequenced):**
+- **Locale & tests** → formalise en-IE/en-GB/en-US parsing and currency display.  
+- **Receipts v2 + PDF OCR** → structured totals; rasterise PDF pages for Vision.  
+- **History & Undo** → App Group ledger + simple “Undo last” surface.  
+- **Reliability polish** → error surfaces, toasts, OSLog categories; unify service calls.  
+- **Scan Mode** → Data Scanner → `ActionRouter`.  
+- **Flights & parcels** → new parsers + deep links.
 
 ---
 
