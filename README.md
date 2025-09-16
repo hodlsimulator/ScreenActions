@@ -10,8 +10,8 @@
 ## What’s new (16 Sep 2025)
 
 - **Geofencing implemented (under the hood).** Region monitoring for **arrive/leave** with local notifications is wired and available to the event builder; UI toggles land next.  
-- **Safari Web Extension working.** Popup actions call into the native handler via Safari’s native messaging; background worker kept minimal for now.  
-- **Inline editors in the app.** Event, Reminder, Contact, and Receipt-to-CSV editors are now presented in-app as sheets (not just in extensions).
+- **Safari Web Extension working (iOS Safari).** Popup actions call into the native handler via Safari’s native messaging; background worker kept minimal for now.  
+- **Inline editors in the app.** Event, Reminder, Contact, and Receipt-to-CSV editors are presented in-app as sheets (not just in extensions).
 
 ---
 
@@ -19,6 +19,7 @@
 - **Minimum OS:** iOS **26**.
 - **Devices:** iPhones with **Apple Intelligence** support (e.g. iPhone 15 Pro/Pro Max, the iPhone 16 family, the iPhone 17 family, and newer).
 - **Apple Intelligence:** Turn on in **Settings → Apple Intelligence & Siri**; availability varies by language/region.
+- **Device support:** **iPhone only** (no iPad, no macOS).
 - **Capabilities:** Calendars, Reminders, Contacts, **Location (When In Use)**, **Always & When In Use** (for geofencing), and App Group **`group.com.conornolan.screenactions`** must be enabled.
 
 ## What you can do
@@ -34,7 +35,7 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
 - **ScreenActionsActionExtension** — action extension (grabs selected text via `GetSelection.js`) and hosts the shared panel.
 - **ScreenActionsShareExtension** — share-sheet flow to pass text/images; OCRs images then hosts the shared panel.
 - **ScreenActionsControls** — widget/live activity utilities.
-- **ScreenActionsWebExtension** — Safari Web Extension (iOS & macOS): popup UI + native messaging; context menus planned (macOS-only).
+- **ScreenActionsWebExtension** — **iOS Safari Web Extension**: popup UI + native messaging. *(iOS does not support context menus.)*
 
 ## Build & run
 1. Open **`Screen Actions.xcodeproj`** in Xcode.
@@ -95,12 +96,12 @@ Exports are written to:
 - ✅ **Inline editors** for Event/Reminder/Contact and **Receipt-to-CSV preview** presented as sheets.
 
 ### Unified action panel (extensions)
-- ✅ `SAActionPanelView` shared by Action/Share extensions with inline editors and direct-run context menus.
+- ✅ `SAActionPanelView` shared by Action/Share extensions with inline editors and direct-run shortcuts.
 
-### Safari Web Extension
+### Safari Web Extension (iOS)
 - ✅ Popup shows 5 buttons (Auto Detect + four manual).
 - ✅ Native handler supports `autoDetect`, `createReminder`, `addEvent`, `extractContact`, `receiptCSV`.
-- ⚠️ No context-menu actions yet; background is minimal; **manifest lacks `contextMenus` permission**.
+- ℹ️ **No context menus on iOS**; manifest intentionally omits `contextMenus`.
 
 ### Shortcuts
 - ✅ Tiles for all five, including Auto Detect (phrases + colour).
@@ -131,10 +132,10 @@ Exports are written to:
    - UI: toggles for **“Notify on arrival”**, **“Notify on departure”**, and a **radius** slider (50–2,000 m).  
    - Wire through `CalendarService.addEvent(…, geofenceProximity:, geofenceRadius:)`.  
    - Prompt for **Always** location when a toggle is enabled, with a brief explainer.
-2. **Safari context menus (macOS)**  
-   - Add `contextMenus` permission in `manifest.json`; create five items in `background.js`.  
-   - On click: capture `selectionText` or fall back to title/URL; call `sendNativeMessage`.  
-   - Guard iOS (no context menus) → rely on popup and Share sheet.
+2. **Safari popup polish (iOS)**  
+   - Background worker: add error routing and user-visible failures.  
+   - Selection fallback: if no selection, fall back to page title/URL; handle frames.  
+   - Permissions UX: surface guidance when Calendars/Reminders/Contacts/Location are denied.
 3. **Time-zone fallback**  
    - If `MKMapItem.timeZone` is nil, reverse-geocode for a best-effort zone (toggle in Event editor).  
    - Persist last-used **alert minutes** as a convenience default.
