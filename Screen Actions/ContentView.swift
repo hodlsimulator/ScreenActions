@@ -5,7 +5,7 @@
 //  Created by . . on 9/13/25.
 //
 //  App home with inline editors for the four actions.
-//  Auto Detect remains a quick action; the four buttons now open editors.
+//  Auto Detect now opens the matching editor (like the manual buttons).
 //
 
 import SwiftUI
@@ -59,24 +59,32 @@ struct ContentView: View {
             .toolbar {
                 // Trailing gear for Settings
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showSettings = true } label: { Image(systemName: "gearshape") }
-                        .accessibilityLabel("Settings")
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
                 }
 
                 // Bottom actions
                 ToolbarItemGroup(placement: .bottomBar) {
-                    Button { Task { await autoDetect() } } label: {
+                    Button {
+                        autoDetect()
+                    } label: {
                         Label("Auto Detect", systemImage: "wand.and.stars")
                     }
+
                     Button { showEvent = true } label: {
                         Label("Add to Calendar", systemImage: "calendar.badge.plus")
                     }
+
                     Button { showReminder = true } label: {
                         Label("Create Reminder", systemImage: "checkmark.circle.badge.plus")
                     }
+
                     Button { showContact = true } label: {
                         Label("Extract Contact", systemImage: "person.crop.rectangle.badge.plus")
                     }
+
                     Button { showCSV = true } label: {
                         Label("Receipt → CSV", systemImage: "doc.text.magnifyingglass")
                     }
@@ -116,20 +124,27 @@ struct ContentView: View {
                     status = message
                 }
             }
-
             .onAppear {
-                if !hasCompletedShareOnboarding { showShareOnboarding = true }
+                if !hasCompletedShareOnboarding {
+                    showShareOnboarding = true
+                }
             }
         }
     }
 
-    // MARK: - Quick Auto (unchanged)
-    private func autoDetect() async {
-        do {
-            let result = try await AutoDetectIntent.runStandalone(text: inputText)
-            status = result
-        } catch {
-            status = "Auto error: \(error.localizedDescription)"
+    // MARK: - Auto Detect → open editor (no direct-save)
+    private func autoDetect() {
+        let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            status = "Provide text first."
+            return
+        }
+        let decision = ActionRouter.route(text: trimmed)
+        switch decision.kind {
+        case .receipt:  showCSV = true
+        case .contact:  showContact = true
+        case .event:    showEvent = true
+        case .reminder: showReminder = true
         }
     }
 }

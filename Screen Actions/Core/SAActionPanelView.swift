@@ -40,6 +40,7 @@ public struct SAActionPanelView: View {
     public var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 16) {
+
                 // Selection preview
                 Group {
                     Text("Selected Text")
@@ -59,7 +60,9 @@ public struct SAActionPanelView: View {
                 // Page context
                 if !pageTitle.isEmpty || !pageURL.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        if !pageTitle.isEmpty { Text(pageTitle).font(.subheadline).bold() }
+                        if !pageTitle.isEmpty {
+                            Text(pageTitle).font(.subheadline).bold()
+                        }
                         if !pageURL.isEmpty {
                             Text(pageURL)
                                 .font(.footnote)
@@ -74,8 +77,11 @@ public struct SAActionPanelView: View {
 
                 // Actions
                 VStack(spacing: 10) {
-                    // Primary: Auto Detect (direct-run)
-                    Button { runAuto() } label: {
+
+                    // Primary: Auto Detect → now opens the matching editor (no direct-save)
+                    Button {
+                        openAutoEditor()
+                    } label: {
                         rowLabel("Auto Detect", "wand.and.stars")
                     }
                     .buttonStyle(.borderedProminent)
@@ -210,12 +216,8 @@ public struct SAActionPanelView: View {
 
     private var inputText: String {
         var t = selection
-        if !pageTitle.isEmpty {
-            t = t.isEmpty ? pageTitle : t
-        }
-        if !pageURL.isEmpty {
-            t += "\n\(pageURL)"
-        }
+        if !pageTitle.isEmpty { t = t.isEmpty ? pageTitle : t }
+        if !pageURL.isEmpty { t += "\n\(pageURL)" }
         return t
     }
 
@@ -243,61 +245,21 @@ public struct SAActionPanelView: View {
         }
     }
 
-    // Auto Detect (direct-run; keeps A’s behaviour)
-    private func runAuto() {
-        run {
-            let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !text.isEmpty else { return "Provide text first." }
-
-            let decision = ActionRouter.route(text: text)
-            switch decision.kind {
-            case .receipt:
-                let csv = CSVExporter.makeReceiptCSV(from: text)
-                let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
-                let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
-                UIPasteboard.general.url = url
-                return "Auto → Receipt → CSV exported (\(url.lastPathComponent))."
-
-            case .contact:
-                let detected = ContactParser.detect(in: text)
-                let has = (detected.givenName?.isEmpty == false)
-                    || !detected.emails.isEmpty
-                    || !detected.phones.isEmpty
-                    || (detected.postalAddress != nil)
-                guard has else { return "Auto → Contact: No contact details found." }
-                let id = try await ContactsService.save(contact: detected)
-                return "Auto → Contact saved (\(id))."
-
-            case .event:
-                if let range = decision.dateRange ?? DateParser.firstDateRange(in: text) {
-                    let title = text
-                        .components(separatedBy: .newlines)
-                        .first?
-                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Event"
-                    let id = try await CalendarService.shared.addEvent(
-                        title: title,
-                        start: range.start,
-                        end: range.end,
-                        notes: text
-                    )
-                    return "Auto → Event created (\(id))."
-                } else {
-                    fallthrough
-                }
-
-            case .reminder:
-                let title = text
-                    .components(separatedBy: .newlines)
-                    .first?
-                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Todo"
-                let due = DateParser.firstDateRange(in: text)?.start
-                let id = try await RemindersService.shared.addReminder(
-                    title: title,
-                    due: due,
-                    notes: text
-                )
-                return "Auto → Reminder created (\(id))."
-            }
+    /// Auto Detect → **open the matching editor** (like manual selections)
+    private func openAutoEditor() {
+        let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty else {
+            status = "Provide text first."
+            ok = false
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            return
+        }
+        let decision = ActionRouter.route(text: text)
+        switch decision.kind {
+        case .receipt:  showCSV = true
+        case .contact:  showContact = true
+        case .event:    showEvent = true
+        case .reminder: showReminder = true
         }
     }
 
@@ -355,7 +317,9 @@ private func extractContact(text: String) async throws -> String {
 @MainActor
 private func exportReceiptCSV(text: String) async throws -> (String, URL) {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else { return ("Provide text first.", AppStorageService.shared.containerURL()) }
+    guard !trimmed.isEmpty else {
+        return ("Provide text first.", AppStorageService.shared.containerURL())
+    }
     let csv = CSVExporter.makeReceiptCSV(from: trimmed)
     let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
     let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
