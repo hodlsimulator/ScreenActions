@@ -6,4 +6,129 @@
   
 */
 
-/* Intentionally left blank for now. */
+/* General */
+"Screen Actions" = "Screen Actions";
+"Settings" = "Settings";
+"Close" = "Close";
+"Done" = "Done";
+"Cancel" = "Cancel";
+"Save" = "Save";
+"Export" = "Export";
+
+/* Home */
+"Input" = "Input";
+"Type or paste any text…" = "Type or paste any text…";
+"Input text" = "Input text";
+"Status" = "Status";
+"Auto Detect" = "Auto Detect";
+"Add to Calendar" = "Add to Calendar";
+"Create Reminder" = "Create Reminder";
+"Extract Contact" = "Extract Contact";
+"Receipt → CSV" = "Receipt → CSV";
+
+/* Editors — common */
+"Title" = "Title";
+"Notes" = "Notes";
+
+/* Event editor */
+"New Event" = "New Event";
+"Details" = "Details";
+"Starts" = "Starts";
+"Ends" = "Ends";
+"Location" = "Location";
+"Place or address (optional)" = "Place or address (optional)";
+"Infer time zone from location" = "Infer time zone from location";
+"Geofencing" = "Geofencing";
+"Notify on arrival" = "Notify on arrival";
+"Notify on departure" = "Notify on departure";
+"Radius" = "Radius";
+"Add a place above to use geofencing." = "Add a place above to use geofencing.";
+"Alert" = "Alert";
+"None" = "None";
+"5 minutes before" = "5 minutes before";
+"10 minutes before" = "10 minutes before";
+"15 minutes before" = "15 minutes before";
+"30 minutes before" = "30 minutes before";
+"1 hour before" = "1 hour before";
+"Allow “Always” Location?" = "Allow “Always” Location?";
+"Not now" = "Not now";
+"Continue" = "Continue";
+"To notify when you arrive or leave an event location, Screen Actions needs “Always & When In Use” access to your location.\nYou can change this any time in Settings." = "To notify when you arrive or leave an event location, Screen Actions needs “Always & When In Use” access to your location.\nYou can change this any time in Settings.";
+
+/* Reminder editor */
+"New Reminder" = "New Reminder";
+"Due date" = "Due date";
+"Due" = "Due";
+
+/* Contact editor */
+"New Contact" = "New Contact";
+"Name" = "Name";
+"Given name" = "Given name";
+"Family name" = "Family name";
+"Emails" = "Emails";
+"Phones" = "Phones";
+"Address" = "Address";
+"email@example.com" = "email@example.com";
+"Remove email" = "Remove email";
+"Add email" = "Add email";
+"+353 1 123 4567" = "+353 1 123 4567";
+"Remove phone" = "Remove phone";
+"Add phone" = "Add phone";
+"Street" = "Street";
+"City" = "City";
+"County/State" = "County/State";
+"Postcode" = "Postcode";
+"Country" = "Country";
+"Enter at least one contact field." = "Enter at least one contact field.";
+
+/* Receipt preview */
+"Items" = "Items";
+"No lines detected.\nAdd a few below." = "No lines detected.\nAdd a few below.";
+"Item" = "Item";
+"Amount" = "Amount";
+"Add line" = "Add line";
+"Preview (CSV)" = "Preview (CSV)";
+"Export CSV" = "Export CSV";
+"Export & Open In…" = "Export & Open In…";
+
+/* Settings */
+"Location & Geofencing" = "Location & Geofencing";
+"Request Location Access" = "Request Location Access";
+"Open iOS Settings" = "Open iOS Settings";
+"Share Sheet" = "Share Sheet";
+"Show Share Onboarding Again" = "Show Share Onboarding Again";
+"Open Share Onboarding" = "Open Share Onboarding";
+"Open Share Sheet Here" = "Open Share Sheet Here";
+"Open Safari (apple.com)" = "Open Safari (apple.com)";
+"Reset" = "Reset";
+"Reset Onboarding Status" = "Reset Onboarding Status";
+"Not requested" = "Not requested";
+"Restricted" = "Restricted";
+"Denied" = "Denied";
+"While Using" = "While Using";
+"Always" = "Always";
+"Unknown" = "Unknown";
+
+/* Onboarding */
+"Pin to Share Sheet" = "Pin to Share Sheet";
+"Why pin Screen Actions" = "Why pin Screen Actions";
+"Fast access from any page" = "Fast access from any page";
+"Works for links, selected text, and images" = "Works for links, selected text, and images";
+"You choose its position" = "You choose its position";
+"Checklist" = "Checklist";
+"Open the Share sheet here" = "Open the Share sheet here";
+"We’ll open the system share sheet now." = "We’ll open the system share sheet now.";
+"Go to More → Edit (top-right)" = "Go to More → Edit (top-right)";
+"In the top row of apps, swipe to the end, tap More, then Edit." = "In the top row of apps, swipe to the end, tap More, then Edit.";
+"Add “Screen Actions” to Favourites" = "Add “Screen Actions” to Favourites";
+"Find Screen Actions, enable it, tap Add to Favourites." = "Find Screen Actions, enable it, tap Add to Favourites.";
+"Launch Screen Actions from Safari once" = "Launch Screen Actions from Safari once";
+"Share any page in Safari and pick Screen Actions.\nWe’ll detect it automatically." = "Share any page in Safari and pick Screen Actions.\nWe’ll detect it automatically.";
+"Drag it to the front of the row" = "Drag it to the front of the row";
+"Press-and-hold in Favourites to reorder." = "Press-and-hold in Favourites to reorder.";
+"Finish — All set!" = "Finish — All set!";
+"Do it" = "Do it";
+
+/* Fallback titles used in code */
+"Event" = "Event";
+"Todo" = "Todo";

@@ -99,6 +99,8 @@
 		E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E12A855E2E760EBD00E07869 /* ScreenActionsWebExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsWebExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E12CA0912E7A4790006FBB3F /* verify_webext_guard.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = verify_webext_guard.rb; sourceTree = "<group>"; };
+		E12CA0942E7A579C006FBB3F /* verify_archive_entitlements.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = verify_archive_entitlements.rb; sourceTree = "<group>"; };
+		E12CA0952E7A5876006FBB3F /* archive_and_verify.zsh */ = {isa = PBXFileReference; lastKnownFileType = text; path = archive_and_verify.zsh; sourceTree = "<group>"; };
 		E183E1352E75ABC700E8D263 /* Screen Actions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen Actions.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsControlsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1492E75ACF400E8D263 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -308,6 +310,8 @@
 				70685838DF59FF47AC0BA15B /* fix_core_and_editors.rb */,
 				E12CA0912E7A4790006FBB3F /* verify_webext_guard.rb */,
 				FAFF717ED1A16338ACAA62B8 /* fix_webext_sources.rb */,
+				E12CA0942E7A579C006FBB3F /* verify_archive_entitlements.rb */,
+				E12CA0952E7A5876006FBB3F /* archive_and_verify.zsh */,
 				2B653A6655AAC907E4699A1F /* remove_panel_from_webext.rb */,
 				35E9B74C82844916689270EB /* sanitize_sources.rb */,
 				B5ECC9F4F80BBF08BF6803E8 /* scripts_add_editors.rb */,

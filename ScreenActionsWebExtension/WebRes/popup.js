@@ -26,7 +26,6 @@ async function getPageContext() {
     }
   });
 
-  // Prefer the first frame that actually has a selection
   const firstWithSel = results.find(r => r && r.result && r.result.selection && r.result.selection.trim().length > 0);
   return firstWithSel?.result || (results[0]?.result) || { selection: "", title: "", url: "" };
 }
@@ -41,7 +40,7 @@ function decorateError(message, hint) {
   const known = [
     { match: /Calendar access was not granted/i, guide: "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions." },
     { match: /Reminders access was not granted/i, guide: "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions." },
-    { match: /Contacts access.*not granted/i,    guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions." },
+    { match: /Contacts access.*not granted/i, guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions." },
     { match: /cannot connect|connectNative|native/i, guide: "Enable the extension under Settings → Safari → Extensions → Screen Actions." }
   ];
   const extra = hint || (known.find(k => k.match.test(message))?.guide);
@@ -51,9 +50,7 @@ function decorateError(message, hint) {
 async function runAction(action) {
   try {
     const payload = await getPageContext();
-    document.getElementById("sel").textContent =
-      (payload.selection?.trim() || payload.title || "(No selection)");
-
+    document.getElementById("sel").textContent = (payload.selection?.trim() || payload.title || "(No selection)");
     const response = await browser.runtime.sendNativeMessage(NATIVE_APP_ID, { action, payload });
 
     if (response?.ok) {
@@ -73,11 +70,11 @@ async function runAction(action) {
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     const ctx = await getPageContext();
-    document.getElementById("sel").textContent =
-      (ctx.selection?.trim() || ctx.title || "(No selection)").toString();
+    document.getElementById("sel").textContent = (ctx.selection?.trim() || ctx.title || "(No selection)").toString();
   } catch {
     document.getElementById("sel").textContent = "(Unable to read page)";
   }
+
   document.getElementById("btn-auto").addEventListener("click", () => runAction("autoDetect"));
   document.getElementById("btn-rem").addEventListener("click", () => runAction("createReminder"));
   document.getElementById("btn-cal").addEventListener("click", () => runAction("addEvent"));

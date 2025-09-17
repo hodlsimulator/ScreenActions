@@ -2,31 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Screen Actions</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <header>
-    <img src="images/toolbar-icon.svg" alt="" width="16" height="16">
+  <header aria-label="Screen Actions">
     <h1>Screen Actions</h1>
   </header>
 
-  <div class="card">
-    <label for="sel">Selected Text</label>
-    <pre id="sel" class="selection">(Loading…)</pre>
-  </div>
+  <section class="card" aria-labelledby="sel-label">
+    <label id="sel-label">Selected Text</label>
+    <pre class="selection" id="sel" role="region" aria-live="polite">(Loading…)</pre>
+  </section>
 
-  <div class="buttons">
-    <button id="btn-auto" class="primary">Auto Detect</button>
-    <button id="btn-rem">Create Reminder</button>
-    <button id="btn-cal">Add Calendar Event</button>
-    <button id="btn-ctc">Extract Contact</button>
-    <button id="btn-csv">Receipt → CSV</button>
-  </div>
+  <section class="card" aria-label="Actions">
+    <div class="buttons">
+      <button id="btn-auto" class="primary" aria-label="Auto Detect">Auto Detect</button>
+      <button id="btn-rem" aria-label="Create Reminder">Create Reminder</button>
+      <button id="btn-cal" aria-label="Add Calendar Event">Add Calendar Event</button>
+      <button id="btn-ctc" aria-label="Extract Contact">Extract Contact</button>
+      <button id="btn-csv" aria-label="Receipt to CSV">Receipt → CSV</button>
+    </div>
+    <p id="status" class="status" aria-live="polite">(Idle)</p>
+  </section>
 
-  <p id="status" class="status">(Idle)</p>
-
-  <script src="popup.js"></script>
+  <script defer src="popup.js"></script>
 </body>
 </html>
