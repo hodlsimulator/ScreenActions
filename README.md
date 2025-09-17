@@ -1,214 +1,153 @@
-# Screen Actions (iOS 26)
+# Screen Actions
 
-**Event-centric actions for iPhone — built and tested on _iOS 26_ with _Xcode 26_.**  
-Add calendar events, create reminders, extract contacts, and turn receipts into CSV — from the app, the Share sheet, or the iOS Safari Web Extension.
+**iOS 26+ (iPhone only).** On-device App Intents that act on what’s on screen: add calendar events, create reminders, extract contacts, and turn receipts into CSVs.
 
-> **iOS 26 prominence:** This project targets modern APIs (SwiftUI, App Intents) and ships first-class support for iOS 26. Geofencing is fully integrated into the event editor with an “Always” permission nudge aligned to current iOS guidance.
-
----
-
-## Features
-
-- **Auto-detect** useful bits from selected text: dates, addresses, phones, emails.  
-- **Add to Calendar** with start/end, alerts, notes, and location.  
-- **🆕 Geofencing for events (iOS 26-ready)**
-  - Toggle **Notify on arrival** / **Notify on departure** per event.
-  - Adjustable **radius** (50–2,000 m), clamped on save.
-  - Offline-friendly: enter/exit uses GPS; only initial geocoding needs Internet.
-  - Built-in explainer to request **Always & While Using** location access.
-- **Create Reminder** quickly with due date and notes.  
-- **Extract Contact** from selection into a contact card.  
-- **Receipt → CSV** exporter.  
-- **iOS Safari Web Extension** popup to run actions without leaving Safari.  
-- **Settings → Request Location Access** to make the app appear in Location Services.
+- **Bundle ID:** `com.conornolan.Screen-Actions`  
+- **App Group:** `group.com.conornolan.screenactions`
 
 ---
 
-## Requirements
+## What’s new (17 Sep 2025)
 
-- **Xcode 26**  
-- **iOS 17+** (developed and verified on **iOS 26**)  
-- iPhone (device recommended for geofencing; Simulator supported for basic flows)
-
----
-
-## Project Layout
-
-```text
-Screen Actions/                      # Main app (SwiftUI)
-  Core/                              # Calendar/Reminders/Contacts/CSV/Parsing/Logging
-  Intents/                           # App Intents for Shortcuts
-  Resources/                         # Assets, Localizable.strings
-  Screen_ActionsApp.swift
-  SettingsView.swift                 # Includes “Request Location Access”
-  Editors/                           # Event/Reminder/Contact/Receipt editors
-
-ScreenActionsShareExtension/         # Share extension (UI + JS bridge)
-ScreenActionsActionExtension/        # Optional action-style target
-
-ScreenActionsWebExtension/           # iOS Safari Web Extension target
-  WebRes/                            # manifest, background.js, popup.*, icons, locales
-  SafariWebExtensionHandler.swift
-```
+- **Geofencing UI implemented.** Event editor now has **Notify on arrival / departure** toggles and a **radius** slider (50–2,000 m). Includes a brief explainer to request **Always** location. Wired via `CalendarService.addEvent(…, geofenceProximity:, geofenceRadius:)`.
+- **Safari Web Extension working (iOS Safari).** Popup actions call the native handler via Safari’s native messaging; background worker kept minimal for now.
+- **Inline editors in the app.** Event, Reminder, Contact, and Receipt-to-CSV editors are presented in-app as sheets (not just in extensions).
+- **APIs tidied for iOS 26.** MapKit 26 clean-ups and SwiftUI iOS 17+ `onChange` updates applied where relevant.
 
 ---
 
-## Build & Run (device recommended)
+## Requirements & compatibility
+- **Minimum OS:** iOS **26**.
+- **Devices:** iPhones with **Apple Intelligence** support (e.g. iPhone 15 Pro/Pro Max, the iPhone 16 family, the iPhone 17 family, and newer).
+- **Apple Intelligence:** Turn on in **Settings → Apple Intelligence & Siri**; availability varies by language/region.
+- **Device support:** **iPhone only** (no iPad, no macOS).
+- **Capabilities:** Calendars, Reminders, Contacts, **Location (When In Use)**, **Always & When In Use** (for geofencing), and App Group **`group.com.conornolan.screenactions`** must be enabled.
 
-1. Open `Screen Actions.xcodeproj` in **Xcode 26**.  
-2. Select **Screen Actions** scheme → **Run** on a physical iPhone.  
-3. In the app, open **Settings → Location & Geofencing → Request Location Access**.  
-   Grant **While Using** then **Always** (or switch to **Always** later in iOS Settings).  
-4. (Optional) Enable the Safari Web Extension: **Settings → Safari → Extensions → Screen Actions**.
+## What you can do
+- **Add to Calendar** — Detects dates/times in text and creates an event *(optional location, alert, travel-time alarm, and geofenced arrive/leave notifications)*.
+- **Create Reminder** — Finds tasks/deadlines and makes a reminder.
+- **Extract Contact** — Pulls names, emails, phones, and addresses into Contacts.
+- **Receipt → CSV** — Parses receipt-like text to a shareable CSV.
 
----
+All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventKit, Contacts, MapKit).
 
-## Permissions & Capabilities
+## Targets in this project
+- **Screen Actions (App)** — main SwiftUI app with inline editors and a bottom toolbar.
+- **ScreenActionsActionExtension** — action extension (grabs selected text via `GetSelection.js`) and hosts the shared panel.
+- **ScreenActionsShareExtension** — share-sheet flow to pass text/images; OCRs images then hosts the shared panel.
+- **ScreenActionsControls** — widget/live activity utilities.
+- **ScreenActionsWebExtension** — **iOS Safari Web Extension**: popup UI + native messaging. *(iOS does not support context menus.)*
 
-Ensure the app target’s **Info.plist** includes:
+## Build & run
+1. Open **`Screen Actions.xcodeproj`** in Xcode.
+2. Set **iOS Deployment Target = 26.0** for **all** targets/configs (Debug/Release).
+3. In **Signing & Capabilities**:
+   - App target bundle ID: **com.conornolan.Screen-Actions**
+   - App Group: **group.com.conornolan.screenactions**
+4. Run on an Apple Intelligence-capable iPhone on **iOS 26**.
+5. (If needed) Enable **Apple Intelligence** in **Settings → Apple Intelligence & Siri**.
+6. To use the Safari Web Extension on device: enable it in **Settings → Safari → Extensions → Screen Actions**.
+7. To appear in Location Services quickly: in-app **Settings → Request Location Access**, then allow **While Using** and **Always**.
 
-- `NSLocationWhenInUseUsageDescription`  
-- `NSLocationAlwaysAndWhenInUseUsageDescription`
+## Permissions used (Info.plist)
+- `NSCalendarsFullAccessUsageDescription` — lets the app add events.
+- `NSRemindersFullAccessUsageDescription` — lets the app create reminders.
+- `NSContactsUsageDescription` — lets the app save contacts.
+- `NSLocationWhenInUseUsageDescription` — used for travel-time and geofenced arrive/leave notifications.
+- `NSLocationAlwaysAndWhenInUseUsageDescription` — allows geofence notifications even if the app is closed.
+- `NSSupportsLiveActivities` — enables live activities (where supported).
 
-Recommended capability:
+## How it works (high level)
+- **Text capture:** via share/action/web extensions (`SAGetSelection.js` / `GetSelection.js`) and `ActionViewController.swift`.
+- **OCR (optional):** Vision recognises text from images (`TextRecognition.swift`).
+- **Parsing:** `NSDataDetector` pulls dates, phones, and addresses (`DataDetectors.swift`).  
+- **Location hint (events):** heuristics extract places from text (postal address detection plus “at/@/in …” phrases).  
+- **Calendar:** `CalendarService` writes `event.location`, structured location (`EKStructuredLocation`), optional **travel-time alarm**, and registers **geofenced arrive/leave** via `GeofencingManager` (driven by the editor’s arrival/departure toggles + radius).
+- **CSV export:** `CSVExporter.writeCSVToAppGroup(...)` writes into the App Group’s `Exports/` folder.
 
-- **Background Modes** → **Location updates** (improves region event delivery when backgrounded).
+## Storage
+Exports are written to:  
+`~/Library/Group Containers/group.com.conornolan.screenactions/Exports`
 
----
-
-## Geofencing (Arrival/Departure + Radius)
-
-- Event editor: `Editors/EventEditorView.swift`
-  - Toggles: **Notify on arrival**, **Notify on departure**
-  - **Radius slider**: 50–2,000 m (saved value is clamped)
-  - Enabling a toggle shows a brief explainer and requests **Always** access.
-- Persists via:
-  - `CalendarService.addEvent(... geofenceProximity:, geofenceRadius:)`
-
-**Practical tips**
-
-- Start with **150–300 m** for reliable testing.  
-- Do **geocoding** (place name → coordinates) once on Wi-Fi; enter/exit works offline.  
-- Don’t force-quit during tests; background is fine.  
-- Core Location enforces a **~20 monitored regions per app** limit; rotate the nearest N if you scale up.
-
----
-
-## Quick Testing (from the sofa)
-
-### A) Best: Simulate on your **iPhone** via Xcode
-
-1. Run the app on device (cable or wireless debugging).  
-2. Create an event with a real **Location** (e.g. “Dublin Castle”), enable **Arrival/Departure**, set **Radius**, **Save**.  
-3. Xcode → **Debug → Simulate Location** → choose an **Outside** GPX, then switch to **Inside** to simulate **arrival** (reverse for **departure**).
-
-Add these GPX files anywhere in your project and select them from the Simulate Location menu.
-
-```xml
-<!-- dublin_castle_outside.gpx -->
-<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="ScreenActionsTest" xmlns="http://www.topografix.com/GPX/1/1">
-  <wpt lat="53.3460" lon="-6.2800"><name>Dublin Castle Outside (~1km W)</name></wpt>
-</gpx>
-```
-
-```xml
-<!-- dublin_castle_inside.gpx -->
-<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="ScreenActionsTest" xmlns="http://www.topografix.com/GPX/1/1">
-  <wpt lat="53.3430" lon="-6.2675"><name>Dublin Castle Inside</name></wpt>
-</gpx>
-```
-
-```xml
-<!-- dublin_castle_crossing.gpx (optional route: outside → inside) -->
-<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="ScreenActionsTest" xmlns="http://www.topografix.com/GPX/1/1">
-  <trk><name>Outside to Inside</name><trkseg>
-    <trkpt lat="53.346500" lon="-6.283500"></trkpt>
-    <trkpt lat="53.345900" lon="-6.281900"></trkpt>
-    <trkpt lat="53.345000" lon="-6.279000"></trkpt>
-    <trkpt lat="53.344200" lon="-6.274500"></trkpt>
-    <trkpt lat="53.343600" lon="-6.270500"></trkpt>
-    <trkpt lat="53.343000" lon="-6.267500"></trkpt>
-  </trkseg></trk>
-</gpx>
-```
-
-### B) Simulator
-
-Use the same GPX files via **Debug → Simulate Location** (device remains more faithful for region enter/exit).
-
----
+*(Extensions fall back to a private temp folder if the App Group isn’t present; the app uses the App Group when available.)*
 
 ## Troubleshooting
-
-- **App not shown in Location Services**  
-  Open the app’s **Settings** page and tap **Request Location Access** once; after granting, it will appear in iOS Location Services.
-
-- **No enter/exit firing**
-  - iOS **Settings → Screen Actions → Location**: ensure **Allow Location Access: Always** and **Precise Location: On**.
-  - Use a larger radius (**150–300 m** to start).
-  - Confirm the event’s location geocodes to a map pin before going offline.
-
-- **Background delivery**  
-  Works when backgrounded; avoid force-quitting during tests.
+- If extensions don’t appear, clean build, reinstall to device, then enable the relevant extension in **Settings → Safari → Extensions**.
+- If CSV isn’t visible, check the App Group path above and that the App Group entitlement matches exactly.
+- If Apple Intelligence options aren’t visible, confirm your device is supported, language settings match, and there’s sufficient free space.
 
 ---
 
-## iOS Safari Web Extension — packaging & signing (iOS 26-verified)
+## Roadmap (updated 17 Sep 2025)
 
-- iOS Safari has **no `contextMenus`/`menus` API**; expose actions via the **popup** and/or the **Share extension**.  
-- **Native messaging on iOS** must originate from an extension page (popup/service worker), not a content script.  
-- **Manifest path** in the extension **Info.plist** must point to the packed resources inside the `.appex`:
-  - `NSExtensionAttributes → SFSafariWebExtensionManifestPath = WebRes/manifest.json`
-- **Package `WebRes` inside the `.appex`** using **Copy Files (Resources)** on the extension target:
-  - `WebRes/manifest.json`, `background.js`, `popup.html`, `popup.css`, `popup.js`
-  - `WebRes/_locales/en/messages.json`
-  - `WebRes/images/*` (all icons + `toolbar-icon.svg`)
-- **Embed the appex** in the app target via **Embed Foundation Extensions** and add a **Target Dependency** on the extension.
+### Core (on-device)
+- ✅ Date parsing: `DateParser.firstDateRange` (`NSDataDetector`).
+- ✅ Contact parsing: `ContactParser.detect`.
+- ✅ OCR utilities for images (Vision).
+- ✅ CSV export (v1) + App Group/Temp routing.
+- ✅ Services: create EK events/reminders; save contacts.
+- ✅ **Events:** location string + **structured location (`EKStructuredLocation`)**, **travel-time alarm**, and **optional geofencing (enter/exit)** via `GeofencingManager`.
+- ✅ **iOS 26 clean-up:** MapKit 26 (`MKMapItem.location`, `timeZone`)—removed deprecated placemark APIs.
 
-### Entitlements & provisioning
+### Auto-Detect (router + intent)
+- ✅ Heuristic router picks receipt/contact/event/reminder and returns optional date range.
+- ✅ App Intent: `AutoDetectIntent` calls the router; also exposes `runStandalone`.
 
-- The extension must carry:
-```text
-com.apple.developer.extensionkit.extension-point-identifiers = ["com.apple.Safari.web-extension"]
-```
+### App UI (main app)
+- ✅ Text editor + bottom toolbar for the five actions.
+- ✅ **Inline editors** for Event/Reminder/Contact and **Receipt-to-CSV preview** presented as sheets.
+- ✅ **Geofencing UI** in Event editor: arrival/departure toggles + radius slider (50–2,000 m) with permission explainer.
 
-- Reliable dev-profile recipe (iOS 26):
-  1) Create a fresh iOS **Safari Extension** target (Xcode template).  
-  2) Build to a physical device with **Automatic signing** to mint the profile containing the ExtensionKit entitlement.  
-  3) If Xcode later picks a wildcard profile, switch the extension to **Manual** and pin the minted profile.
+### Unified action panel (extensions)
+- ✅ `SAActionPanelView` shared by Action/Share extensions with inline editors and direct-run shortcuts.
 
-### Verify what’s embedded
+### Safari Web Extension (iOS)
+- ✅ Popup shows 5 buttons (Auto Detect + four manual).
+- ✅ Native handler supports `autoDetect`, `createReminder`, `addEvent`, `extractContact`, `receiptCSV`.
+- ℹ️ **No context menus on iOS**; manifest intentionally omits `contextMenus`.
 
-```bash
-# Adjust the path to your build products
-codesign -d --entitlements :- \
-"…/Build/Products/Debug-iphoneos/Screen Actions.app/PlugIns/ScreenActionsWebExtension.appex" | plutil -p -
+### Shortcuts
+- ✅ Tiles for all five, including Auto Detect (phrases + colour).
 
-/usr/libexec/PlistBuddy -c "Print :NSExtension" \
-"…/ScreenActionsWebExtension.appex/Info.plist"
-```
+### Internationalisation & locale smarts
+- ⏳ Respect `Locale.current` for dates/currency/addresses; tests for en-IE/en-GB/en-US.
 
----
+### Reliability & UX polish
+- ⏳ Unify service calls; consistent error dialogs/toasts; tidy OSLog categories across UI/Core/Extensions.
+- ⏳ App Intents: audit `ReturnsValue` usage to keep the generic surface tidy.
 
-## Developer Notes
-
-- If principal-class instantiation becomes fussy, an Objective-C principal (`SAWebExtensionHandler : NSObject <NSExtensionRequestHandling>`) that bridges into Swift is a proven fallback; current project uses a Swift principal (`SafariWebExtensionHandler.swift`).  
-- Keep the extension `MinimumOSVersion` ≤ your device’s OS.  
-- Core Location’s **~20 monitored regions per app** limit still applies; when scaling, rotate the nearest N regions in your `GeofencingManager`.
-
----
-
-## Roadmap
-
-- Region rotation/refresh for multiple upcoming events.  
-- App Intents surface for Shortcuts (toggle arrival/departure for a selected event).  
-- Optional travel-time alarms.
+### Add-on features
+- ⛳ Flights & itineraries: airline+flight regex; IATA origin/destination; tz inference; title `BA284 LHR → SFO`.
+- ⛳ Bills & subscriptions: keywords → `EKRecurrenceRule`.
+- ⛳ Parcel tracking helper: patterns for UPS/FedEx/DHL/Royal Mail/An Post; carrier links; delivery-day reminder.
+- ⛳ Receipt parser v2 (subtotal/tax/tip/total + categories, multi-currency).
+- ⛳ PDF & multi-page OCR (PDFKit → Vision).
+- ⛳ Barcode & QR decoder (tickets/URLs/Wi-Fi); suggest actions.
+- ⛳ Live camera **Scan Mode** (Data Scanner) → route via `ActionRouter`.
+- ⛳ History & Undo: persist last 20 actions; undo via EventKit/CNContact delete.
 
 ---
 
-## Licence
+## Action plan (clear next steps)
 
-Proprietary — © Conor Nolan. All rights reserved.
+**Next patch:**
+1. **Safari popup polish (iOS)**  
+   - Background worker: add error routing and user-visible failures.  
+   - Selection fallback: if no selection, fall back to page title/URL; handle frames.  
+   - Permissions UX: surface guidance when Calendars/Reminders/Contacts/Location are denied.
+2. **Time-zone fallback**  
+   - If `MKMapItem.timeZone` is nil, reverse-geocode for a best-effort zone (toggle in Event editor).  
+   - Persist last-used **alert minutes** as a convenience default.
+3. **Locale & tests**  
+   - Formalise en-IE/en-GB/en-US parsing and currency display.
+
+**Then (sequenced):**
+- **Receipts v2 + PDF OCR** → structured totals; rasterise PDF pages for Vision.  
+- **History & Undo** → App Group ledger + simple “Undo last” surface.  
+- **Reliability polish** → error surfaces, toasts, OSLog categories; unify service calls.  
+- **Scan Mode** → Data Scanner → `ActionRouter`.  
+- **Flights & parcels** → new parsers + deep links.
+
+---
+
+© 2025. All rights reserved.
