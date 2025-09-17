@@ -10,10 +10,24 @@
 ## What’s new (17 Sep 2025)
 
 - **Geofencing UI implemented.** Event editor now has **Notify on arrival / departure** toggles and a **radius** slider (50–2,000 m). Includes a brief explainer to request **Always** location. Wired via `CalendarService.addEvent(…, geofenceProximity:, geofenceRadius:)`.
-- **Safari Web Extension working (iOS Safari).** Popup actions call the native handler via Safari’s native messaging; background worker kept minimal for now.
+- **Safari Web Extension working (iOS Safari).** Popup actions call the native handler via Safari’s native messaging; background worker kept minimal for now. **Shipping note:** the extension **ships without** the ExtensionKit entitlement; see “Signing approach” below.
 - **Popup polish.** Selection is now **frame-aware** (grabs text from iframes and focused inputs), falls back to **title/URL** when nothing’s selected, and shows **permission hints** if Calendars/Reminders/Contacts access is denied.
 - **Event alert minutes remembered.** The Event editor **remembers your last alert choice** (e.g. “30 minutes before”) across launches.
 - **APIs tidied for iOS 26.** MapKit 26 clean-ups: no deprecated placemark APIs; uses `MKMapItem.location` and time-zone fallback via `MKReverseGeocodingRequest`. Concurrency warnings removed.
+
+---
+
+## Signing approach (Sept 2025 — read me)
+
+We **intentionally do not request** the ExtensionKit entitlement (`com.apple.developer.extensionkit.extension-point-identifiers`) for the iOS Safari Web Extension. The extension **works without it** and archives/upload reliably. Requesting the key caused profile mismatches and wasted cycles.  
+**Plan:** ship with App Group only. If we ever decide to add the key, we’ll do it on a short-lived branch with a pinned profile; if it pushes back, we revert immediately.
+
+**Checklist for Release archives:**
+- App + appex sign with **Apple Distribution** (so `get-task-allow = 0`).
+- App Group present on the web-extension appex.
+- **No** ExtensionKit entitlement requested anywhere.
+
+Optional guard (advisory): `ruby tools/verify_webext_guard.rb`
 
 ---
 
@@ -81,6 +95,7 @@ Exports are written to:
 - If the popup shows “can’t connect” errors, ensure the extension is enabled and the app is installed on the device.
 - If CSV isn’t visible, check the App Group path above and that the App Group entitlement matches exactly.
 - If Apple Intelligence options aren’t visible, confirm your device is supported, language settings match, and there’s sufficient free space.
+- If Archive fails with an ExtensionKit entitlement error, ensure you are **not** requesting that entitlement anywhere (by design we don’t).
 
 ---
 
@@ -137,24 +152,25 @@ Exports are written to:
 
 ## Action plan (clear next steps)
 
+**Completed on 17 Sep 2025**
+- ✅ **Distribution signing & archive** — Release archive uploaded to App Store Connect; web extension embedded; **no** ExtensionKit entitlement requested; App Group present; delivered package has `get-task-allow = 0`.
+
 **Next patch:**
-1. **Distribution signing & archive**  
-   - Archive/Validate for App Store; verify the web-extension entitlement `com.apple.Safari.web-extension` persists in **distribution** profiles.
-2. **QA matrix (device)**  
+1. **QA matrix (device)**  
    - Exercise all actions across permission states (granted/denied), iframes, text inputs; tighten error surfaces.
-3. **Locale & tests**  
+2. **Locale & tests**  
    - en-IE/en-GB/en-US date/number formats; CSV decimals/commas; currency symbols.
-4. **A11y & localisation**  
+3. **A11y & localisation**  
    - VoiceOver labels for popup/buttons; Dynamic Type checks; initial strings in `en.lproj`.
-5. **Docs**  
+4. **Docs**  
    - Quick start section for dev scripts (`tools/verify_webext_guard.rb`) and typical failure cases.
 
 **Then (sequenced):**
-- **Receipts v2 + PDF OCR** → structured totals; rasterise PDF pages for Vision.  
-- **History & Undo** → App Group ledger + simple “Undo last” surface.  
-- **Reliability polish** → error surfaces, toasts, OSLog categories; unify service calls.  
-- **Scan Mode** → Data Scanner → `ActionRouter`.  
-- **Flights & parcels** → new parsers + deep links.
+- Receipts v2 + PDF OCR → structured totals; rasterise PDF pages for Vision.  
+- History & Undo → App Group ledger + simple “Undo last” surface.  
+- Reliability polish → error surfaces, toasts, OSLog categories; unify service calls.  
+- Scan Mode → Data Scanner → `ActionRouter`.  
+- Flights & parcels → new parsers + deep links.
 
 ---
 
