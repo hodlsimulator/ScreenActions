@@ -2,12 +2,10 @@
 //  Screen Actions
 //
 //  Created by . . on 9/14/25.
-//  Updated: 17/09/2025 – Geofencing UI (arrival/departure + radius) with brief permission explainer.
-//  Updated: 17/09/2025 – Fix: iOS 17+ onChange(two-param), MapKit import for .automobile, use instance authorizationStatus.
 //
-//  Inline editor for calendar events used by the app & extensions.
-//  Prepopulates from pasted text and DateParser.firstDateRange.
-//  Saves via CalendarService (rich builder).
+//  Updated: 17/09/2025 – Geofencing UI + iOS 17+ onChange fix.
+//  Updated: 17/09/2025 – Persist last-used alert minutes via AppStorageService.
+//
 
 import SwiftUI
 import CoreLocation
@@ -15,6 +13,7 @@ import MapKit
 
 @MainActor
 public struct EventEditorView: View {
+
     // Editable fields
     @State private var title: String
     @State private var start: Date
@@ -43,9 +42,7 @@ public struct EventEditorView: View {
     public let onCancel: () -> Void
     public let onSaved: (String) -> Void
 
-    public init(sourceText: String,
-                onCancel: @escaping () -> Void,
-                onSaved: @escaping (String) -> Void) {
+    public init(sourceText: String, onCancel: @escaping () -> Void, onSaved: @escaping (String) -> Void) {
         let trimmed = sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // Dates
@@ -53,10 +50,10 @@ public struct EventEditorView: View {
         let defaultEnd = defaultStart.addingTimeInterval(60 * 60)
         if let range = DateParser.firstDateRange(in: trimmed) {
             _start = State(initialValue: range.start)
-            _end = State(initialValue: range.end)
+            _end   = State(initialValue: range.end)
         } else {
             _start = State(initialValue: defaultStart)
-            _end = State(initialValue: defaultEnd)
+            _end   = State(initialValue: defaultEnd)
         }
 
         // Title
@@ -73,13 +70,13 @@ public struct EventEditorView: View {
         // Location hint (extract from text if possible)
         let hint = CalendarService.firstLocationHint(in: trimmed) ?? ""
         _location = State(initialValue: hint)
-        _inferTZ = State(initialValue: !hint.isEmpty) // infer if we already have a place
+        _inferTZ  = State(initialValue: !hint.isEmpty) // infer if we already have a place
 
-        // Alert
-        _alertMinutes = State(initialValue: 0)
+        // Alert — use last saved default (0 = None)
+        _alertMinutes = State(initialValue: AppStorageService.getDefaultAlertMinutes())
 
         self.onCancel = onCancel
-        self.onSaved = onSaved
+        self.onSaved  = onSaved
     }
 
     public var body: some View {
@@ -87,19 +84,13 @@ public struct EventEditorView: View {
             Form {
                 Section("Details") {
                     TextField("Title", text: $title)
-
                     DatePicker("Starts", selection: $start, displayedComponents: [.date, .hourAndMinute])
-
-                    DatePicker("Ends",
-                               selection: $end,
-                               in: start...,
-                               displayedComponents: [.date, .hourAndMinute])
+                    DatePicker("Ends", selection: $end, in: start..., displayedComponents: [.date, .hourAndMinute])
                 }
 
                 Section("Location") {
                     TextField("Place or address (optional)", text: $location)
                         .textInputAutocapitalization(.words)
-
                     Toggle("Infer time zone from location", isOn: $inferTZ)
                         .disabled(location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
@@ -109,12 +100,10 @@ public struct EventEditorView: View {
                         .onChange(of: geoNotifyOnArrival) { _, new in
                             if new { promptAlwaysLocationExplainer() }
                         }
-
                     Toggle("Notify on departure", isOn: $geoNotifyOnDeparture)
                         .onChange(of: geoNotifyOnDeparture) { _, new in
                             if new { promptAlwaysLocationExplainer() }
                         }
-
                     if geoNotifyOnArrival || geoNotifyOnDeparture {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
@@ -125,7 +114,6 @@ public struct EventEditorView: View {
                                     .foregroundStyle(.secondary)
                             }
                             Slider(value: $geoRadius, in: 50...2000, step: 50)
-
                             if location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 Text("Add a place above to use geofencing.")
                                     .font(.footnote)
@@ -155,9 +143,7 @@ public struct EventEditorView: View {
 
                 if let error {
                     Section {
-                        Text(error)
-                            .foregroundStyle(.red)
-                            .font(.footnote)
+                        Text(error).foregroundStyle(.red).font(.footnote)
                     }
                 }
             }
@@ -167,28 +153,25 @@ public struct EventEditorView: View {
                     Button("Cancel", action: onCancel)
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") {
-                        Task { await save() }
-                    }
-                    .disabled(isSaving || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    Button("Save") { Task { await save() } }
+                        .disabled(isSaving || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
-            .overlay {
-                if isSaving {
-                    ProgressView().scaleEffect(1.2)
-                }
-            }
+            .overlay { if isSaving { ProgressView().scaleEffect(1.2) } }
             .alert("Allow “Always” Location?", isPresented: $showLocationExplainer) {
                 Button("Not now", role: .cancel) { }
                 Button("Continue") { requestAlwaysLocation() }
             } message: {
-                Text("To notify when you arrive or leave an event location, Screen Actions needs “Always & When In Use” access to your location. You can change this any time in Settings.")
+                Text("""
+                     To notify when you arrive or leave an event location,
+                     Screen Actions needs “Always & When In Use” access to your location.
+                     You can change this any time in Settings.
+                     """)
             }
         }
     }
 
     // MARK: - Save
-
     private func save() async {
         error = nil
         isSaving = true
@@ -217,6 +200,11 @@ public struct EventEditorView: View {
                 geofenceRadius: clampRadius(geoRadius)
             )
 
+            // Persist last-used alert minutes (if any)
+            if alertMinutes > 0 {
+                AppStorageService.setDefaultAlertMinutes(alertMinutes)
+            }
+
             onSaved("Event created (\(id)).")
         } catch {
             self.error = error.localizedDescription
@@ -224,21 +212,15 @@ public struct EventEditorView: View {
     }
 
     // MARK: - Helpers
-
     private func promptAlwaysLocationExplainer() {
-        // Only show once per editing session when a toggle is first enabled.
-        if !showLocationExplainer {
-            showLocationExplainer = true
-        }
+        if !showLocationExplainer { showLocationExplainer = true }
     }
 
     private func requestAlwaysLocation() {
-        // Best-effort: if never asked, request When In Use first, then Always.
         let status = locationManager.authorizationStatus
         switch status {
         case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
-            // Nudge the Always prompt shortly after.
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                 self.locationManager.requestAlwaysAuthorization()
             }
@@ -249,7 +231,5 @@ public struct EventEditorView: View {
         }
     }
 
-    private func clampRadius(_ r: Double) -> Double {
-        return max(50, min(r, 2000))
-    }
+    private func clampRadius(_ r: Double) -> Double { max(50, min(r, 2000)) }
 }

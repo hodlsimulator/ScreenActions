@@ -12,6 +12,7 @@ import EventKit
 
 @MainActor
 final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
+
     func beginRequest(with context: NSExtensionContext) {
         guard
             let item = context.inputItems.first as? NSExtensionItem,
@@ -27,6 +28,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         let selection = (payload["selection"] as? String) ?? ""
         let title = (payload["title"] as? String) ?? ""
         let urlString = (payload["url"] as? String) ?? ""
+
         let text = composeInput(selection: selection, title: title, url: urlString)
 
         Task { @MainActor in
@@ -48,12 +50,17 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
                 }
                 reply(context, result)
             } catch {
-                reply(context, ["ok": false, "message": error.localizedDescription])
+                var payload: [String: Any] = ["ok": false, "message": error.localizedDescription]
+                if let hint = Self.permissionHint(for: error.localizedDescription, action: action) {
+                    payload["hint"] = hint
+                }
+                reply(context, payload)
             }
         }
     }
 
     // MARK: - Helpers
+
     private func reply(_ context: NSExtensionContext, _ payload: [String: Any]) {
         let response = NSExtensionItem()
         response.userInfo = [SFExtensionMessageKey: payload]
@@ -67,7 +74,22 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         return t
     }
 
+    private static func permissionHint(for message: String, action: String) -> String? {
+        let lower = message.lowercased()
+        if lower.contains("calendar access") || (action == "addEvent" && lower.contains("not granted")) {
+            return "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions."
+        }
+        if lower.contains("reminders access") || (action == "createReminder" && lower.contains("not granted")) {
+            return "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions."
+        }
+        if lower.contains("contacts") && lower.contains("not granted") {
+            return "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions."
+        }
+        return nil
+    }
+
     // MARK: - Actions (reuse your Core services)
+
     private func handleAutoDetect(text: String, title: String, selection: String) async throws -> [String: Any] {
         let decision = ActionRouter.route(text: text)
         switch decision.kind {
@@ -76,16 +98,19 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
             let fileURL = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
             return ["ok": true, "message": "Auto → CSV exported.", "fileURL": fileURL.absoluteString]
+
         case .contact:
             let detected = ContactParser.detect(in: text)
             let id = try await ContactsService.save(contact: detected)
             return ["ok": true, "message": "Auto → Contact saved (\(id))."]
+
         case .event:
             guard let range = decision.dateRange ?? DateParser.firstDateRange(in: text) else {
                 return try await handleCreateReminder(text: text, title: title, selection: selection)
             }
             let preferredTitle = selection.components(separatedBy: .newlines).first?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? (title.isEmpty ? "Event" : title)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                ?? (title.isEmpty ? "Event" : title)
             let id = try await CalendarService.shared.addEvent(
                 title: preferredTitle,
                 start: range.start,
@@ -93,6 +118,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
                 notes: text
             )
             return ["ok": true, "message": "Auto → Event created (\(id))."]
+
         case .reminder:
             return try await handleCreateReminder(text: text, title: title, selection: selection)
         }
@@ -100,7 +126,8 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
     private func handleCreateReminder(text: String, title: String, selection: String) async throws -> [String: Any] {
         let preferredTitle = selection.components(separatedBy: .newlines).first?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? (title.isEmpty ? "Reminder" : title)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? (title.isEmpty ? "Reminder" : title)
         let due = DateParser.firstDateRange(in: text)?.start
         let id = try await RemindersService.shared.addReminder(
             title: preferredTitle,
@@ -115,7 +142,8 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             throw NSError(domain: "ScreenActions", code: 2, userInfo: [NSLocalizedDescriptionKey: "No date found."])
         }
         let preferredTitle = selection.components(separatedBy: .newlines).first?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? (title.isEmpty ? "Event" : title)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            ?? (title.isEmpty ? "Event" : title)
         let id = try await CalendarService.shared.addEvent(
             title: preferredTitle,
             start: range.start,
