@@ -11,8 +11,9 @@
 
 - **Geofencing UI implemented.** Event editor now has **Notify on arrival / departure** toggles and a **radius** slider (50–2,000 m). Includes a brief explainer to request **Always** location. Wired via `CalendarService.addEvent(…, geofenceProximity:, geofenceRadius:)`.
 - **Safari Web Extension working (iOS Safari).** Popup actions call the native handler via Safari’s native messaging; background worker kept minimal for now.
-- **Inline editors in the app.** Event, Reminder, Contact, and Receipt-to-CSV editors are presented in-app as sheets (not just in extensions).
-- **APIs tidied for iOS 26.** MapKit 26 clean-ups and SwiftUI iOS 17+ `onChange` updates applied where relevant.
+- **Popup polish.** Selection is now **frame-aware** (grabs text from iframes and focused inputs), falls back to **title/URL** when nothing’s selected, and shows **permission hints** if Calendars/Reminders/Contacts access is denied.
+- **Event alert minutes remembered.** The Event editor **remembers your last alert choice** (e.g. “30 minutes before”) across launches.
+- **APIs tidied for iOS 26.** MapKit 26 clean-ups: no deprecated placemark APIs; uses `MKMapItem.location` and time-zone fallback via `MKReverseGeocodingRequest`. Concurrency warnings removed.
 
 ---
 
@@ -48,6 +49,9 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
 5. (If needed) Enable **Apple Intelligence** in **Settings → Apple Intelligence & Siri**.
 6. To use the Safari Web Extension on device: enable it in **Settings → Safari → Extensions → Screen Actions**.
 7. To appear in Location Services quickly: in-app **Settings → Request Location Access**, then allow **While Using** and **Always**.
+8. *(Dev tip)* Verify extension wiring from Terminal (expect “✅ All checks passed.”):
+    
+       ruby tools/verify_webext_guard.rb
 
 ## Permissions used (Info.plist)
 - `NSCalendarsFullAccessUsageDescription` — lets the app add events.
@@ -63,6 +67,7 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
 - **Parsing:** `NSDataDetector` pulls dates, phones, and addresses (`DataDetectors.swift`).  
 - **Location hint (events):** heuristics extract places from text (postal address detection plus “at/@/in …” phrases).  
 - **Calendar:** `CalendarService` writes `event.location`, structured location (`EKStructuredLocation`), optional **travel-time alarm**, and registers **geofenced arrive/leave** via `GeofencingManager` (driven by the editor’s arrival/departure toggles + radius).
+- **Time zone inference:** prefers `MKMapItem.timeZone`; falls back to **`MKReverseGeocodingRequest`** to resolve a best-effort zone (iOS 26-compliant).
 - **CSV export:** `CSVExporter.writeCSVToAppGroup(...)` writes into the App Group’s `Exports/` folder.
 
 ## Storage
@@ -73,6 +78,7 @@ Exports are written to:
 
 ## Troubleshooting
 - If extensions don’t appear, clean build, reinstall to device, then enable the relevant extension in **Settings → Safari → Extensions**.
+- If the popup shows “can’t connect” errors, ensure the extension is enabled and the app is installed on the device.
 - If CSV isn’t visible, check the App Group path above and that the App Group entitlement matches exactly.
 - If Apple Intelligence options aren’t visible, confirm your device is supported, language settings match, and there’s sufficient free space.
 
@@ -104,6 +110,7 @@ Exports are written to:
 ### Safari Web Extension (iOS)
 - ✅ Popup shows 5 buttons (Auto Detect + four manual).
 - ✅ Native handler supports `autoDetect`, `createReminder`, `addEvent`, `extractContact`, `receiptCSV`.
+- ✅ **Popup polish:** frame-aware selection; fall back to title/URL; permission hints when access is denied.
 - ℹ️ **No context menus on iOS**; manifest intentionally omits `contextMenus`.
 
 ### Shortcuts
@@ -131,15 +138,16 @@ Exports are written to:
 ## Action plan (clear next steps)
 
 **Next patch:**
-1. **Safari popup polish (iOS)**  
-   - Background worker: add error routing and user-visible failures.  
-   - Selection fallback: if no selection, fall back to page title/URL; handle frames.  
-   - Permissions UX: surface guidance when Calendars/Reminders/Contacts/Location are denied.
-2. **Time-zone fallback**  
-   - If `MKMapItem.timeZone` is nil, reverse-geocode for a best-effort zone (toggle in Event editor).  
-   - Persist last-used **alert minutes** as a convenience default.
+1. **Distribution signing & archive**  
+   - Archive/Validate for App Store; verify the web-extension entitlement `com.apple.Safari.web-extension` persists in **distribution** profiles.
+2. **QA matrix (device)**  
+   - Exercise all actions across permission states (granted/denied), iframes, text inputs; tighten error surfaces.
 3. **Locale & tests**  
-   - Formalise en-IE/en-GB/en-US parsing and currency display.
+   - en-IE/en-GB/en-US date/number formats; CSV decimals/commas; currency symbols.
+4. **A11y & localisation**  
+   - VoiceOver labels for popup/buttons; Dynamic Type checks; initial strings in `en.lproj`.
+5. **Docs**  
+   - Quick start section for dev scripts (`tools/verify_webext_guard.rb`) and typical failure cases.
 
 **Then (sequenced):**
 - **Receipts v2 + PDF OCR** → structured totals; rasterise PDF pages for Vision.  
