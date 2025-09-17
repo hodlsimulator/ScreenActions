@@ -10,10 +10,6 @@ build/
 .swiftpm/
 .build/
 
-# CocoaPods / Carthage
-Pods/
-Carthage/
-
 # Provisioning cruft (local only)
 .provtmp/
 *.mobileprovision
@@ -22,7 +18,7 @@ Carthage/
 # macOS cruft
 .DS_Store
 
-# Fastlane (if added later)
+# Fastlane
 fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots
