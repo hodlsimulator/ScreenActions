@@ -7,7 +7,7 @@
 //  Compose-first home, calm colour, HIG-friendly.
 //  • Default iOS 26 tab bar unchanged.
 //  • First tab: “Compose” (square.and.pencil), not a wand.
-//  • Auto Detect stays on the right; wand at left; label right-aligned inside.
+//  • Auto Detect centred with wand icon; Paste/Scan slightly larger.
 //  • Subtle accent gradient background + tinted “cards”.
 //  • Clear is a small × inside the editor. Paste/char labels don’t wrap.
 //
@@ -108,15 +108,13 @@ struct ContentView: View {
         // Live camera scanner sheet (VisionKit DataScanner)
         .sheet(isPresented: $showScanner) {
             VisualScannerView(
-                mode: .barcodesAndText(symbologies: nil),   // ← CHANGED: pass associated value (or omit `mode:` entirely)
+                mode: .barcodesAndText(symbologies: nil),
                 recognizesMultipleItems: false,
                 onRecognized: { payload in
-                    // Route the payload:
                     let resolution = VisualScanRouter.resolve(payload)
                     switch resolution {
                     case .openURL(let url):
                         openURL(url)
-
                     case .saveContact(let dc):
                         Task {
                             do {
@@ -126,7 +124,6 @@ struct ContentView: View {
                                 status = "Contact save failed: \(error.localizedDescription)"
                             }
                         }
-
                     case .handoff(let decision, let text):
                         inputText = text
                         switch decision.kind {
@@ -136,7 +133,6 @@ struct ContentView: View {
                         case .reminder: showReminder = true
                         }
                     }
-                    // Close after a successful hit
                     showScanner = false
                 },
                 onCancel: { showScanner = false }
@@ -146,7 +142,6 @@ struct ContentView: View {
 
         // NOTE: Auto-present removed by design. Users can open the guide from Settings.
         .onChange(of: selectedTab) { _, newValue in
-            // Compose doesn’t auto-run; others open their editor.
             switch newValue {
             case .compose: break
             case .calendar: showEvent = true
@@ -241,7 +236,8 @@ private struct MainScreen: View {
                                 .textInputAutocapitalization(.sentences)
                                 .autocorrectionDisabled(false)
                                 .font(.body)
-                                .padding(2) // space for inner border glow
+                                .padding(2)
+                                .frame(maxWidth: .infinity)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                                         .fill(Color(.secondarySystemBackground))
@@ -249,10 +245,10 @@ private struct MainScreen: View {
                                             RoundedRectangle(cornerRadius: 12)
                                                 .strokeBorder(Color.accentColor.opacity(0.22), lineWidth: 1)
                                         )
-                                        .shadow(color: Color.accentColor.opacity(0.15), radius: 10, y: 6)
                                 )
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .shadow(color: Color.accentColor.opacity(0.12), radius: 8, y: 4)
                                 .accessibilityLabel("Input text")
-                                // Inline clear (×)
                                 .overlay(alignment: .topTrailing) {
                                     if !inputText.isEmpty {
                                         Button {
@@ -270,53 +266,38 @@ private struct MainScreen: View {
                                 }
                         }
 
-                        // Secondary actions row
-                        HStack(spacing: 12) {
-                            Text("\(inputText.count) chars")
-                                .font(.footnote)
-                                .monospacedDigit()
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .fixedSize(horizontal: true, vertical: false)
-
-                            Spacer(minLength: 12)
-
-                            if UIPasteboard.general.hasStrings {
-                                Button {
-                                    pasteFromClipboard()
-                                } label: {
-                                    Label("Paste", systemImage: "doc.on.clipboard")
-                                        .labelStyle(.titleAndIcon)
-                                        .lineLimit(1)
-                                        .fixedSize(horizontal: true, vertical: false)
+                        // Secondary actions — responsive layout
+                        ViewThatFits(in: .horizontal) {
+                            // 1) One-row layout (if it truly fits without truncation)
+                            HStack(spacing: 12) {
+                                charsOut
+                                Spacer(minLength: 12)
+                                pasteButton
+                                scanButton
+                                AutoDetectButton(title: "Auto Detect") {
+                                    isEditorFocused = false
+                                    onAutoDetect()
                                 }
-                                .buttonStyle(.bordered)
-                                .controlSize(.small)
-                                .contentShape(Rectangle())
+                                .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
 
-                            // Scan button (camera input; non-OCR first)
-                            Button {
-                                isEditorFocused = false
-                                onScan()
-                            } label: {
-                                Label("Scan", systemImage: "camera.viewfinder")
-                                    .labelStyle(.titleAndIcon)
-                                    .lineLimit(1)
-                                    .fixedSize(horizontal: true, vertical: false)
+                            // 2) Fallback: two rows (prevents truncation)
+                            VStack(alignment: .trailing, spacing: 8) {
+                                HStack(spacing: 12) {
+                                    charsOut
+                                    Spacer(minLength: 12)
+                                    pasteButton
+                                    scanButton
+                                }
+                                AutoDetectButton(title: "Auto Detect") {
+                                    isEditorFocused = false
+                                    onAutoDetect()
+                                }
+                                .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                            .contentShape(Rectangle())
-
-                            // Primary action (right): wand left, label right-aligned
-                            AutoDetectButton(title: "Auto Detect") {
-                                isEditorFocused = false
-                                onAutoDetect()
-                            }
-                            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
                     }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
                     .listRowBackground(Color.clear)
                 }
 
@@ -358,7 +339,9 @@ private struct MainScreen: View {
                         .listRowBackground(Color.clear)
                 }
             }
-            .scrollContentBackground(.hidden) // let our gradient show through
+            .formStyle(.grouped)
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
             .background { backgroundView }
             .navigationTitle("Screen Actions")
             .navigationBarTitleDisplayMode(.large)
@@ -373,6 +356,60 @@ private struct MainScreen: View {
                 }
             }
         }
+    }
+
+    // Subviews used in the responsive row
+    private var charsOut: some View {
+        Text("\(inputText.count) chars")
+            .font(.footnote)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.9)
+            .layoutPriority(0) // lowest priority to give space to buttons
+    }
+
+    private var pasteButton: some View {
+        Group {
+            if UIPasteboard.general.hasStrings {
+                Button {
+                    if let s = UIPasteboard.general.string { inputText = s }
+                } label: {
+                    Label {
+                        Text("Paste")
+                            .fixedSize(horizontal: true, vertical: false) // never truncate
+                    } icon: {
+                        Image(systemName: "doc.on.clipboard")
+                    }
+                    .labelStyle(.titleAndIcon)
+                    .padding(.horizontal, 8) // slightly larger
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                .contentShape(Rectangle())
+                .layoutPriority(1) // keep visible before charsOut
+            }
+        }
+    }
+
+    private var scanButton: some View {
+        Button {
+            isEditorFocused = false
+            onScan()
+        } label: {
+            Label {
+                Text("Scan")
+                    .fixedSize(horizontal: true, vertical: false) // never truncate
+            } icon: {
+                Image(systemName: "camera.viewfinder")
+            }
+            .labelStyle(.titleAndIcon)
+            .padding(.horizontal, 8) // slightly larger
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.regular)
+        .contentShape(Rectangle())
+        .layoutPriority(1)
     }
 
     // Date range → concise, friendly text
@@ -396,46 +433,34 @@ private struct MainScreen: View {
         }
         return "From \(startText) to \(endText)"
     }
-
-    // Paste helper
-    private func pasteFromClipboard() {
-        if let s = UIPasteboard.general.string { inputText = s }
-    }
 }
 
-// MARK: - Primary Auto Detect Button (wand left, text right-aligned)
+// MARK: - Primary Auto Detect Button (centred text + wand)
 private struct AutoDetectButton: View {
     let title: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            ZStack {
-                // Right-aligned label for visual weight balance
-                HStack {
-                    Spacer(minLength: 0)
-                    Text(title)
-                        .font(.body.weight(.semibold))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.9)
-                        .fixedSize(horizontal: true, vertical: false)
-                        .multilineTextAlignment(.trailing)
-                }
-                // Wand anchored to the left
-                HStack(spacing: 8) {
-                    Image(systemName: "wand.and.stars")
-                        .font(.body)
-                    Spacer(minLength: 0)
-                }
+            // Icon + text centred together within the button
+            HStack(spacing: 8) {
+                Image(systemName: "wand.and.stars")
+                    .font(.body)
+                Text(title)
+                    .font(.body.weight(.semibold))
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false) // never truncate
             }
             .padding(.horizontal, 18)
-            .padding(.vertical, 10)
-            .frame(minWidth: 150)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .center) // centre content inside pill
+            .contentShape(Capsule())
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.capsule)
         .controlSize(.regular)
         .contentShape(Capsule())
+        .accessibilityLabel(title)
     }
 }
 
