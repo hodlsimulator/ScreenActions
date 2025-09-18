@@ -4,12 +4,11 @@
 //
 //  Created by . . on 9/13/25.
 //
-//  Compose-first home, calm colour, HIG-friendly.
-//
-//  • Default iOS tab bar visual remains unchanged.
-//  • First tab: “Compose” (square.and.pencil).
-//  • Re-tapping an already-selected action tab (Calendar/Reminder/Contact/CSV)
-//    now opens its editor sheet instead of doing nothing.
+//  Compose-first home, HIG-friendly.
+//  – Re-tapping an already-selected tab opens its editor.
+//  – Tab bar hides while the keyboard is visible (prevents jump).
+//  – The existing “Auto Detect” button is one-tap even if the keyboard is up:
+//    it dismisses the keyboard and then runs detection with the committed text.
 //
 
 import SwiftUI
@@ -43,8 +42,7 @@ struct ContentView: View {
     @State private var selectedTab: ActionTab = .compose
 
     var body: some View {
-        // Custom tab container that calls back on every tap,
-        // including when the user taps the already-selected tab.
+        // Custom tab container for reselection callbacks.
         TabBarContainer(
             selection: $selectedTab,
             onSelect: { tab in handleTabTap(tab) },
@@ -89,7 +87,7 @@ struct ContentView: View {
                 onExported: { message in showCSV = false; status = message }
             )
         }
-        // Live camera scanner sheet (VisionKit DataScanner)
+        // Live camera scanner
         .sheet(isPresented: $showScanner) {
             VisualScannerView(
                 mode: .barcodesAndText(symbologies: nil),
@@ -125,7 +123,7 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Action for any tab tap (including reselection)
+    // MARK: - Any tab tap (including reselection)
     private func handleTabTap(_ tab: ActionTab) {
         switch tab {
         case .compose:
@@ -175,6 +173,10 @@ struct ContentView: View {
 
         // Track pasteboard state so the Paste button is stable and predictable.
         @State private var canPaste: Bool = UIPasteboard.general.hasStrings
+
+        // One-tap Auto Detect while keyboard is up:
+        // we wait for focus to drop so text composition is fully committed.
+        @State private var pendingAutoDetect = false
 
         // Live route preview
         private var decision: RouteDecision? {
@@ -252,22 +254,26 @@ struct ContentView: View {
                                     }
                             }
 
-                            // Secondary actions — responsive layout
+                            // Secondary actions — responsive layout (unchanged look)
                             ViewThatFits(in: .horizontal) {
-                                // 1) One-row layout (if it truly fits without truncation)
+                                // 1) One-row layout (if it fits)
                                 HStack(spacing: 12) {
                                     charsOut
                                     Spacer(minLength: 12)
                                     pasteButton
                                     scanButton
                                     AutoDetectButton(title: "Auto Detect") {
-                                        isEditorFocused = false
-                                        onAutoDetect()
+                                        if isEditorFocused {
+                                            pendingAutoDetect = true
+                                            isEditorFocused = false   // dismiss keyboard first
+                                        } else {
+                                            onAutoDetect()
+                                        }
                                     }
                                     .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                                 }
 
-                                // 2) Fallback: two rows (prevents truncation)
+                                // 2) Fallback: two rows
                                 VStack(alignment: .trailing, spacing: 8) {
                                     HStack(spacing: 12) {
                                         charsOut
@@ -276,8 +282,12 @@ struct ContentView: View {
                                         scanButton
                                     }
                                     AutoDetectButton(title: "Auto Detect") {
-                                        isEditorFocused = false
-                                        onAutoDetect()
+                                        if isEditorFocused {
+                                            pendingAutoDetect = true
+                                            isEditorFocused = false
+                                        } else {
+                                            onAutoDetect()
+                                        }
                                     }
                                     .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                                 }
@@ -338,6 +348,7 @@ struct ContentView: View {
                         }
                         .accessibilityLabel("Settings")
                     }
+                    // Minimal keyboard toolbar (no duplicate Auto Detect).
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
                         Button("Done") { isEditorFocused = false }
@@ -355,6 +366,15 @@ struct ContentView: View {
             .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.removedNotification)) { _ in
                 canPaste = UIPasteboard.general.hasStrings
             }
+            // Fire pending Auto Detect after focus actually drops so text is committed.
+            .onChange(of: isEditorFocused) { _, focused in
+                if !focused && pendingAutoDetect {
+                    DispatchQueue.main.async {
+                        onAutoDetect()
+                        pendingAutoDetect = false
+                    }
+                }
+            }
         }
 
         // Subviews used in the responsive row
@@ -365,7 +385,7 @@ struct ContentView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.9)
-                .layoutPriority(0) // lowest priority to give space to buttons
+                .layoutPriority(0)
         }
 
         private var pasteButton: some View {
@@ -378,17 +398,17 @@ struct ContentView: View {
             } label: {
                 Label {
                     Text("Paste")
-                        .fixedSize(horizontal: true, vertical: false) // never truncate
+                        .fixedSize(horizontal: true, vertical: false)
                 } icon: {
                     Image(systemName: "doc.on.clipboard")
                 }
                 .labelStyle(.titleAndIcon)
-                .padding(.horizontal, 8) // slightly larger
+                .padding(.horizontal, 8)
             }
             .buttonStyle(.bordered)
             .controlSize(.regular)
             .contentShape(Rectangle())
-            .layoutPriority(1) // keep visible before charsOut
+            .layoutPriority(1)
             .disabled(!canPaste)
             .opacity(canPaste ? 1.0 : 0.55)
         }
@@ -400,12 +420,12 @@ struct ContentView: View {
             } label: {
                 Label {
                     Text("Scan")
-                        .fixedSize(horizontal: true, vertical: false) // never truncate
+                        .fixedSize(horizontal: true, vertical: false)
                 } icon: {
                     Image(systemName: "camera.viewfinder")
                 }
                 .labelStyle(.titleAndIcon)
-                .padding(.horizontal, 8) // slightly larger
+                .padding(.horizontal, 8)
             }
             .buttonStyle(.bordered)
             .controlSize(.regular)
@@ -434,25 +454,24 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Primary Auto Detect Button (centred text + wand)
+    // MARK: - Primary Auto Detect Button (unchanged appearance)
     private struct AutoDetectButton: View {
         let title: String
         let action: () -> Void
 
         var body: some View {
             Button(action: action) {
-                // Icon + text centred together within the button
                 HStack(spacing: 8) {
                     Image(systemName: "wand.and.stars")
                         .font(.body)
                     Text(title)
                         .font(.body.weight(.semibold))
                         .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false) // never truncate
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
-                .frame(maxWidth: .infinity, alignment: .center) // centre content inside pill
+                .frame(maxWidth: .infinity, alignment: .center)
                 .contentShape(Capsule())
             }
             .buttonStyle(.borderedProminent)
@@ -489,7 +508,7 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - UIKit TabBar wrapper (fires on every selection, including reselection)
+    // MARK: - UIKit TabBar wrapper (fires on every selection; hides during keyboard)
     private struct TabBarContainer: UIViewControllerRepresentable {
         @Binding var selection: ActionTab
         var onSelect: (ActionTab) -> Void
@@ -504,7 +523,7 @@ struct ContentView: View {
             let tbc = UITabBarController()
             tbc.delegate = context.coordinator
 
-            // Build five identical SwiftUI "MainScreen" hosts with different tab items.
+            // Build five hosts with identical content but different tab items.
             let composeVC  = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan))
             let calendarVC = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan))
             let reminderVC = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan))
@@ -519,6 +538,10 @@ struct ContentView: View {
 
             tbc.viewControllers = [composeVC, calendarVC, reminderVC, contactVC, csvVC]
             tbc.selectedIndex = selection.rawValue
+
+            // Hide/show the tab bar with the keyboard (selector-based on main actor).
+            context.coordinator.attach(to: tbc)
+
             return tbc
         }
 
@@ -534,9 +557,33 @@ struct ContentView: View {
             Coordinator(self)
         }
 
+        // Coordinator runs on the main actor so UI access is safe and compiler-clean.
+        @MainActor
         final class Coordinator: NSObject, UITabBarControllerDelegate {
             var parent: TabBarContainer
+            weak var tabBarController: UITabBarController?
+
             init(_ parent: TabBarContainer) { self.parent = parent }
+
+            func attach(to tbc: UITabBarController) {
+                self.tabBarController = tbc
+                let nc = NotificationCenter.default
+                nc.addObserver(self, selector: #selector(kbWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil)
+                nc.addObserver(self, selector: #selector(kbWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)
+            }
+
+            deinit {
+                NotificationCenter.default.removeObserver(self)
+            }
+
+            // MARK: Keyboard handlers (main actor)
+            @objc private func kbWillShow(_ note: Notification) {
+                tabBarController?.tabBar.isHidden = true
+            }
+
+            @objc private func kbWillHide(_ note: Notification) {
+                tabBarController?.tabBar.isHidden = false
+            }
 
             func tabBarController(_ tabBarController: UITabBarController, didSelect viewController: UIViewController) {
                 guard
@@ -545,10 +592,8 @@ struct ContentView: View {
                 else { return }
 
                 // Always fire, even when the user re-taps the already selected tab.
-                DispatchQueue.main.async {
-                    self.parent.selection = tab
-                    self.parent.onSelect(tab)
-                }
+                self.parent.selection = tab
+                self.parent.onSelect(tab)
             }
         }
 
