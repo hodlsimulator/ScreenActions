@@ -33,6 +33,8 @@
   - **Implementation:** StoreKit 2 (`ProStore`, `SAProducts`, `ProPaywallView`), quota gates in editors and extensions, and Pro status mirrored to the App Group (`iap.pro.active`) for the Safari/Share/Action extensions. (See **Monetisation** section below.)
 - **New app icon** applied across app, extensions, and widgets; asset catalog tidied and 1024-px sources updated.
 - **Home Screen redesign:** clearer action cards with a top-row entry for **Scan / Paste / Share**; toolbar simplified for one-hand reach; typography/spacing aligned with iOS 26.
+- **📋 Paste button fixes.**  
+  Fixed the **Paste** button sometimes getting hidden; it now **greys out** when there’s nothing on the clipboard.
 - **Onboarding overhaul (design finished, first pass shipped):** short, privacy-first flow that explains what runs on device, requests the right permissions, and offers quick enable steps for the Safari/Share extensions and Scan.
 - **Auto Detect** now opens the relevant **Edit** page first (matches manual actions), so you review before saving.
 - **Visual Intelligence scanner implemented** (VisionKit Data Scanner) for barcodes/QR + text; routes into the matching editor.

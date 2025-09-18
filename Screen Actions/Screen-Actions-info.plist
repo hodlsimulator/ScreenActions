@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+
+    <!-- App icon -->
     <key>CFBundleIconName</key>
     <string>AppIcon</string>
     <key>CFBundleIcons</key>
@@ -12,14 +14,40 @@
             <string>AppIcon</string>
         </dict>
     </dict>
+
+    <!-- Make exported files easy to find in the Files app -->
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+
+    <!-- Background (geofencing) -->
     <key>UIBackgroundModes</key>
     <array>
         <string>location</string>
     </array>
+
+    <!-- Minimal launch screen -->
     <key>UILaunchScreen</key>
     <dict/>
+
     <!-- Privacy: camera for live scanning -->
     <key>NSCameraUsageDescription</key>
     <string>Screen Actions uses the camera to scan QR codes, barcodes and documents you aim at it.</string>
+
+    <!-- Privacy: calendars / reminders / contacts -->
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Allow Screen Actions to add events to your calendars.</string>
+    <key>NSRemindersFullAccessUsageDescription</key>
+    <string>Allow Screen Actions to add reminders for you.</string>
+    <key>NSContactsUsageDescription</key>
+    <string>Allow Screen Actions to save contacts to your address book.</string>
+
+    <!-- Privacy: location (for geofenced event alerts) -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Screen Actions uses your location to set up geofenced alerts for events.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Allow always-on location so geofence alerts can trigger even when the app is closed.</string>
+
 </dict>
 </plist>
