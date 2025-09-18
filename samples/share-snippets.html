@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Screen Actions — Share Extension Sample Text</title>
+  <meta name="description" content="Realistic, copy-friendly snippets you can highlight to test Screen Actions’ Share extension (Calendar, Reminders, Contacts, Receipt→CSV, Auto-Detect).">
+  <link rel="canonical" href="https://screenactions.com/samples/share-snippets.html">
+  <style>
+    :root { --bg:#0b0c0e; --card:#111318; --ink:#e7e9ee; --muted:#aeb4c0; --accent:#5bbcff; --code:#0d0f14; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    header { padding:28px 20px 8px; max-width:980px; margin:0 auto; }
+    header h1 { margin:0 0 4px; font-size:28px; letter-spacing:0.2px; }
+    header p { margin:0; color:var(--muted); }
+    main { max-width:980px; margin:16px auto 56px; padding:0 20px; display:grid; gap:18px; }
+    .snippet { background:var(--card); border:1px solid #1b1e25; border-radius:14px; padding:14px 14px 0; }
+    .snippet h2 { margin:4px 4px 10px; font-size:18px; color:#dfe5f2; }
+    pre { margin:0; padding:12px 14px 14px; background:var(--code); border-radius:10px; overflow:auto; white-space:pre-wrap; word-wrap:break-word; }
+    small { color:var(--muted); }
+    .hint { margin: 14px 18px 18px; color:var(--muted); }
+    a { color:var(--accent); text-decoration:none; }
+    a:hover { text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Share Extension — Sample Text</h1>
+    <p>Highlight any block below on this page and invoke <strong>Screen Actions → Share</strong> to test Calendar, Reminders, Contacts, and Receipt→CSV.</p>
+  </header>
+  <main>
+
+    <section class="snippet">
+      <h2>Event / Meetup</h2>
+      <pre>City UX Breakfast — Dublin
+Thursday, 27 November 2025 · 08:00–09:30
+Brother Hubbard (North), 153 Capel St, Dublin 1, D01 V3P6
+Topic: “Designing trust into onboarding”
+RSVP (free): https://example.ie/city-ux-breakfast
+Contact: events@cityux.ie · +353 1 234 5678</pre>
+      <div class="hint"><small>Good for: Add to Calendar · Auto-Detect</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Webinar (Online)</h2>
+      <pre>Webinar: Swift Concurrency Patterns That Scale
+Tuesday, 9 December 2025 · 17:00–18:15 (Ireland time)
+Join link (Zoom): https://zoom.example.com/j/987654321
+Speaker: Dr Aisling Kavanagh — Meadow Labs
+Notes: Q&amp;A at the end; recording shared with registrants.</pre>
+      <div class="hint"><small>Good for: Add to Calendar</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Restaurant Booking Confirmation</h2>
+      <pre>Booking confirmed — Rosa Madre
+Date: Friday, 24 October 2025
+Time: 19:45
+Guests: 2
+Address: 7 Crow St, Temple Bar, Dublin 2, D02 N228
+Phone: +353 1 555 9010
+Special request: Window table if possible.</pre>
+      <div class="hint"><small>Good for: Add to Calendar · Reminder</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Service Appointment</h2>
+      <pre>Appointment — Boiler Service
+Monday, 6 October 2025 · 10:30–11:30
+Engineer: Liam O’Donnell (Gas Safe 123456)
+Address: 18 Capel St, Dublin 1, D01 AB23
+Contact: +353 83 123 4567 · liam@heatquick.ie</pre>
+      <div class="hint"><small>Good for: Add to Calendar</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Conference Talk (track + room)</h2>
+      <pre>Dublin Mobile Dev Day 2025
+Friday, 12 December 2025 · 09:00–17:30
+The Marker Hotel, Grand Canal Square, Dublin 2
+
+10:30–11:15 · Track A · Room “Bray”
+“Widgets &amp; Live Activities: Practical Patterns”
+Speaker: Niall Keane — Brightmoor</pre>
+      <div class="hint"><small>Good for: Add to Calendar</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Deadline → Reminder</h2>
+      <pre>Reminder: Submit Q4 VAT return by Friday, 10 October 2025 at 17:00.
+Revenue Online Service: https://ros.ie</pre>
+      <div class="hint"><small>Good for: Create Reminder</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Press Contact (extract a contact)</h2>
+      <pre>Press Contact
+Siobhán Murphy — Operations Manager
+Riverstone Studios
+12–14 Camden Row, Dublin 8, D08 XY91
++353 87 555 0184 · +353 1 234 5678
+siobhan@riverstonestudios.ie
+https://riverstonestudios.ie</pre>
+      <div class="hint"><small>Good for: Extract Contact</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Team Bio (compact contact)</h2>
+      <pre>Tomás Kelly, Director at Oakfield Consulting. Tel: +353 85 234 7788 · Email: tomas.kelly@oakfield.ie · Office: 5 Harcourt Rd, Dublin 2, D02 XY77. LinkedIn: /in/tomaskelly</pre>
+      <div class="hint"><small>Good for: Extract Contact</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Shipping / Delivery Slot</h2>
+      <pre>DPD Delivery — Order #E52190
+Estimated: Tuesday, 7 October 2025 · 13:00–15:00
+Address: Apt 12, The Phoenix, Parkgate St, Dublin 8
+Tracking: https://dpd.example/track/E52190</pre>
+      <div class="hint"><small>Good for: Add to Calendar · Reminder</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Order Confirmation (Receipt → CSV)</h2>
+      <pre>Order #42139 — GreenLeaf Market
+Date: 21 Sep 2025 13:14
+
+Sourdough Loaf                           €3.50
+Free-range Eggs (6)                      €2.40
+Bananas 1.18 kg @ €1.89/kg               €2.23
+Oat Milk 1L                              €2.10
+Irish Cheddar 300g                       €3.75
+Coffee Beans 500g                        €9.90
+Reusable Bag                             €0.20
+
+SUBTOTAL                                €24.08
+VAT @ 23%                                €5.54
+TOTAL                                   €29.62
+Paid: Visa **** 1234 (Contactless)</pre>
+      <div class="hint"><small>Good for: Receipt → CSV</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Services Invoice (Receipt → CSV)</h2>
+      <pre>Brightline Cycles — Service Invoice 2025-1048
+Date: 02 Oct 2025 10:47
+
+Labour — Full Service (1.5 hrs)         €60.00
+Shimano Brake Pads (pair)                €18.00
+Gear Cable (stainless)                    €6.50
+Wheel True (rear)                        €12.00
+Chain Lubricant                           €7.50
+
+SUBTOTAL                                €104.00
+VAT @ 13.5%                              €14.04
+TOTAL                                   €118.04
+Paid by Mastercard **** 4420</pre>
+      <div class="hint"><small>Good for: Receipt → CSV</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Mixed “News Post” (multiple actions)</h2>
+      <pre>Great to meet earlier. Let’s lock the planning session:
+
+Project Kick-off Workshop
+Mon 6 October 2025, 09:30–11:00
+Studio North, 3rd Floor, 18 Capel St, Dublin 1, D01 AB23
+
+Facilitator:
+Liam O’Donnell — Product Lead
+M: +353 83 123 4567
+E: liam.odonnell@brightmoor.io
+Site: https://brightmoor.io</pre>
+      <div class="hint"><small>Good for: Auto-Detect (Calendar + Contact)</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Travel Itinerary Snippet</h2>
+      <pre>Aer Lingus — Booking RT2F9K
+Dublin (DUB) → London Heathrow (LHR)
+Thu, 30 October 2025 · 07:45–09:15 · EI 152
+Passenger: Conor Nolan
+Check-in closes 45 mins before departure.</pre>
+      <div class="hint"><small>Good for: Add to Calendar</small></div>
+    </section>
+
+    <section class="snippet">
+      <h2>Community Notice</h2>
+      <pre>Street cleaning — Ranelagh
+Wednesday, 8 October 2025 · 08:00–10:00
+Parking restrictions in effect on Ranelagh Rd between Charleston Rd and Sandford Rd.
+Contact: Dublin City Council · 01 222 2222</pre>
+      <div class="hint"><small>Good for: Add to Calendar · Reminder</small></div>
+    </section>
+
+  </main>
+</body>
+</html>
