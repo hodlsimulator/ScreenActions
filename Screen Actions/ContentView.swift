@@ -10,12 +10,15 @@
 //  • Auto Detect centred with wand icon; Paste/Scan slightly larger.
 //  • Subtle accent gradient background + tinted “cards”.
 //  • Clear is a small × inside the editor. Paste/char labels don’t wrap.
+//  Users can open the guide from Settings. Auto-present removed by design.
 //
 
 import SwiftUI
 import UIKit
+import Combine
 
 struct ContentView: View {
+
     // MARK: - State
     @State private var inputText: String = ""
     @State private var status: String = "Ready"
@@ -41,7 +44,6 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-
             // Compose (home)
             mainScreen
                 .tabItem { Label("Compose", systemImage: symbolName(["square.and.pencil"])) }
@@ -49,12 +51,12 @@ struct ContentView: View {
 
             // Calendar
             mainScreen
-                .tabItem { Label("Calendar", systemImage: symbolName(["calendar.badge.plus","calendar"])) }
+                .tabItem { Label("Calendar", systemImage: symbolName(["calendar.badge.plus", "calendar"])) }
                 .tag(ActionTab.calendar)
 
             // Reminder
             mainScreen
-                .tabItem { Label("Reminder", systemImage: symbolName(["checklist","checkmark.circle"])) }
+                .tabItem { Label("Reminder", systemImage: symbolName(["checklist", "checkmark.circle"])) }
                 .tag(ActionTab.reminder)
 
             // Contact
@@ -70,13 +72,14 @@ struct ContentView: View {
 
             // CSV
             mainScreen
-                .tabItem { Label("Receipt · CSV", systemImage: symbolName(["tablecells","doc.text.magnifyingglass"])) }
+                .tabItem { Label("Receipt · CSV", systemImage: symbolName(["tablecells", "doc.text.magnifyingglass"])) }
                 .tag(ActionTab.csv)
         }
-
         // Sheets
         .sheet(isPresented: $showSettings) { SettingsView() }
-        .sheet(isPresented: $showShareOnboarding) { ShareOnboardingView(isPresented: $showShareOnboarding) }
+        .sheet(isPresented: $showShareOnboarding) {
+            ShareOnboardingView(isPresented: $showShareOnboarding)
+        }
         .sheet(isPresented: $showEvent) {
             EventEditorView(
                 sourceText: inputText,
@@ -139,8 +142,6 @@ struct ContentView: View {
             )
             .ignoresSafeArea()
         }
-
-        // NOTE: Auto-present removed by design. Users can open the guide from Settings.
         .onChange(of: selectedTab) { _, newValue in
             switch newValue {
             case .compose: break
@@ -167,7 +168,6 @@ struct ContentView: View {
     private func autoDetect() {
         let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { status = "Provide text first."; return }
-
         let decision = ActionRouter.route(text: trimmed)
         switch decision.kind {
         case .receipt:  showCSV = true
@@ -191,7 +191,12 @@ private struct MainScreen: View {
     var onTapSettings: () -> Void
     var onAutoDetect: () -> Void
     var onScan: () -> Void
+
     @FocusState private var isEditorFocused: Bool
+    @Environment(\.scenePhase) private var scenePhase
+
+    // Track pasteboard state so the Paste button is stable and predictable.
+    @State private var canPaste: Bool = UIPasteboard.general.hasStrings
 
     // Live route preview
     private var decision: RouteDecision? {
@@ -205,11 +210,14 @@ private struct MainScreen: View {
         ZStack {
             LinearGradient(
                 colors: [Color(.systemBackground), Color.accentColor.opacity(0.05)],
-                startPoint: .topLeading, endPoint: .bottomTrailing
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
             RadialGradient(
                 colors: [Color.accentColor.opacity(0.10), .clear],
-                center: .topLeading, startRadius: 0, endRadius: 420
+                center: .topLeading,
+                startRadius: 0,
+                endRadius: 420
             )
         }
         .ignoresSafeArea()
@@ -356,6 +364,19 @@ private struct MainScreen: View {
                 }
             }
         }
+        // Keep Paste button state fresh
+        .onAppear { canPaste = UIPasteboard.general.hasStrings }
+        .onChange(of: scenePhase) { _, newValue in
+            if newValue == .active {
+                canPaste = UIPasteboard.general.hasStrings
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
+            canPaste = UIPasteboard.general.hasStrings
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.removedNotification)) { _ in
+            canPaste = UIPasteboard.general.hasStrings
+        }
     }
 
     // Subviews used in the responsive row
@@ -370,26 +391,28 @@ private struct MainScreen: View {
     }
 
     private var pasteButton: some View {
-        Group {
-            if UIPasteboard.general.hasStrings {
-                Button {
-                    if let s = UIPasteboard.general.string { inputText = s }
-                } label: {
-                    Label {
-                        Text("Paste")
-                            .fixedSize(horizontal: true, vertical: false) // never truncate
-                    } icon: {
-                        Image(systemName: "doc.on.clipboard")
-                    }
-                    .labelStyle(.titleAndIcon)
-                    .padding(.horizontal, 8) // slightly larger
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-                .contentShape(Rectangle())
-                .layoutPriority(1) // keep visible before charsOut
+        Button {
+            if let s = UIPasteboard.general.string, !s.isEmpty {
+                inputText = s
+            } else {
+                status = "Nothing to paste."
             }
+        } label: {
+            Label {
+                Text("Paste")
+                    .fixedSize(horizontal: true, vertical: false) // never truncate
+            } icon: {
+                Image(systemName: "doc.on.clipboard")
+            }
+            .labelStyle(.titleAndIcon)
+            .padding(.horizontal, 8) // slightly larger
         }
+        .buttonStyle(.bordered)
+        .controlSize(.regular)
+        .contentShape(Rectangle())
+        .layoutPriority(1) // keep visible before charsOut
+        .disabled(!canPaste)
+        .opacity(canPaste ? 1.0 : 0.55)
     }
 
     private var scanButton: some View {
@@ -439,7 +462,6 @@ private struct MainScreen: View {
 private struct AutoDetectButton: View {
     let title: String
     let action: () -> Void
-
     var body: some View {
         Button(action: action) {
             // Icon + text centred together within the button
@@ -467,14 +489,13 @@ private struct AutoDetectButton: View {
 // MARK: - KindChip (tasteful, minimal colour)
 private struct KindChip: View {
     let kind: ScreenActionKind
-
     var body: some View {
         let (label, icon, tint): (String, String, Color) = {
             switch kind {
-            case .event:    return ("Event", "calendar", .blue)
-            case .reminder: return ("Reminder", "checkmark.circle", .green)
-            case .contact:  return ("Contact", "person.crop.circle", .orange)
-            case .receipt:  return ("Receipt", "tablecells", .purple)
+            case .event:    return ("Event",    "calendar",                 .blue)
+            case .reminder: return ("Reminder", "checkmark.circle",         .green)
+            case .contact:  return ("Contact",  "person.crop.circle",       .orange)
+            case .receipt:  return ("Receipt",  "tablecells",               .purple)
             }
         }()
 
