@@ -700,7 +700,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsActionExtension/ScreenActionsActionExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsActionExtension/Info.plist;
@@ -729,7 +729,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsActionExtension/ScreenActionsActionExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsActionExtension/Info.plist;
@@ -758,7 +758,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsShareExtension/ScreenActionsShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsShareExtension/Info.plist;
@@ -787,7 +787,7 @@
 			buildSettings = {
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsShareExtension/ScreenActionsShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsShareExtension/Info.plist;
@@ -1015,7 +1015,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Screen Actions/Screen Actions.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1060,7 +1060,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Screen Actions/Screen Actions.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1105,7 +1105,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsControlsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsControls/Info.plist;
@@ -1140,7 +1140,7 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsControlsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsControls/Info.plist;
