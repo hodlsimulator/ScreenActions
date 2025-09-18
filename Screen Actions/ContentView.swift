@@ -37,6 +37,7 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
+
             // Compose (home)
             mainScreen
                 .tabItem { Label("Compose", systemImage: symbolName(["square.and.pencil"])) }
@@ -55,12 +56,11 @@ struct ContentView: View {
             // Contact
             mainScreen
                 .tabItem {
-                    Label("Contact",
-                          systemImage: symbolName([
-                            "person.text.rectangle",
-                            "person.crop.rectangle.badge.plus",
-                            "person.crop.circle.badge.plus"
-                          ]))
+                    Label("Contact", systemImage: symbolName([
+                        "person.text.rectangle",
+                        "person.crop.rectangle.badge.plus",
+                        "person.crop.circle.badge.plus"
+                    ]))
                 }
                 .tag(ActionTab.contact)
 
@@ -69,32 +69,40 @@ struct ContentView: View {
                 .tabItem { Label("Receipt · CSV", systemImage: symbolName(["tablecells","doc.text.magnifyingglass"])) }
                 .tag(ActionTab.csv)
         }
+
         // Sheets
         .sheet(isPresented: $showSettings) { SettingsView() }
         .sheet(isPresented: $showShareOnboarding) { ShareOnboardingView(isPresented: $showShareOnboarding) }
         .sheet(isPresented: $showEvent) {
-            EventEditorView(sourceText: inputText,
-                            onCancel: { showEvent = false },
-                            onSaved: { message in showEvent = false; status = message })
+            EventEditorView(
+                sourceText: inputText,
+                onCancel: { showEvent = false },
+                onSaved: { message in showEvent = false; status = message }
+            )
         }
         .sheet(isPresented: $showReminder) {
-            ReminderEditorView(sourceText: inputText,
-                               onCancel: { showReminder = false },
-                               onSaved: { message in showReminder = false; status = message })
+            ReminderEditorView(
+                sourceText: inputText,
+                onCancel: { showReminder = false },
+                onSaved: { message in showReminder = false; status = message }
+            )
         }
         .sheet(isPresented: $showContact) {
-            ContactEditorView(sourceText: inputText,
-                              onCancel: { showContact = false },
-                              onSaved: { message in showContact = false; status = message })
+            ContactEditorView(
+                sourceText: inputText,
+                onCancel: { showContact = false },
+                onSaved: { message in showContact = false; status = message }
+            )
         }
         .sheet(isPresented: $showCSV) {
-            ReceiptCSVPreviewView(sourceText: inputText,
-                                  onCancel: { showCSV = false },
-                                  onExported: { message in showCSV = false; status = message })
+            ReceiptCSVPreviewView(
+                sourceText: inputText,
+                onCancel: { showCSV = false },
+                onExported: { message in showCSV = false; status = message }
+            )
         }
-        .onAppear {
-            if !hasCompletedShareOnboarding { showShareOnboarding = true }
-        }
+
+        // NOTE: Auto-present removed by design. Users can open the guide from Settings.
         .onChange(of: selectedTab) { _, newValue in
             // Compose doesn’t auto-run; others open their editor.
             switch newValue {
@@ -120,10 +128,8 @@ struct ContentView: View {
     // MARK: - Auto Detect router
     private func autoDetect() {
         let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            status = "Provide text first."
-            return
-        }
+        guard !trimmed.isEmpty else { status = "Provide text first."; return }
+
         let decision = ActionRouter.route(text: trimmed)
         switch decision.kind {
         case .receipt:  showCSV = true
@@ -144,10 +150,8 @@ struct ContentView: View {
 private struct MainScreen: View {
     @Binding var inputText: String
     @Binding var status: String
-
     var onTapSettings: () -> Void
     var onAutoDetect: () -> Void
-
     @FocusState private var isEditorFocused: Bool
 
     // Live route preview
@@ -322,7 +326,7 @@ private struct MainScreen: View {
         df.timeStyle = .short
 
         let startText = df.string(from: r.start)
-        let endText   = df.string(from: r.end)
+        let endText = df.string(from: r.end)
 
         let comps = DateComponentsFormatter()
         comps.allowedUnits = [.hour, .minute]
@@ -337,9 +341,7 @@ private struct MainScreen: View {
 
     // Paste helper
     private func pasteFromClipboard() {
-        if let s = UIPasteboard.general.string {
-            inputText = s
-        }
+        if let s = UIPasteboard.general.string { inputText = s }
     }
 }
 
