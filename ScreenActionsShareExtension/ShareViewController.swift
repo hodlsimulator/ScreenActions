@@ -4,7 +4,8 @@
 //
 //  Created by . . on 13/09/2025.
 //
-//  Pass shared text/URL/image into the shared action panel.
+//  ShareViewController.swift — Share Extension
+//  Hosts the SwiftUI panel + injects a ProStore stub so editor sheets work.
 //
 
 import UIKit
@@ -17,12 +18,12 @@ final class ShareViewController: UIViewController {
     private var pageTitle: String = ""
     private var pageURL: String = ""
     private var imageData: Data? = nil
-
-    private var host: UIHostingController<SAActionPanelView>?
+    private var host: UIHostingController<AnyView>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
+        AppStorageService.shared.bootstrap() // safe no-op if already done
         loadFromContext()
     }
 
@@ -35,10 +36,12 @@ final class ShareViewController: UIViewController {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
             attachUI(); return
         }
+
         let group = DispatchGroup()
 
         for item in items {
             for provider in item.attachments ?? [] {
+
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, _ in
@@ -49,6 +52,7 @@ final class ShareViewController: UIViewController {
                         Task { @MainActor in self.selectedText = t }
                     }
                 }
+
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
@@ -57,6 +61,7 @@ final class ShareViewController: UIViewController {
                         Task { @MainActor in self.pageURL = url.absoluteString }
                     }
                 }
+
                 if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] item, _ in
@@ -80,6 +85,10 @@ final class ShareViewController: UIViewController {
     }
 
     private func attachUI() {
+        // Pro status is mirrored by the app into the App Group.
+        let pro = ProStore()
+        Task { await pro.refreshEntitlement() } // reads mirror; no StoreKit in extension
+
         let root = SAActionPanelView(
             selection: selectedText,
             pageTitle: pageTitle,
@@ -90,8 +99,9 @@ final class ShareViewController: UIViewController {
             out.userInfo = ["ScreenActionsResult": message]
             self?.extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
         }
+        .environmentObject(pro) // needed by the editor sheets/paywall
 
-        let host = UIHostingController(rootView: root)
+        let host = UIHostingController(rootView: AnyView(root))
         addChild(host)
         host.view.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(host.view)

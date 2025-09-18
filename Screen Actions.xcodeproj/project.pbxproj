@@ -17,6 +17,16 @@
 		E12A851F2E75DBAE00E07869 /* ScreenActionsActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E12A85482E76045100E07869 /* ScreenActionsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E12A85762E760EBD00E07869 /* ScreenActionsWebExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A855E2E760EBD00E07869 /* ScreenActionsWebExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E12CA70A2E7C96FF006FBB3F /* EventEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2522E77619500C8F5EE /* EventEditorView.swift */; };
+		E12CA70B2E7C9710006FBB3F /* ContactEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2722E7775D800C8F5EE /* ContactEditorView.swift */; };
+		E12CA70C2E7C9741006FBB3F /* ReceiptCSVPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */; };
+		E12CA70F2E7C9D1E006FBB3F /* Combine.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12CA70E2E7C9D1E006FBB3F /* Combine.framework */; };
+		E12CA7102E7C9D39006FBB3F /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E14B2E75ACF400E8D263 /* SwiftUI.framework */; };
+		E12CA7122E7C9D4D006FBB3F /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12CA7112E7C9D4D006FBB3F /* StoreKit.framework */; };
+		E12CA7142E7C9D59006FBB3F /* EventKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12CA7132E7C9D59006FBB3F /* EventKit.framework */; };
+		E12CA7162E7C9D68006FBB3F /* Contacts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12CA7152E7C9D67006FBB3F /* Contacts.framework */; };
+		E12CA7182E7C9D76006FBB3F /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12CA7172E7C9D76006FBB3F /* MapKit.framework */; };
+		E12CA71A2E7C9D86006FBB3F /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12CA7192E7C9D86006FBB3F /* CoreLocation.framework */; };
 		E183E14A2E75ACF400E8D263 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E1492E75ACF400E8D263 /* WidgetKit.framework */; };
 		E183E14C2E75ACF400E8D263 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E14B2E75ACF400E8D263 /* SwiftUI.framework */; };
 		E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -95,6 +105,12 @@
 		E12CA0912E7A4790006FBB3F /* verify_webext_guard.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = verify_webext_guard.rb; sourceTree = "<group>"; };
 		E12CA0942E7A579C006FBB3F /* verify_archive_entitlements.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = verify_archive_entitlements.rb; sourceTree = "<group>"; };
 		E12CA0952E7A5876006FBB3F /* archive_and_verify.zsh */ = {isa = PBXFileReference; lastKnownFileType = text; path = archive_and_verify.zsh; sourceTree = "<group>"; };
+		E12CA70E2E7C9D1E006FBB3F /* Combine.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Combine.framework; path = System/Library/Frameworks/Combine.framework; sourceTree = SDKROOT; };
+		E12CA7112E7C9D4D006FBB3F /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		E12CA7132E7C9D59006FBB3F /* EventKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = EventKit.framework; path = System/Library/Frameworks/EventKit.framework; sourceTree = SDKROOT; };
+		E12CA7152E7C9D67006FBB3F /* Contacts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Contacts.framework; path = System/Library/Frameworks/Contacts.framework; sourceTree = SDKROOT; };
+		E12CA7172E7C9D76006FBB3F /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		E12CA7192E7C9D86006FBB3F /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		E183E1352E75ABC700E8D263 /* Screen Actions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen Actions.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsControlsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1492E75ACF400E8D263 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -175,6 +191,7 @@
 				Intents/CreateReminderIntent.swift,
 				Intents/ExtractContactIntent.swift,
 				Intents/ReceiptToCSVIntent.swift,
+				ProPaywallView.swift,
 			);
 			target = E12A853D2E76045100E07869 /* ScreenActionsShareExtension */;
 		};
@@ -269,6 +286,13 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E12CA71A2E7C9D86006FBB3F /* CoreLocation.framework in Frameworks */,
+				E12CA7182E7C9D76006FBB3F /* MapKit.framework in Frameworks */,
+				E12CA7162E7C9D68006FBB3F /* Contacts.framework in Frameworks */,
+				E12CA7142E7C9D59006FBB3F /* EventKit.framework in Frameworks */,
+				E12CA7122E7C9D4D006FBB3F /* StoreKit.framework in Frameworks */,
+				E12CA7102E7C9D39006FBB3F /* SwiftUI.framework in Frameworks */,
+				E12CA70F2E7C9D1E006FBB3F /* Combine.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,6 +390,12 @@
 		E183E1482E75ACF400E8D263 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E12CA7192E7C9D86006FBB3F /* CoreLocation.framework */,
+				E12CA7172E7C9D76006FBB3F /* MapKit.framework */,
+				E12CA7152E7C9D67006FBB3F /* Contacts.framework */,
+				E12CA7132E7C9D59006FBB3F /* EventKit.framework */,
+				E12CA7112E7C9D4D006FBB3F /* StoreKit.framework */,
+				E12CA70E2E7C9D1E006FBB3F /* Combine.framework */,
 				E183E1492E75ACF400E8D263 /* WidgetKit.framework */,
 				E183E14B2E75ACF400E8D263 /* SwiftUI.framework */,
 				E12A85122E75DBAD00E07869 /* UniformTypeIdentifiers.framework */,
@@ -607,7 +637,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E12CA70B2E7C9710006FBB3F /* ContactEditorView.swift in Sources */,
 				E115D2632E77664500C8F5EE /* ReminderEditorView.swift in Sources */,
+				E12CA70A2E7C96FF006FBB3F /* EventEditorView.swift in Sources */,
+				E12CA70C2E7C9741006FBB3F /* ReceiptCSVPreviewView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
