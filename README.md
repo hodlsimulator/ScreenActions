@@ -21,11 +21,11 @@
   - **100% on-device; no network or costs.**
 - **💫 Monetisation (StoreKit 2) — Pro + Tip Jar + daily free quotas.**  
   - **Products (exact IDs):**  
-    - `com.conornolan.Screen-Actions.pro.monthly` — Auto-Renewable Subscription (1 month)  
-    - `com.conornolan.Screen-Actions.pro.lifetime` — Non-Consumable  
-    - `com.conornolan.Screen-Actions.tip.small` — Consumable  
-    - `com.conornolan.Screen-Actions.tip.medium` — Consumable  
-    - `com.conornolan.Screen-Actions.tip.large` — Consumable
+    - `com.conornolan.Screen_Actions.pro.monthly` — Auto-Renewable Subscription (1 month)  
+    - `com.conornolan.Screen_Actions.pro.lifetime` — Non-Consumable  
+    - `com.conornolan.Screen_Actions.tip.small` — Consumable  
+    - `com.conornolan.Screen_Actions.tip.medium` — Consumable  
+    - `com.conornolan.Screen_Actions.tip.large` — Consumable
   - **Suggested pricing (pick nearby tiers):** Monthly €0.99 • Lifetime €16.99 • Tips €0.99 / €2.99 / €4.99.  
     UI shows **localised** prices via `Product.displayPrice` (no hard-coded currency).
   - **Free (daily quotas):** Receipt → CSV **3/day** • Create Contact **from image 5/day** • Add Event **with geofence 1/day**.  
@@ -72,11 +72,11 @@ Optional guard (advisory): `ruby tools/verify_webext_guard.rb`
 ## 🛒 Monetisation (Pro + Tip Jar — StoreKit 2)
 
 **Products to create in App Store Connect (IDs must match exactly):**
-- `com.conornolan.Screen-Actions.pro.monthly` — Auto-Renewable (1 month)
-- `com.conornolan.Screen-Actions.pro.lifetime` — Non-Consumable
-- `com.conornolan.Screen-Actions.tip.small` — Consumable
-- `com.conornolan.Screen-Actions.tip.medium` — Consumable
-- `com.conornolan.Screen-Actions.tip.large` — Consumable
+- `com.conornolan.Screen_Actions.pro.monthly` — Auto-Renewable (1 month)
+- `com.conornolan.Screen_Actions.pro.lifetime` — Non-Consumable
+- `com.conornolan.Screen_Actions.tip.small` — Consumable
+- `com.conornolan.Screen_Actions.tip.medium` — Consumable
+- `com.conornolan.Screen_Actions.tip.large` — Consumable
 
 **Suggested pricing (choose nearby tiers in ASC):**  
 Monthly €0.99 • Lifetime €16.99 • Tips €0.99 / €2.99 / €4.99.  
