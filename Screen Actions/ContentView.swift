@@ -31,6 +31,10 @@ struct ContentView: View {
     @State private var showContact = false
     @State private var showCSV = false
 
+    // Live scanner
+    @State private var showScanner = false
+    @Environment(\.openURL) private var openURL
+
     // Tab routing
     private enum ActionTab: Hashable { case compose, calendar, reminder, contact, csv }
     @State private var selectedTab: ActionTab = .compose
@@ -101,6 +105,44 @@ struct ContentView: View {
                 onExported: { message in showCSV = false; status = message }
             )
         }
+        // Live camera scanner sheet (VisionKit DataScanner)
+        .sheet(isPresented: $showScanner) {
+            VisualScannerView(
+                mode: .barcodesAndText(symbologies: nil),   // ← CHANGED: pass associated value (or omit `mode:` entirely)
+                recognizesMultipleItems: false,
+                onRecognized: { payload in
+                    // Route the payload:
+                    let resolution = VisualScanRouter.resolve(payload)
+                    switch resolution {
+                    case .openURL(let url):
+                        openURL(url)
+
+                    case .saveContact(let dc):
+                        Task {
+                            do {
+                                let id = try await ContactsService.save(contact: dc)
+                                status = "Saved contact (\(id))."
+                            } catch {
+                                status = "Contact save failed: \(error.localizedDescription)"
+                            }
+                        }
+
+                    case .handoff(let decision, let text):
+                        inputText = text
+                        switch decision.kind {
+                        case .receipt:  showCSV = true
+                        case .contact:  showContact = true
+                        case .event:    showEvent = true
+                        case .reminder: showReminder = true
+                        }
+                    }
+                    // Close after a successful hit
+                    showScanner = false
+                },
+                onCancel: { showScanner = false }
+            )
+            .ignoresSafeArea()
+        }
 
         // NOTE: Auto-present removed by design. Users can open the guide from Settings.
         .onChange(of: selectedTab) { _, newValue in
@@ -121,7 +163,8 @@ struct ContentView: View {
             inputText: $inputText,
             status: $status,
             onTapSettings: { showSettings = true },
-            onAutoDetect: { autoDetect() }
+            onAutoDetect: { autoDetect() },
+            onScan: { showScanner = true }
         )
     }
 
@@ -152,6 +195,7 @@ private struct MainScreen: View {
     @Binding var status: String
     var onTapSettings: () -> Void
     var onAutoDetect: () -> Void
+    var onScan: () -> Void
     @FocusState private var isEditorFocused: Bool
 
     // Live route preview
@@ -250,6 +294,20 @@ private struct MainScreen: View {
                                 .controlSize(.small)
                                 .contentShape(Rectangle())
                             }
+
+                            // Scan button (camera input; non-OCR first)
+                            Button {
+                                isEditorFocused = false
+                                onScan()
+                            } label: {
+                                Label("Scan", systemImage: "camera.viewfinder")
+                                    .labelStyle(.titleAndIcon)
+                                    .lineLimit(1)
+                                    .fixedSize(horizontal: true, vertical: false)
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .contentShape(Rectangle())
 
                             // Primary action (right): wand left, label right-aligned
                             AutoDetectButton(title: "Auto Detect") {
