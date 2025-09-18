@@ -20,6 +20,10 @@ final class ProStore: ObservableObject {
     @Published private(set) var isPro: Bool = false
     @Published private(set) var proDescription: String = "Not Pro"
     @Published private(set) var productsByID: [String: Product] = [:]
+    
+    @Published private(set) var isLoadingProducts = false
+    @Published private(set) var missingProductIDs: Set<String> = []
+    @Published private(set) var lastLoadError: String?
 
     // Convenience accessors
     var proMonthly: Product?  { productsByID[SAProducts.proMonthly] }
@@ -42,13 +46,23 @@ final class ProStore: ObservableObject {
     // MARK: - StoreKit plumbing
 
     func loadProducts() async {
+        isLoadingProducts = true
+        lastLoadError = nil
+        defer { isLoadingProducts = false }
+
         do {
-            let products = try await Product.products(for: Array(SAProducts.all))
+            let ids = Array(SAProducts.all)
+            let products = try await Product.products(for: ids)
             var map: [String: Product] = [:]
             for p in products { map[p.id] = p }
             self.productsByID = map
+
+            let found = Set(products.map(\.id))
+            self.missingProductIDs = SAProducts.all.subtracting(found)
         } catch {
             self.productsByID = [:]
+            self.missingProductIDs = SAProducts.all
+            self.lastLoadError = error.localizedDescription
         }
     }
 

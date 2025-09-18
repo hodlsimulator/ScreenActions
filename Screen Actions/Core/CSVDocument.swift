@@ -11,9 +11,12 @@ import SwiftUI
 
 /// Simple FileDocument so we can show the system "Save to Files…" UI.
 public struct CSVDocument: FileDocument {
-    public static var readableContentTypes: [UTType] = [
-        .commaSeparatedText, .plainText, .utf8PlainText, .text
-    ]
+
+    /// Use a computed static (or a `static let`) to avoid
+    /// Swift 6 concurrency warnings about global mutable state.
+    public static var readableContentTypes: [UTType] {
+        [.commaSeparatedText, .plainText, .utf8PlainText, .text]
+    }
 
     public var text: String
 

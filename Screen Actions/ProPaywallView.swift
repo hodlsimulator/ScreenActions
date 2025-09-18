@@ -34,38 +34,64 @@ struct ProPaywallView: View {
                     Label("Early features as they ship", systemImage: "sparkles")
                 }
 
+                // Load products on appear; keep graceful fallbacks if nothing returns
                 Section("Choose a plan") {
+                    // Monthly
                     if let monthly = pro.proMonthly {
                         Button {
                             Task { await act { try await pro.purchaseProMonthly() } }
                         } label: {
                             HStack { Text("Monthly"); Spacer(); Text(monthly.displayPrice).bold() }
                         }
-                    } else {
+                    } else if pro.isLoadingProducts {
                         Text("Loading monthly price…").foregroundStyle(.secondary)
+                    } else {
+                        HStack {
+                            Text("Monthly unavailable right now").foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Retry") { Task { await pro.loadProducts() } }
+                        }
+                        .font(.footnote)
                     }
 
+                    // Lifetime
                     if let lifetime = pro.proLifetime {
                         Button {
                             Task { await act { try await pro.purchaseProLifetime() } }
                         } label: {
                             HStack { Text("Lifetime"); Spacer(); Text(lifetime.displayPrice).bold() }
                         }
-                    } else {
+                    } else if pro.isLoadingProducts {
                         Text("Loading lifetime price…").foregroundStyle(.secondary)
+                    } else {
+                        HStack {
+                            Text("Lifetime unavailable right now").foregroundStyle(.secondary)
+                            Spacer()
+                            Button("Retry") { Task { await pro.loadProducts() } }
+                        }
+                        .font(.footnote)
                     }
 
                     Button("Restore Purchases") {
                         Task { await act { try await pro.restorePurchases() } }
                     }
+
+                    if let err = pro.lastLoadError {
+                        Text(err).foregroundStyle(.red).font(.footnote)
+                    }
                 }
+                .task { await pro.loadProducts() } // idempotent
 
                 if let e = error {
                     Section { Text(e).foregroundStyle(.red).font(.footnote) }
                 }
             }
             .navigationTitle("Go Pro")
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
         }
     }
 
