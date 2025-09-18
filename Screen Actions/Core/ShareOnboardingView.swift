@@ -149,6 +149,15 @@ struct ShareOnboardingView: View {
                 .tag(5)
             }
             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+            // Keep the page index capsule visible so dots always sit on a contrasting pill
+            .indexViewStyle(PageIndexViewStyle(backgroundDisplayMode: .always))
+            // Make the dots high-contrast in both light and dark modes
+            .onAppear {
+                let pc = UIPageControl.appearance()
+                pc.currentPageIndicatorTintColor = UIColor.label
+                pc.pageIndicatorTintColor = UIColor.secondaryLabel
+            }
+
             .navigationTitle("Share Sheet Guide")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showShareSheetHere) {
@@ -178,7 +187,7 @@ struct ShareOnboardingView: View {
             }
         }
     }
-}
+} 
 
 // MARK: - Page wrapper
 
