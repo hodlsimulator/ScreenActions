@@ -4,12 +4,12 @@
 //
 //  Created by . . on 9/13/25.
 //
-//  Simple, HIG-friendly home.
-//  • Default iOS 26 tab bar (unchanged).
-//  • First tab renamed to “Actions” (clearer than Home).
-//  • Auto Detect: right-aligned, centred text, wand on left.
-//  • Clear = small × inside the TextEditor.
-//  • Paste + char counter won’t wrap.
+//  Compose-first home, calm colour, HIG-friendly.
+//  • Default iOS 26 tab bar unchanged.
+//  • First tab: “Compose” (square.and.pencil), not a wand.
+//  • Auto Detect stays on the right; wand at left; label right-aligned inside.
+//  • Subtle accent gradient background + tinted “cards”.
+//  • Clear is a small × inside the editor. Paste/char labels don’t wrap.
 //
 
 import SwiftUI
@@ -32,24 +32,24 @@ struct ContentView: View {
     @State private var showCSV = false
 
     // Tab routing
-    private enum ActionTab: Hashable { case actions, calendar, reminder, contact, csv }
-    @State private var selectedTab: ActionTab = .actions
+    private enum ActionTab: Hashable { case compose, calendar, reminder, contact, csv }
+    @State private var selectedTab: ActionTab = .compose
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Actions (home)
+            // Compose (home)
             mainScreen
-                .tabItem { Label("Actions", systemImage: symbolName(["wand.and.stars"])) }
-                .tag(ActionTab.actions)
+                .tabItem { Label("Compose", systemImage: symbolName(["square.and.pencil"])) }
+                .tag(ActionTab.compose)
 
             // Calendar
             mainScreen
-                .tabItem { Label("Calendar", systemImage: symbolName(["calendar.badge.plus", "calendar"])) }
+                .tabItem { Label("Calendar", systemImage: symbolName(["calendar.badge.plus","calendar"])) }
                 .tag(ActionTab.calendar)
 
             // Reminder
             mainScreen
-                .tabItem { Label("Reminder", systemImage: symbolName(["checklist", "checkmark.circle"])) }
+                .tabItem { Label("Reminder", systemImage: symbolName(["checklist","checkmark.circle"])) }
                 .tag(ActionTab.reminder)
 
             // Contact
@@ -66,49 +66,39 @@ struct ContentView: View {
 
             // CSV
             mainScreen
-                .tabItem { Label("Receipt · CSV", systemImage: symbolName(["tablecells", "doc.text.magnifyingglass"])) }
+                .tabItem { Label("Receipt · CSV", systemImage: symbolName(["tablecells","doc.text.magnifyingglass"])) }
                 .tag(ActionTab.csv)
         }
         // Sheets
         .sheet(isPresented: $showSettings) { SettingsView() }
-        .sheet(isPresented: $showShareOnboarding) {
-            ShareOnboardingView(isPresented: $showShareOnboarding)
-        }
+        .sheet(isPresented: $showShareOnboarding) { ShareOnboardingView(isPresented: $showShareOnboarding) }
         .sheet(isPresented: $showEvent) {
-            EventEditorView(
-                sourceText: inputText,
-                onCancel: { showEvent = false },
-                onSaved: { message in showEvent = false; status = message }
-            )
+            EventEditorView(sourceText: inputText,
+                            onCancel: { showEvent = false },
+                            onSaved: { message in showEvent = false; status = message })
         }
         .sheet(isPresented: $showReminder) {
-            ReminderEditorView(
-                sourceText: inputText,
-                onCancel: { showReminder = false },
-                onSaved: { message in showReminder = false; status = message }
-            )
+            ReminderEditorView(sourceText: inputText,
+                               onCancel: { showReminder = false },
+                               onSaved: { message in showReminder = false; status = message })
         }
         .sheet(isPresented: $showContact) {
-            ContactEditorView(
-                sourceText: inputText,
-                onCancel: { showContact = false },
-                onSaved: { message in showContact = false; status = message }
-            )
+            ContactEditorView(sourceText: inputText,
+                              onCancel: { showContact = false },
+                              onSaved: { message in showContact = false; status = message })
         }
         .sheet(isPresented: $showCSV) {
-            ReceiptCSVPreviewView(
-                sourceText: inputText,
-                onCancel: { showCSV = false },
-                onExported: { message in showCSV = false; status = message }
-            )
+            ReceiptCSVPreviewView(sourceText: inputText,
+                                  onCancel: { showCSV = false },
+                                  onExported: { message in showCSV = false; status = message })
         }
         .onAppear {
             if !hasCompletedShareOnboarding { showShareOnboarding = true }
         }
         .onChange(of: selectedTab) { _, newValue in
-            // Don’t auto-run on Actions; the others open their editor.
+            // Compose doesn’t auto-run; others open their editor.
             switch newValue {
-            case .actions: break
+            case .compose: break
             case .calendar: showEvent = true
             case .reminder: showReminder = true
             case .contact: showContact = true
@@ -145,9 +135,7 @@ struct ContentView: View {
 
     // MARK: - SF Symbols fallback helper
     private func symbolName(_ candidates: [String]) -> String {
-        for name in candidates {
-            if UIImage(systemName: name) != nil { return name }
-        }
+        for name in candidates where UIImage(systemName: name) != nil { return name }
         return candidates.last ?? "square"
     }
 }
@@ -169,6 +157,21 @@ private struct MainScreen: View {
         return ActionRouter.route(text: t)
     }
 
+    // Accent background
+    private var backgroundView: some View {
+        ZStack {
+            LinearGradient(
+                colors: [Color(.systemBackground), Color.accentColor.opacity(0.05)],
+                startPoint: .topLeading, endPoint: .bottomTrailing
+            )
+            RadialGradient(
+                colors: [Color.accentColor.opacity(0.10), .clear],
+                center: .topLeading, startRadius: 0, endRadius: 420
+            )
+        }
+        .ignoresSafeArea()
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -183,18 +186,25 @@ private struct MainScreen: View {
                                     .accessibilityHidden(true)
                             }
 
+                            // Text editor with tinted card styling
                             TextEditor(text: $inputText)
                                 .frame(minHeight: 180)
                                 .focused($isEditorFocused)
                                 .textInputAutocapitalization(.sentences)
                                 .autocorrectionDisabled(false)
                                 .font(.body)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.accentColor.opacity(0.18), lineWidth: 1)
+                                .padding(2) // space for inner border glow
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color(.secondarySystemBackground))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .strokeBorder(Color.accentColor.opacity(0.22), lineWidth: 1)
+                                        )
+                                        .shadow(color: Color.accentColor.opacity(0.15), radius: 10, y: 6)
                                 )
                                 .accessibilityLabel("Input text")
-                                // Inline clear (×) at top-right inside the box
+                                // Inline clear (×)
                                 .overlay(alignment: .topTrailing) {
                                     if !inputText.isEmpty {
                                         Button {
@@ -208,7 +218,6 @@ private struct MainScreen: View {
                                         }
                                         .buttonStyle(.plain)
                                         .accessibilityLabel("Clear text")
-                                        .accessibilityHint("Clears the input")
                                     }
                                 }
                         }
@@ -236,18 +245,17 @@ private struct MainScreen: View {
                                 .buttonStyle(.bordered)
                                 .controlSize(.small)
                                 .contentShape(Rectangle())
-                                .layoutPriority(1)
                             }
 
-                            // Primary action (right), text centred with a wand on the left.
-                            PrimaryActionButton(title: "Auto Detect", systemImage: "wand.and.stars") {
+                            // Primary action (right): wand left, label right-aligned
+                            AutoDetectButton(title: "Auto Detect") {
                                 isEditorFocused = false
                                 onAutoDetect()
                             }
                             .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            .layoutPriority(2)
                         }
                     }
+                    .listRowBackground(Color.clear)
                 }
 
                 // PREVIEW
@@ -256,14 +264,20 @@ private struct MainScreen: View {
                         HStack(spacing: 10) {
                             KindChip(kind: decision.kind)
                             if let range = decision.dateRange {
-                                Text(Self.format(range))
-                                    .foregroundStyle(.secondary)
+                                Text(Self.format(range)).foregroundStyle(.secondary)
                             } else if !decision.reason.isEmpty {
-                                Text(decision.reason)
-                                    .foregroundStyle(.secondary)
+                                Text(decision.reason).foregroundStyle(.secondary)
                             }
                         }
                         .font(.callout)
+                        .padding(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(.secondarySystemBackground))
+                                .shadow(color: Color.black.opacity(0.12), radius: 4, y: 2)
+                        )
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .listRowBackground(Color.clear)
                     }
                 }
 
@@ -272,10 +286,18 @@ private struct MainScreen: View {
                     Text(status)
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                        .textSelection(.enabled)
-                        .accessibilityLabel("Status")
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(.secondarySystemBackground))
+                        )
+                        .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+                        .listRowBackground(Color.clear)
                 }
             }
+            .scrollContentBackground(.hidden) // let our gradient show through
+            .background { backgroundView }
             .navigationTitle("Screen Actions")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
@@ -321,31 +343,34 @@ private struct MainScreen: View {
     }
 }
 
-// MARK: - PrimaryActionButton (centred title + leading icon)
-private struct PrimaryActionButton: View {
+// MARK: - Primary Auto Detect Button (wand left, text right-aligned)
+private struct AutoDetectButton: View {
     let title: String
-    let systemImage: String
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             ZStack {
-                // Centred title
-                Text(title)
-                    .font(.body.weight(.semibold))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.9)
-                    .frame(maxWidth: .infinity, alignment: .center)
-
-                // Leading icon (keeps visual balance)
+                // Right-aligned label for visual weight balance
+                HStack {
+                    Spacer(minLength: 0)
+                    Text(title)
+                        .font(.body.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.9)
+                        .fixedSize(horizontal: true, vertical: false)
+                        .multilineTextAlignment(.trailing)
+                }
+                // Wand anchored to the left
                 HStack(spacing: 8) {
-                    Image(systemName: systemImage)
+                    Image(systemName: "wand.and.stars")
+                        .font(.body)
                     Spacer(minLength: 0)
                 }
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 18)
             .padding(.vertical, 10)
-            .frame(minWidth: 148) // ensures room for centred title + icon
+            .frame(minWidth: 150)
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.capsule)
