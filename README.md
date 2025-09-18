@@ -19,6 +19,18 @@
   - **Share Extension updated:** passes original **image data** into the shared panel so Document Mode can run there too.
   - **App Intents updated:** **ReceiptToCSVIntent** and **ExtractContactIntent** prefer Document Mode on iOS 26; fall back to OCR on older OSes.
   - **100% on-device; no network or costs.**
+- **💫 Monetisation (StoreKit 2) — Pro + Tip Jar + daily free quotas.**  
+  - **Products (exact IDs):**  
+    - `com.conornolan.Screen-Actions.pro.monthly` — Auto-Renewable Subscription (1 month)  
+    - `com.conornolan.Screen-Actions.pro.lifetime` — Non-Consumable  
+    - `com.conornolan.Screen-Actions.tip.small` — Consumable  
+    - `com.conornolan.Screen-Actions.tip.medium` — Consumable  
+    - `com.conornolan.Screen-Actions.tip.large` — Consumable
+  - **Suggested pricing (pick nearby tiers):** Monthly €0.99 • Lifetime €16.99 • Tips €0.99 / €2.99 / €4.99.  
+    UI shows **localised** prices via `Product.displayPrice` (no hard-coded currency).
+  - **Free (daily quotas):** Receipt → CSV **3/day** • Create Contact **from image 5/day** • Add Event **with geofence 1/day**.  
+    **Pro** removes limits and unlocks the **“Remember last action”** toggle in the Safari popup.
+  - **Implementation:** StoreKit 2 (`ProStore`, `SAProducts`, `ProPaywallView`), quota gates in editors and extensions, and Pro status mirrored to the App Group (`iap.pro.active`) for the Safari/Share/Action extensions. (See **Monetisation** section below.)
 - **New app icon** applied across app, extensions, and widgets; asset catalog tidied and 1024-px sources updated.
 - **Home Screen redesign:** clearer action cards with a top-row entry for **Scan / Paste / Share**; toolbar simplified for one-hand reach; typography/spacing aligned with iOS 26.
 - **Onboarding overhaul (design finished, first pass shipped):** short, privacy-first flow that explains what runs on device, requests the right permissions, and offers quick enable steps for the Safari/Share extensions and Scan.
@@ -57,6 +69,52 @@ Optional guard (advisory): `ruby tools/verify_webext_guard.rb`
 
 ---
 
+## 🛒 Monetisation (Pro + Tip Jar — StoreKit 2)
+
+**Products to create in App Store Connect (IDs must match exactly):**
+- `com.conornolan.Screen-Actions.pro.monthly` — Auto-Renewable (1 month)
+- `com.conornolan.Screen-Actions.pro.lifetime` — Non-Consumable
+- `com.conornolan.Screen-Actions.tip.small` — Consumable
+- `com.conornolan.Screen-Actions.tip.medium` — Consumable
+- `com.conornolan.Screen-Actions.tip.large` — Consumable
+
+**Suggested pricing (choose nearby tiers in ASC):**  
+Monthly €0.99 • Lifetime €16.99 • Tips €0.99 / €2.99 / €4.99.  
+UI shows localised prices via **StoreKit 2** (`Product.displayPrice`) — **no hard-coded €**.
+
+**Free vs Pro (what ships today):**
+- **Free (daily quotas):**
+  - Receipt → CSV: **up to 3 exports/day**
+  - Create Contact **from image**: **up to 5 saves/day**
+  - Add Event **with geofence**: **up to 1/day**
+- **Pro (unlimited + QoL):**
+  - Unlimited CSV exports / contacts-from-images / geofenced events
+  - **Safari popup:** **“Remember last action”** toggle (Pro-only), plus **Run Last** button when enabled
+  - “Early features” as they ship (server-side switch with local checks — no app update required)
+
+**Implementation notes (repo):**
+- **StoreKit 2 core:** `Core/IAP/SAProducts.swift` (IDs) + `Core/IAP/ProStore.swift` (loading, purchase/restore, entitlement) + `Screen Actions/ProPaywallView.swift` (UI).  
+  `ProStore` mirrors entitlement to App Group keys:  
+  - `iap.pro.active` (Bool)  
+  - `iap.pro.exp` (optional expiry timestamp for subs)
+- **Quota gating:** `Core/QuotaManager.swift` (app) with per-day keys like `quota.v1.<feature>.<yyyy-m-d>` in the App Group. Editors call it where relevant:
+  - `ReceiptCSVPreviewView` → gate on export (3/day)
+  - `ContactEditorView` → gate **only** when seeded from an image (5/day)
+  - `EventEditorView` → gate **only** when geofencing is enabled (1/day)
+- **Extensions:** small, target-local quota helpers mirroring the same logic (share App Group storage):
+  - Action Ext: `ScreenActionsActionExtension/AEQuotaManager.swift`
+  - Share Ext:  `ScreenActionsShareExtension/SEQuotaManager.swift`
+  - Safari Web Ext: `ScreenActionsWebExtension/WEQuotaManager.swift` (CSV gate in `SafariWebExtensionHandler`)
+- **Safari popup (Web Extension):** shows **Pro-only** “Remember last action” toggle; persists flag and exposes **Run Last** when set. Pro status is read from App Group (`iap.pro.active`) via native messaging.
+- **Settings → Tip Jar:** three buttons wired to the tip consumables; prices come from `displayPrice`. Restore Purchases is available.
+
+**To ship:**
+1. Create the five IAPs in **App Store Connect** using the **exact IDs** above, choose nearby pricing tiers.  
+2. Enable **In-App Purchase** capability on the **app** target.  
+3. Build to a device; StoreKit displays sandbox prices. No currency is hard-coded; all prices are localised.
+
+---
+
 ## Requirements & compatibility
 - **Minimum OS:** iOS **26**.
 - **Devices:** iPhones with **Apple Intelligence** support (e.g. iPhone 15 Pro/Pro Max, the iPhone 16 family, the iPhone 17 family, and newer).
@@ -88,6 +146,7 @@ All actions use on-device Apple frameworks (Vision OCR, Vision 26 Document Mode,
 3. In **Signing & Capabilities**:
    - App target bundle ID: **com.conornolan.Screen-Actions**
    - App Group: **group.com.conornolan.screenactions**
+   - **In-App Purchase:** enable on the **app** target.
 4. Run on an Apple Intelligence-capable iPhone on **iOS 26**.
 5. (If needed) Enable **Apple Intelligence** in **Settings → Apple Intelligence & Siri**.
 6. To use the Safari Web Extension on device: enable it in **Settings → Safari → Extensions → Screen Actions**.
@@ -123,6 +182,7 @@ All actions use on-device Apple frameworks (Vision OCR, Vision 26 Document Mode,
 - **Time zone inference:** prefers `MKMapItem.timeZone`; falls back to **`MKReverseGeocodingRequest`** to resolve a best-effort zone (iOS 26-compliant).
 - **CSV export:** `CSVExporter.writeCSVToAppGroup(...)` writes into the App Group’s `Exports/` folder.
 - **Editors & flow:** Manual actions and Auto Detect both open the relevant editor first (review → Save).
+- **Monetisation internals:** StoreKit 2 entitlement mirrored into the App Group, extensions read `iap.pro.active` for UI/limits; per-feature daily counters stored under `quota.v1.*` keys (reside in the App Group for cross-target consistency).
 
 ## Storage
 Exports are written to:  
@@ -137,6 +197,7 @@ Exports are written to:
 - If Apple Intelligence options aren’t visible, confirm your device is supported, language settings match, and there’s sufficient free space.
 - If Archive fails with an ExtensionKit entitlement error, ensure you are **not** requesting that entitlement anywhere (by design we don’t).
 - If Scan feels sluggish, try barcode-only mode first and fill more of the ROI band with the code.
+- If purchases don’t show: confirm IAPs exist in App Store Connect with the **exact IDs**, In-App Purchase capability is enabled, and test on-device with a sandbox Apple ID (prices appear localised via StoreKit).
 
 ---
 
@@ -201,6 +262,7 @@ Exports are written to:
 - ✅ New app icon rolled out across all targets.
 - ✅ Onboarding overhaul: design complete + first pass shipped (permissions & extensions guidance).
 - ✅ **iOS 26 Document Mode** wired across app + extensions (tables, smudge hint, editors, intents).
+- ✅ **Monetisation**: Pro + Tip Jar shipped with StoreKit 2; daily free quotas enforced across app and extensions; Safari popup gains Pro-only “Remember last action”.
 
 **Completed on 17 Sep 2025**
 - ✅ **Distribution signing & archive** — Release archive uploaded to App Store Connect; web extension embedded; **no** ExtensionKit entitlement requested; App Group present; delivered package has `get-task-allow = 0`.

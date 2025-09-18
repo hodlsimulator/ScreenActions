@@ -12,7 +12,7 @@
 
 import UIKit
 import SwiftUI
-import MobileCoreServices
+import UniformTypeIdentifiers
 
 @MainActor
 final class ActionViewController: UIViewController {
@@ -20,12 +20,14 @@ final class ActionViewController: UIViewController {
     private var selectedText: String = ""
     private var pageTitle: String = ""
     private var pageURL: String = ""
+    private var imageData: Data? = nil
+
     private var host: UIHostingController<SAActionPanelView>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
-        loadFromJavaScriptPayload()
+        loadFromContext()
     }
 
     override func viewDidLayoutSubviews() {
@@ -33,37 +35,61 @@ final class ActionViewController: UIViewController {
         updatePreferredContentSize()
     }
 
-    // MARK: - Read JS preprocessing results
+    private func loadFromContext() {
+        guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
+            attachUI(); return
+        }
+        let group = DispatchGroup()
 
-    private func loadFromJavaScriptPayload() {
-        guard let item = (extensionContext?.inputItems.first as? NSExtensionItem),
-              let dict = item.userInfo?[NSExtensionJavaScriptPreprocessingResultsKey] as? [String: Any]
-        else {
-            attachUI()
-            return
+        for item in items {
+            for provider in item.attachments ?? [] {
+                if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
+                    group.enter()
+                    provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, _ in
+                        defer { group.leave() }
+                        guard let self, let s = item as? String else { return }
+                        let t = s.trimmingCharacters(in: .whitespacesAndNewlines)
+                        guard !t.isEmpty else { return }
+                        Task { @MainActor in self.selectedText = t }
+                    }
+                }
+                if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
+                    group.enter()
+                    provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
+                        defer { group.leave() }
+                        guard let self, let url = item as? URL else { return }
+                        Task { @MainActor in self.pageURL = url.absoluteString }
+                    }
+                }
+                if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
+                    group.enter()
+                    provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] item, _ in
+                        defer { group.leave() }
+                        guard let self else { return }
+                        if let data = item as? Data {
+                            Task { @MainActor in self.imageData = data }
+                        } else if let image = item as? UIImage, let data = image.pngData() {
+                            Task { @MainActor in self.imageData = data }
+                        } else if let url = item as? URL, url.isFileURL, let data = try? Data(contentsOf: url) {
+                            Task { @MainActor in self.imageData = data }
+                        }
+                    }
+                }
+            }
         }
 
-        if let s = dict["selection"] as? String, !s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            selectedText = s.trimmingCharacters(in: .whitespacesAndNewlines)
+        group.notify(queue: .main) { [weak self] in
+            self?.attachUI()
         }
-        if let t = dict["title"] as? String {
-            pageTitle = t
-        }
-        if let u = dict["url"] as? String {
-            pageURL = u
-        }
-
-        attachUI()
     }
-
-    // MARK: - Host SwiftUI
 
     private func attachUI() {
         let root = SAActionPanelView(
             selection: selectedText,
             pageTitle: pageTitle,
-            pageURL: pageURL
-        ) { [weak self] message in
+            pageURL: pageURL,
+            imageData: imageData
+        ) { [weak self] (message: String) in
             let out = NSExtensionItem()
             out.userInfo = ["ScreenActionsResult": message]
             self?.extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)
@@ -89,7 +115,7 @@ final class ActionViewController: UIViewController {
         let w = max(320, view.bounds.width)
         let target = CGSize(width: w, height: UIView.layoutFittingCompressedSize.height)
         let size = host.sizeThatFits(in: target)
-        let h = max(360, min(680, size.height + 20))
+        let h = max(320, min(640, size.height + 20))
         preferredContentSize = CGSize(width: w, height: h)
     }
 }
