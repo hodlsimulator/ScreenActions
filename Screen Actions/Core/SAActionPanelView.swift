@@ -4,9 +4,8 @@
 //
 //  Created by . . on 9/14/25.
 //
-//  Shared action panel used by the app + extensions.
-//  Keeps Auto Detect and direct-run helpers (from A),
-//  and adds inline editors & previews (for B).
+//  Shared panel used by the app + extensions.
+//  Adds iOS 26 “Document Mode” when an image is supplied.
 //
 
 import SwiftUI
@@ -17,23 +16,29 @@ public struct SAActionPanelView: View {
     public let selection: String
     public let pageTitle: String
     public let pageURL: String
+    public let imageData: Data?            // NEW: enables document mode
     public let onDone: (String) -> Void
 
-    // Status / progress
     @State private var isWorking = false
-    @State private var status: String?
+    @State private var status: String? = nil
     @State private var ok = false
 
-    // Inline editors (B)
     @State private var showEvent = false
     @State private var showReminder = false
     @State private var showContact = false
     @State private var showCSV = false
 
-    public init(selection: String, pageTitle: String, pageURL: String, onDone: @escaping (String) -> Void) {
+    @State private var smudgeNote: String? = nil
+
+    public init(selection: String,
+                pageTitle: String,
+                pageURL: String,
+                imageData: Data? = nil,     // default keeps old call sites working
+                onDone: @escaping (String) -> Void) {
         self.selection = selection
         self.pageTitle = pageTitle
         self.pageURL = pageURL
+        self.imageData = imageData
         self.onDone = onDone
     }
 
@@ -43,10 +48,7 @@ public struct SAActionPanelView: View {
 
                 // Selection preview
                 Group {
-                    Text("Selected Text")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
+                    Text("Selected Text").font(.caption).foregroundStyle(.secondary)
                     ScrollView {
                         Text(displaySelection)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -60,9 +62,7 @@ public struct SAActionPanelView: View {
                 // Page context
                 if !pageTitle.isEmpty || !pageURL.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
-                        if !pageTitle.isEmpty {
-                            Text(pageTitle).font(.subheadline).bold()
-                        }
+                        if !pageTitle.isEmpty { Text(pageTitle).font(.subheadline).bold() }
                         if !pageURL.isEmpty {
                             Text(pageURL)
                                 .font(.footnote)
@@ -73,68 +73,94 @@ public struct SAActionPanelView: View {
                     }
                 }
 
+                if imageData != nil {
+                    Label("Image detected — Document Mode available.", systemImage: "doc.viewfinder")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+
                 Divider().padding(.vertical, 2)
 
                 // Actions
                 VStack(spacing: 10) {
+                    Button { openAutoEditor() } label: { rowLabel("Auto Detect", "wand.and.stars") }
+                        .buttonStyle(.borderedProminent)
 
-                    // Primary: Auto Detect → now opens the matching editor (no direct-save)
-                    Button {
-                        openAutoEditor()
-                    } label: {
-                        rowLabel("Auto Detect", "wand.and.stars")
-                    }
-                    .buttonStyle(.borderedProminent)
-
-                    // Manual actions → open editors (B)
-                    Button { showReminder = true } label: {
-                        rowLabel("Create Reminder", "checkmark.circle")
-                    }
-                    .buttonStyle(.bordered)
-                    // Optional quick path: direct-run without editing
-                    .contextMenu {
-                        Button {
-                            run { try await createReminder(text: inputText) }
-                        } label: {
-                            Label("Save Now (no edit)", systemImage: "bolt.fill")
+                    Button { showReminder = true } label: { rowLabel("Create Reminder", "checkmark.circle") }
+                        .buttonStyle(.bordered)
+                        .contextMenu {
+                            Button { run { try await createReminder(text: inputText) } } label: {
+                                Label("Save Now (no edit)", systemImage: "bolt.fill")
+                            }
                         }
-                    }
 
-                    Button { showEvent = true } label: {
-                        rowLabel("Add Calendar Event", "calendar.badge.plus")
-                    }
-                    .buttonStyle(.bordered)
-                    .contextMenu {
-                        Button {
-                            run { try await addToCalendar(text: inputText) }
-                        } label: {
-                            Label("Save Now (no edit)", systemImage: "bolt.fill")
+                    Button { showEvent = true } label: { rowLabel("Add Calendar Event", "calendar.badge.plus") }
+                        .buttonStyle(.bordered)
+                        .contextMenu {
+                            Button { run { try await addToCalendar(text: inputText) } } label: {
+                                Label("Save Now (no edit)", systemImage: "bolt.fill")
+                            }
                         }
-                    }
 
-                    Button { showContact = true } label: {
-                        rowLabel("Extract Contact", "person.crop.circle.badge.plus")
-                    }
-                    .buttonStyle(.bordered)
-                    .contextMenu {
-                        Button {
-                            run { try await extractContact(text: inputText) }
-                        } label: {
-                            Label("Save Now (no edit)", systemImage: "bolt.fill")
+                    Button { showContact = true } label: { rowLabel("Extract Contact", "person.crop.circle.badge.plus") }
+                        .buttonStyle(.bordered)
+                        .contextMenu {
+                            if imageData != nil {
+                                Button {
+                                    run {
+                                        guard let data = imageData else { return "No image supplied." }
+                                        if #available(iOS 26, *) {
+                                            var hint: VisionDocumentReader.SmudgeHint?
+                                            let list = try await VisionDocumentReader.contacts(from: data, smudgeHint: &hint)
+                                            guard !list.isEmpty else { return "No contact details found." }
+                                            var saved = 0
+                                            for c in list {
+                                                let ok = (c.givenName?.isEmpty == false) || (c.familyName?.isEmpty == false)
+                                                    || !c.emails.isEmpty || !c.phones.isEmpty || (c.postalAddress != nil)
+                                                if ok { _ = try await ContactsService.save(contact: c); saved += 1 }
+                                            }
+                                            if let s = hint, s.isLikely {
+                                                smudgeNote = "Tip: Your camera lens looked smudged (\(Int(s.confidence * 100))%)."
+                                            }
+                                            return saved == 1 ? "Saved 1 contact." : "Saved \(saved) contacts."
+                                        } else {
+                                            return "Requires iOS 26."
+                                        }
+                                    }
+                                } label: { Label("Save From Image (batch)", systemImage: "person.crop.rectangle.stack") }
+                            }
+                            Button { run { try await extractContact(text: inputText) } } label: {
+                                Label("Save Now (no edit)", systemImage: "bolt.fill")
+                            }
                         }
-                    }
 
-                    Button { showCSV = true } label: {
-                        rowLabel("Receipt → CSV", "doc.badge.plus")
-                    }
-                    .buttonStyle(.bordered)
-                    .contextMenu {
-                        Button {
-                            runReceipt()
-                        } label: {
-                            Label("Export Now (no edit)", systemImage: "bolt.fill")
+                    Button { showCSV = true } label: { rowLabel("Receipt → CSV", "doc.badge.plus") }
+                        .buttonStyle(.bordered)
+                        .contextMenu {
+                            if imageData != nil {
+                                Button {
+                                    run {
+                                        guard let data = imageData else { return "No image supplied." }
+                                        if #available(iOS 26, *) {
+                                            var hint: VisionDocumentReader.SmudgeHint?
+                                            let csv = try await VisionDocumentReader.receiptCSV(from: data, smudgeHint: &hint)
+                                            let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
+                                            let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
+                                            UIPasteboard.general.url = url
+                                            if let s = hint, s.isLikely {
+                                                smudgeNote = "Tip: Your camera lens looked smudged (\(Int(s.confidence * 100))%)."
+                                            }
+                                            return "CSV exported (\(url.lastPathComponent))."
+                                        } else {
+                                            return "Requires iOS 26."
+                                        }
+                                    }
+                                } label: { Label("Export From Image", systemImage: "scanner") }
+                            }
+                            Button { runReceipt() } label: {
+                                Label("Export Now (no edit)", systemImage: "bolt.fill")
+                            }
                         }
-                    }
                 }
 
                 if let status {
@@ -143,6 +169,11 @@ public struct SAActionPanelView: View {
                         .foregroundStyle(ok ? .green : .red)
                         .padding(.top, 6)
                         .accessibilityLabel("Status")
+                }
+                if let smudgeNote {
+                    Text(smudgeNote)
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer(minLength: 0)
@@ -156,82 +187,58 @@ public struct SAActionPanelView: View {
                     }
                 }
             }
-
-            // Inline editors (B)
             .sheet(isPresented: $showEvent) {
                 EventEditorView(
                     sourceText: inputText,
                     onCancel: { showEvent = false },
-                    onSaved: { message in
-                        showEvent = false
-                        status = message; ok = true
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    }
+                    onSaved: { m in showEvent = false; status = m; ok = true; UIImpactFeedbackGenerator(style: .light).impactOccurred() }
                 )
             }
             .sheet(isPresented: $showReminder) {
                 ReminderEditorView(
                     sourceText: inputText,
                     onCancel: { showReminder = false },
-                    onSaved: { message in
-                        showReminder = false
-                        status = message; ok = true
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    }
+                    onSaved: { m in showReminder = false; status = m; ok = true; UIImpactFeedbackGenerator(style: .light).impactOccurred() }
                 )
             }
             .sheet(isPresented: $showContact) {
                 ContactEditorView(
                     sourceText: inputText,
+                    sourceImageData: imageData,   // seed from document table if present
                     onCancel: { showContact = false },
-                    onSaved: { message in
-                        showContact = false
-                        status = message; ok = true
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    }
+                    onSaved: { m in showContact = false; status = m; ok = true; UIImpactFeedbackGenerator(style: .light).impactOccurred() }
                 )
             }
             .sheet(isPresented: $showCSV) {
                 ReceiptCSVPreviewView(
                     sourceText: inputText,
+                    sourceImageData: imageData,   // seed from document table if present
                     onCancel: { showCSV = false },
-                    onExported: { message in
-                        showCSV = false
-                        status = message; ok = true
-                        UIImpactFeedbackGenerator(style: .light).impactOccurred()
-                    }
+                    onExported: { m in showCSV = false; status = m; ok = true; UIImpactFeedbackGenerator(style: .light).impactOccurred() }
                 )
             }
-            .overlay {
+            .overlay(alignment: .center) {
                 if isWorking { ProgressView().scaleEffect(1.15) }
             }
         }
     }
 
-    // MARK: - Helpers
+    // MARK: Helpers
 
-    private var displaySelection: String {
-        selection.isEmpty ? "No selection found." : selection
-    }
+    private var displaySelection: String { selection.isEmpty ? "No selection found." : selection }
 
     private var inputText: String {
         var t = selection
         if !pageTitle.isEmpty { t = t.isEmpty ? pageTitle : t }
-        if !pageURL.isEmpty { t += "\n\(pageURL)" }
+        if !pageURL.isEmpty  { t += "\n\(pageURL)" }
         return t
     }
 
     private func run(_ op: @escaping () async throws -> String) {
         isWorking = true; status = nil; ok = false
         Task { @MainActor in
-            do {
-                let message = try await op()
-                status = message
-                ok = true
-            } catch {
-                status = error.localizedDescription
-                ok = false
-            }
+            do { let message = try await op(); status = message; ok = true }
+            catch { status = error.localizedDescription; ok = false }
             isWorking = false
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
@@ -245,12 +252,10 @@ public struct SAActionPanelView: View {
         }
     }
 
-    /// Auto Detect → **open the matching editor** (like manual selections)
     private func openAutoEditor() {
         let text = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else {
-            status = "Provide text first."
-            ok = false
+            status = "Provide text first."; ok = false
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
             return
         }
@@ -263,8 +268,7 @@ public struct SAActionPanelView: View {
         }
     }
 
-    @ViewBuilder
-    private func rowLabel(_ title: String, _ systemImage: String) -> some View {
+    @ViewBuilder private func rowLabel(_ title: String, _ systemImage: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: systemImage)
             Text(title)
@@ -275,53 +279,37 @@ public struct SAActionPanelView: View {
     }
 }
 
-// MARK: - Direct-run helpers (kept for parity and context menus)
-
+// Direct-run helpers (unchanged)
 private func createReminder(text: String) async throws -> String {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return "Provide text first." }
-    let title = trimmed
-        .components(separatedBy: .newlines)
-        .first?
-        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Todo"
+    let title = trimmed.components(separatedBy: .newlines).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Todo"
     let due = DateParser.firstDateRange(in: trimmed)?.start
     let id = try await RemindersService.shared.addReminder(title: title, due: due, notes: trimmed)
     return "Reminder created (\(id))."
 }
-
 private func addToCalendar(text: String) async throws -> String {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return "Provide text first." }
     guard let range = DateParser.firstDateRange(in: trimmed) else { return "No date found." }
-    let title = trimmed
-        .components(separatedBy: .newlines)
-        .first?
-        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Event"
+    let title = trimmed.components(separatedBy: .newlines).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Event"
     let id = try await CalendarService.shared.addEvent(title: title, start: range.start, end: range.end, notes: trimmed)
     return "Event created (\(id))."
 }
-
-private func extractContact(text: String) async throws -> String {
+@MainActor private func exportReceiptCSV(text: String) async throws -> (String, URL) {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else { return "Provide text first." }
-    let detected = ContactParser.detect(in: trimmed)
-    let hasSomething = (detected.givenName?.isEmpty == false)
-        || !detected.emails.isEmpty
-        || !detected.phones.isEmpty
-        || (detected.postalAddress != nil)
-    guard hasSomething else { return "No contact details found." }
-    let id = try await ContactsService.save(contact: detected)
-    return "Contact saved (\(id))."
-}
-
-@MainActor
-private func exportReceiptCSV(text: String) async throws -> (String, URL) {
-    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else {
-        return ("Provide text first.", AppStorageService.shared.containerURL())
-    }
+    guard !trimmed.isEmpty else { return ("Provide text first.", AppStorageService.shared.containerURL()) }
     let csv = CSVExporter.makeReceiptCSV(from: trimmed)
     let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
     let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
     return ("CSV exported.", url)
+}
+private func extractContact(text: String) async throws -> String {
+    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return "Provide text first." }
+    let detected = ContactParser.detect(in: trimmed)
+    let has = (detected.givenName?.isEmpty == false) || !detected.emails.isEmpty || !detected.phones.isEmpty || (detected.postalAddress != nil)
+    guard has else { return "No contact details found." }
+    let id = try await ContactsService.save(contact: detected)
+    return "Contact saved (\(id))."
 }

@@ -4,13 +4,15 @@
 //
 //  Created by . . on 9/13/25.
 //
+//  iOS 26: prefers Vision document tables when an image is supplied.
+//
 
 import AppIntents
 
 struct ReceiptToCSVIntent: AppIntent {
     static var title: LocalizedStringResource { "Receipt → CSV" }
     static var description: IntentDescription {
-        IntentDescription("Scans text or an image of a receipt and returns a CSV file with line items and detected amounts.")
+        IntentDescription("Scans text or a photo/screenshot of a receipt and returns a CSV of line items.")
     }
     static var openAppWhenRun: Bool { false }
 
@@ -21,23 +23,39 @@ struct ReceiptToCSVIntent: AppIntent {
     var image: IntentFile?
 
     @MainActor
-    func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> {
-        let sourceText: String
+    func perform() async throws -> some IntentResult & ReturnsValue<IntentFile> & ProvidesDialog {
+        // Text-only path (fast path).
         if let t = text, !t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            sourceText = t
-        } else {
-            sourceText = try TextExtractor.from(imageFile: image)
+            let csv = CSVExporter.makeReceiptCSV(from: t)
+            let url = try write(csv: csv)
+            return .result(value: IntentFile(fileURL: url), dialog: "CSV exported.")
         }
 
-        guard !sourceText.isEmpty else {
-            throw $text.needsValueError("Provide text or an image with text.")
+        // Image path → prefer Vision documents on iOS 26; else fallback to OCR.
+        if let data = image?.data {
+            if #available(iOS 26, *) {
+                var _hint: VisionDocumentReader.SmudgeHint?
+                let csv = try await VisionDocumentReader.receiptCSV(from: data, smudgeHint: &_hint)
+                let url = try write(csv: csv)
+                return .result(value: IntentFile(fileURL: url), dialog: "CSV exported.")
+            } else {
+                let text = try TextExtractor.from(imageFile: image)
+                guard !text.isEmpty else { throw $text.needsValueError("Provide text or an image with text.") }
+                let csv = CSVExporter.makeReceiptCSV(from: text)
+                let url = try write(csv: csv)
+                return .result(value: IntentFile(fileURL: url), dialog: "CSV exported.")
+            }
         }
 
-        let csv = CSVExporter.makeReceiptCSV(from: sourceText)
+        throw $text.needsValueError("Provide text or an image with text.")
+    }
+
+    // MARK: - Helpers
+
+    @MainActor
+    private func write(csv: String) throws -> URL {
         let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
-        let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
-        let file = IntentFile(fileURL: url)
-        return .result(value: file, dialog: "CSV exported.")
+        return try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
     }
 }
 
@@ -45,7 +63,9 @@ extension ReceiptToCSVIntent {
     @MainActor
     static func runStandalone(text: String) async throws -> (String, URL) {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return ("Provide text first.", AppStorageService.shared.containerURL()) }
+        guard !trimmed.isEmpty else {
+            return ("Provide text first.", AppStorageService.shared.containerURL())
+        }
         let csv = CSVExporter.makeReceiptCSV(from: trimmed)
         let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
         let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)

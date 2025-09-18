@@ -9,12 +9,27 @@
 
 ## What’s new (18 Sep 2025)
 
-- New app icon applied across app, extensions, and widgets; asset catalog tidied and 1024-px sources updated.
-- Home Screen redesign: clearer action cards with a top-row entry for **Scan / Paste / Share**; toolbar simplified for one-hand reach; typography/spacing aligned with iOS 26.
-- Onboarding overhaul (design finished, first pass shipped): short, privacy-first flow that explains what runs on device, requests the right permissions, and offers quick enable steps for the Safari/Share extensions and Scan.
-- Auto Detect now opens the relevant **Edit** page first (matches manual actions), so you review before saving.
-- Visual Intelligence scanner implemented (VisionKit Data Scanner) for barcodes/QR + text; routes into the matching editor.
-- Scanner responsiveness tuned: barcode path uses `.fast` quality, a narrower **regionOfInterest**, limited OCR languages, and first-hit auto-capture.
+- **📄 iOS 26 “Document Mode” (on-device, no servers).**  
+  Uses Vision 26 document understanding to read real **tables** and structured text:
+  - **Receipt → CSV v2:** photos/screenshots of receipts become accurate CSVs (rows/columns, not heuristics).  
+  - **Batch contact capture:** a photographed sign-up sheet becomes multiple Contacts in one go.  
+  - **Lens-smudge hint:** friendly nudge if the camera looks foggy (no blocking; still processes).
+  - **Editors wired:** **ReceiptCSVPreviewView** and **ContactEditorView** can **seed from an image** if present.
+  - **Shared panel wired:** **SAActionPanelView** shows “Document Mode available” when an image is passed in and adds quick actions (“Export From Image”, “Save From Image (batch)”).
+  - **Share Extension updated:** passes original **image data** into the shared panel so Document Mode can run there too.
+  - **App Intents updated:** **ReceiptToCSVIntent** and **ExtractContactIntent** prefer Document Mode on iOS 26; fall back to OCR on older OSes.
+  - **100% on-device; no network or costs.**
+- **New app icon** applied across app, extensions, and widgets; asset catalog tidied and 1024-px sources updated.
+- **Home Screen redesign:** clearer action cards with a top-row entry for **Scan / Paste / Share**; toolbar simplified for one-hand reach; typography/spacing aligned with iOS 26.
+- **Onboarding overhaul (design finished, first pass shipped):** short, privacy-first flow that explains what runs on device, requests the right permissions, and offers quick enable steps for the Safari/Share extensions and Scan.
+- **Auto Detect** now opens the relevant **Edit** page first (matches manual actions), so you review before saving.
+- **Visual Intelligence scanner implemented** (VisionKit Data Scanner) for barcodes/QR + text; routes into the matching editor.
+- **Scanner responsiveness tuned:** barcode path uses `.fast` quality, a narrower **regionOfInterest**, limited OCR languages, and first-hit auto-capture.
+
+**Dev notes (18 Sep 2025):**
+- New helper: **`Screen Actions/Core/VisionDocumentReader.swift`** (iOS 26 only).  
+  **Target membership:** ✅ **Screen Actions**, ✅ **ScreenActionsActionExtension**, ✅ **ScreenActionsShareExtension** (not the Safari Web Extension / Controls).  
+  The file is tolerant to minor SDK shape differences and falls back to classic OCR when no tables are detected.
 
 ---
 
@@ -52,16 +67,18 @@ Optional guard (advisory): `ruby tools/verify_webext_guard.rb`
 ## What you can do
 - **Add to Calendar** — Detects dates/times in text and creates an event *(optional location, alert, travel-time alarm, and geofenced arrive/leave notifications)*.
 - **Create Reminder** — Finds tasks/deadlines and makes a reminder.
-- **Extract Contact** — Pulls names, emails, phones, and addresses into Contacts.
-- **Receipt → CSV** — Parses receipt-like text to a shareable CSV.
+- **Extract Contact** — Pulls names, emails, phones, and addresses into Contacts.  
+  **iOS 26+:** can **batch-create** contacts from a photographed table (e.g. sign-up sheet).
+- **Receipt → CSV** — Parses receipt-like text to a shareable CSV.  
+  **iOS 26+:** accepts **photos/screenshots** of receipts and produces more accurate CSVs via table reading.
 - **Scan (live)** — Use the Visual Intelligence scanner to capture text or barcodes/QR and jump straight to the matching editor.
 
-All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventKit, Contacts, MapKit).
+All actions use on-device Apple frameworks (Vision OCR, Vision 26 Document Mode, `NSDataDetector`, EventKit, Contacts, MapKit).
 
 ## Targets in this project
-- **Screen Actions (App)** — SwiftUI app with redesigned Home, inline editors, and a simplified toolbar. Includes **Scan** entry.
-- **ScreenActionsActionExtension** — action extension (grabs selected text via `GetSelection.js`) and hosts the shared panel.
-- **ScreenActionsShareExtension** — share-sheet flow to pass text/images; OCRs images then hosts the shared panel.
+- **Screen Actions (App)** — SwiftUI app with redesigned Home, inline editors, and a simplified toolbar. Includes **Scan** entry and Document Mode hooks in editors.
+- **ScreenActionsActionExtension** — action extension (grabs selected text via `GetSelection.js`) and hosts the **shared panel** (now accepts optional image data for Document Mode).
+- **ScreenActionsShareExtension** — share-sheet flow to pass text/images; **for images, passes original data** into the shared panel so Document Mode can run there; OCRs for preview text if needed.
 - **ScreenActionsControls** — widget/live activity utilities.
 - **ScreenActionsWebExtension** — **iOS Safari Web Extension**: popup UI + native messaging. *(iOS does not support context menus.)*
 
@@ -76,7 +93,11 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
 6. To use the Safari Web Extension on device: enable it in **Settings → Safari → Extensions → Screen Actions**.
 7. To appear in Location Services quickly: in-app **Settings → Request Location Access**, then allow **While Using** and **Always**.
 8. To try **Scan**: open the app’s Home and tap **Scan** (camera prompts appear on first use).
-9. *(Dev tip)* Verify extension wiring from Terminal (expect “✅ All checks passed.”):
+9. *(Dev notes — Document Mode)* Ensure **`Core/VisionDocumentReader.swift`** is a member of:
+   - ✅ **Screen Actions**  
+   - ✅ **ScreenActionsActionExtension**  
+   - ✅ **ScreenActionsShareExtension**
+10. *(Dev tip)* Verify extension wiring from Terminal (expect “✅ All checks passed.”):
     
        ruby tools/verify_webext_guard.rb
 
@@ -91,7 +112,8 @@ All actions use on-device Apple frameworks (Vision OCR, `NSDataDetector`, EventK
 
 ## How it works (high level)
 - **Text capture:** via share/action/web extensions (`SAGetSelection.js` / `GetSelection.js`) and `ActionViewController.swift`.
-- **OCR (optional):** Vision recognises text from images (`TextRecognition.swift`).
+- **iOS 26 Document Mode:** Vision 26 **RecognizeDocumentsRequest** groups text into paragraphs/tables; we walk **table rows/cells** and attach **detected data** (emails/phones/addresses) per cell. A **smudge** check provides a gentle “clean lens?” note (no blocking).
+- **OCR (fallback):** Vision recognises text from images (`TextRecognition.swift`) when no table is found or on older OSes.
 - **Live scan:** VisionKit Data Scanner (`VisualScannerView`) for barcodes/QR and text.
   - Uses `.fast` quality for barcodes, a narrowed **regionOfInterest**, and limited OCR languages to keep it responsive.
   - Auto-captures the first solid barcode hit; otherwise allows tap-to-pick text.
@@ -127,7 +149,7 @@ Exports are written to:
 - ✅ CSV export (v1) + App Group/Temp routing.
 - ✅ Services: create EK events/reminders; save contacts.
 - ✅ **Events:** location string + **structured location (`EKStructuredLocation`)**, **travel-time alarm**, and **optional geofencing (enter/exit)** via `GeofencingManager`.
-- ✅ **iOS 26 clean-up:** MapKit 26 (`MKMapItem.location`, `timeZone`)—removed deprecated placemark APIs.
+- ✅ **iOS 26: Document Mode** — Vision document tables + smudge hint; editors, App Intents, and shared panel wired.
 - ✅ Visual Intelligence scanner baseline (barcodes/QR + text, ROI, `.fast` path, haptics).
 
 ### Auto-Detect (router + intent)
@@ -143,6 +165,7 @@ Exports are written to:
 
 ### Unified action panel (extensions)
 - ✅ `SAActionPanelView` shared by Action/Share extensions with inline editors and direct-run shortcuts.
+- ✅ **Document Mode hooks** (image → quick actions, seeding editors).
 
 ### Safari Web Extension (iOS)
 - ✅ Popup shows 5 buttons (Auto Detect + four manual).
@@ -177,6 +200,7 @@ Exports are written to:
 - ✅ Auto Detect → Editor-first behaviour matched to manual actions.
 - ✅ New app icon rolled out across all targets.
 - ✅ Onboarding overhaul: design complete + first pass shipped (permissions & extensions guidance).
+- ✅ **iOS 26 Document Mode** wired across app + extensions (tables, smudge hint, editors, intents).
 
 **Completed on 17 Sep 2025**
 - ✅ **Distribution signing & archive** — Release archive uploaded to App Store Connect; web extension embedded; **no** ExtensionKit entitlement requested; App Group present; delivered package has `get-task-allow = 0`.
