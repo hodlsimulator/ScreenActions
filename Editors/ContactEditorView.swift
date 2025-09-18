@@ -12,6 +12,8 @@ import Contacts
 
 @MainActor
 public struct ContactEditorView: View {
+    @EnvironmentObject private var pro: ProStore
+
     @State private var givenName: String
     @State private var familyName: String
     @State private var emails: [String]
@@ -25,23 +27,19 @@ public struct ContactEditorView: View {
     @State private var isSaving = false
     @State private var error: String?
     @State private var seededFromImage = false
+    @State private var showPaywall = false
 
     public let onCancel: () -> Void
     public let onSaved: (String) -> Void
 
     private let sourceImageData: Data?
 
-    public init(sourceText: String,
-                sourceImageData: Data? = nil,
-                onCancel: @escaping () -> Void,
-                onSaved: @escaping (String) -> Void) {
-
+    public init(sourceText: String, sourceImageData: Data? = nil, onCancel: @escaping () -> Void, onSaved: @escaping (String) -> Void) {
         let d = ContactParser.detect(in: sourceText)
         _givenName  = State(initialValue: d.givenName ?? "")
         _familyName = State(initialValue: d.familyName ?? "")
         _emails     = State(initialValue: d.emails)
         _phones     = State(initialValue: d.phones)
-
         if let a = d.postalAddress {
             _street = State(initialValue: a.street)
             _city = State(initialValue: a.city)
@@ -50,10 +48,8 @@ public struct ContactEditorView: View {
             _country = State(initialValue: a.country)
         } else {
             _street = State(initialValue: ""); _city = State(initialValue: "")
-            _state = State(initialValue: "");  _postalCode = State(initialValue: "")
-            _country = State(initialValue: "")
+            _state = State(initialValue: ""); _postalCode = State(initialValue: ""); _country = State(initialValue: "")
         }
-
         self.sourceImageData = sourceImageData
         self.onCancel = onCancel
         self.onSaved = onSaved
@@ -72,10 +68,8 @@ public struct ContactEditorView: View {
                             TextField("email@example.com", text: Binding(
                                 get: { emails[i] }, set: { emails[i] = $0 }
                             ))
-                            Button(role: .destructive) { emails.remove(at: i) } label: {
-                                Image(systemName: "minus.circle")
-                            }
-                            .buttonStyle(.borderless)
+                            Button(role: .destructive) { emails.remove(at: i) } label: { Image(systemName: "minus.circle") }
+                                .buttonStyle(.borderless)
                         }
                     }
                     Button { emails.append("") } label: { Label("Add email", systemImage: "plus.circle") }
@@ -86,10 +80,8 @@ public struct ContactEditorView: View {
                             TextField("+353 1 123 4567", text: Binding(
                                 get: { phones[i] }, set: { phones[i] = $0 }
                             ))
-                            Button(role: .destructive) { phones.remove(at: i) } label: {
-                                Image(systemName: "minus.circle")
-                            }
-                            .buttonStyle(.borderless)
+                            Button(role: .destructive) { phones.remove(at: i) } label: { Image(systemName: "minus.circle") }
+                                .buttonStyle(.borderless)
                         }
                     }
                     Button { phones.append("") } label: { Label("Add phone", systemImage: "plus.circle") }
@@ -102,9 +94,7 @@ public struct ContactEditorView: View {
                     TextField("Country", text: $country)
                 }
 
-                if let error {
-                    Section { Text(error).foregroundStyle(.red).font(.footnote) }
-                }
+                if let error { Section { Text(error).foregroundStyle(.red).font(.footnote) } }
                 if seededFromImage {
                     Section {
                         Label("Seeded from document image", systemImage: "doc.viewfinder")
@@ -122,6 +112,7 @@ public struct ContactEditorView: View {
                 }
             }
             .overlay(alignment: .center) { if isSaving { ProgressView().scaleEffect(1.2) } }
+            .sheet(isPresented: $showPaywall) { ProPaywallView().environmentObject(pro) }
             .task {
                 if let data = sourceImageData, !seededFromImage {
                     if #available(iOS 26, *) {
@@ -154,6 +145,17 @@ public struct ContactEditorView: View {
 
     private func save() async {
         error = nil; isSaving = true; defer { isSaving = false }
+
+        // Gate: only when seeded from an image (5/day free)
+        if seededFromImage {
+            let gate = QuotaManager.consume(feature: .createContactFromImage, isPro: pro.isPro)
+            guard gate.allowed else {
+                self.error = gate.message
+                self.showPaywall = true
+                return
+            }
+        }
+
         var dc = DetectedContact()
         if !givenName.trimmingCharacters(in: .whitespaces).isEmpty { dc.givenName = givenName }
         if !familyName.trimmingCharacters(in: .whitespaces).isEmpty { dc.familyName = familyName }
@@ -164,11 +166,15 @@ public struct ContactEditorView: View {
             a.street = street; a.city = city; a.state = state; a.postalCode = postalCode; a.country = country
             dc.postalAddress = a.copy() as? CNPostalAddress
         }
+
         let has = (dc.givenName?.isEmpty == false) || (dc.familyName?.isEmpty == false) || !dc.emails.isEmpty || !dc.phones.isEmpty || (dc.postalAddress != nil)
         guard has else { error = "Enter at least one contact field."; return }
+
         do {
             let id = try await ContactsService.save(contact: dc)
             onSaved("Contact saved (\(id)).")
-        } catch { self.error = error.localizedDescription }
+        } catch {
+            self.error = error.localizedDescription
+        }
     }
 }

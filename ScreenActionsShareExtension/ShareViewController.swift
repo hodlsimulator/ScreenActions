@@ -35,11 +35,10 @@ final class ShareViewController: UIViewController {
         guard let items = extensionContext?.inputItems as? [NSExtensionItem] else {
             attachUI(); return
         }
-
         let group = DispatchGroup()
+
         for item in items {
             for provider in item.attachments ?? [] {
-
                 if provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.plainText.identifier, options: nil) { [weak self] item, _ in
@@ -50,7 +49,6 @@ final class ShareViewController: UIViewController {
                         Task { @MainActor in self.selectedText = t }
                     }
                 }
-
                 if provider.hasItemConformingToTypeIdentifier(UTType.url.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { [weak self] item, _ in
@@ -59,7 +57,6 @@ final class ShareViewController: UIViewController {
                         Task { @MainActor in self.pageURL = url.absoluteString }
                     }
                 }
-
                 if provider.hasItemConformingToTypeIdentifier(UTType.image.identifier) {
                     group.enter()
                     provider.loadItem(forTypeIdentifier: UTType.image.identifier, options: nil) { [weak self] item, _ in
@@ -88,7 +85,7 @@ final class ShareViewController: UIViewController {
             pageTitle: pageTitle,
             pageURL: pageURL,
             imageData: imageData
-        ) { [weak self] message in
+        ) { [weak self] (message: String) in
             let out = NSExtensionItem()
             out.userInfo = ["ScreenActionsResult": message]
             self?.extensionContext?.completeRequest(returningItems: [out], completionHandler: nil)

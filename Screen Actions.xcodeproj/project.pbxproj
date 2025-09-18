@@ -11,14 +11,8 @@
 		E115D2552E7761AB00C8F5EE /* ReminderEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */; };
 		E115D25A2E77632300C8F5EE /* ReceiptCSVPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */; };
 		E115D25F2E77664500C8F5EE /* ReminderEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */; };
-		E115D2602E77664500C8F5EE /* EventEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2522E77619500C8F5EE /* EventEditorView.swift */; };
-		E115D2612E77664500C8F5EE /* ReceiptCSVPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */; };
 		E115D2632E77664500C8F5EE /* ReminderEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */; };
-		E115D2642E77664500C8F5EE /* EventEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2522E77619500C8F5EE /* EventEditorView.swift */; };
-		E115D2652E77664500C8F5EE /* ReceiptCSVPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */; };
-		E115D2732E7775D800C8F5EE /* ContactEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2722E7775D800C8F5EE /* ContactEditorView.swift */; };
 		E115D2742E7775D800C8F5EE /* ContactEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2722E7775D800C8F5EE /* ContactEditorView.swift */; };
-		E115D2752E7775D800C8F5EE /* ContactEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2722E7775D800C8F5EE /* ContactEditorView.swift */; };
 		E12A85132E75DBAE00E07869 /* UniformTypeIdentifiers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E12A85122E75DBAD00E07869 /* UniformTypeIdentifiers.framework */; };
 		E12A851F2E75DBAE00E07869 /* ScreenActionsActionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A85112E75DBAD00E07869 /* ScreenActionsActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E12A85482E76045100E07869 /* ScreenActionsShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E12A853E2E76045100E07869 /* ScreenActionsShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -138,9 +132,9 @@
 				Core/DataDetectors.swift,
 				Core/DesignSystem.swift,
 				Core/GeofencingManager.swift,
+				Core/IAP/SAProducts.swift,
 				Core/Logger.swift,
 				Core/RemindersService.swift,
-				Core/SAActionPanelView.swift,
 				Core/TextRecognition.swift,
 				Core/VisionDocumentReader.swift,
 				Intents/AddToCalendarIntent.swift,
@@ -171,9 +165,9 @@
 				Core/DataDetectors.swift,
 				Core/DesignSystem.swift,
 				Core/GeofencingManager.swift,
+				Core/IAP/SAProducts.swift,
 				Core/Logger.swift,
 				Core/RemindersService.swift,
-				Core/SAActionPanelView.swift,
 				Core/TextRecognition.swift,
 				Core/VisionDocumentReader.swift,
 				Intents/AddToCalendarIntent.swift,
@@ -202,6 +196,7 @@
 				Core/CSVExporter.swift,
 				Core/DataDetectors.swift,
 				Core/GeofencingManager.swift,
+				Core/IAP/SAProducts.swift,
 				Core/RemindersService.swift,
 			);
 			target = E12A855D2E760EBD00E07869 /* ScreenActionsWebExtension */;
@@ -605,9 +600,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E115D25F2E77664500C8F5EE /* ReminderEditorView.swift in Sources */,
-				E115D2602E77664500C8F5EE /* EventEditorView.swift in Sources */,
-				E115D2612E77664500C8F5EE /* ReceiptCSVPreviewView.swift in Sources */,
-				E115D2732E7775D800C8F5EE /* ContactEditorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -616,9 +608,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E115D2632E77664500C8F5EE /* ReminderEditorView.swift in Sources */,
-				E115D2642E77664500C8F5EE /* EventEditorView.swift in Sources */,
-				E115D2652E77664500C8F5EE /* ReceiptCSVPreviewView.swift in Sources */,
-				E115D2752E7775D800C8F5EE /* ContactEditorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

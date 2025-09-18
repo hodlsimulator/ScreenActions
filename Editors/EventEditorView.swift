@@ -13,6 +13,7 @@ import MapKit
 
 @MainActor
 public struct EventEditorView: View {
+    @EnvironmentObject private var pro: ProStore
 
     // Editable fields
     @State private var title: String
@@ -28,7 +29,7 @@ public struct EventEditorView: View {
     // Geofencing UI
     @State private var geoNotifyOnArrival: Bool = false
     @State private var geoNotifyOnDeparture: Bool = false
-    @State private var geoRadius: Double = 150 // metres; clamped 50…2000 on save
+    @State private var geoRadius: Double = 150
 
     // UI state
     @State private var isSaving = false
@@ -38,7 +39,8 @@ public struct EventEditorView: View {
     @State private var showLocationExplainer = false
     private let locationManager = CLLocationManager()
 
-    // Callbacks
+    @State private var showPaywall = false
+
     public let onCancel: () -> Void
     public let onSaved: (String) -> Void
 
@@ -50,33 +52,30 @@ public struct EventEditorView: View {
         let defaultEnd = defaultStart.addingTimeInterval(60 * 60)
         if let range = DateParser.firstDateRange(in: trimmed) {
             _start = State(initialValue: range.start)
-            _end   = State(initialValue: range.end)
+            _end = State(initialValue: range.end)
         } else {
             _start = State(initialValue: defaultStart)
-            _end   = State(initialValue: defaultEnd)
+            _end = State(initialValue: defaultEnd)
         }
 
         // Title
-        let firstLine = trimmed
-            .components(separatedBy: .newlines)
-            .first?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let firstLine = trimmed.components(separatedBy: .newlines).first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let initialTitle = firstLine.isEmpty ? "Event" : (firstLine.count > 64 ? String(firstLine.prefix(64)) : firstLine)
         _title = State(initialValue: initialTitle)
 
         // Notes
         _notes = State(initialValue: trimmed)
 
-        // Location hint (extract from text if possible)
+        // Location hint
         let hint = CalendarService.firstLocationHint(in: trimmed) ?? ""
         _location = State(initialValue: hint)
         _inferTZ  = State(initialValue: !hint.isEmpty) // infer if we already have a place
 
-        // Alert — use last saved default (0 = None)
+        // Alert default (0 = None)
         _alertMinutes = State(initialValue: AppStorageService.getDefaultAlertMinutes())
 
         self.onCancel = onCancel
-        self.onSaved  = onSaved
+        self.onSaved = onSaved
     }
 
     public var body: some View {
@@ -97,13 +96,10 @@ public struct EventEditorView: View {
 
                 Section("Geofencing") {
                     Toggle("Notify on arrival", isOn: $geoNotifyOnArrival)
-                        .onChange(of: geoNotifyOnArrival) { _, new in
-                            if new { promptAlwaysLocationExplainer() }
-                        }
+                        .onChange(of: geoNotifyOnArrival) { _, new in if new { promptAlwaysLocationExplainer() } }
                     Toggle("Notify on departure", isOn: $geoNotifyOnDeparture)
-                        .onChange(of: geoNotifyOnDeparture) { _, new in
-                            if new { promptAlwaysLocationExplainer() }
-                        }
+                        .onChange(of: geoNotifyOnDeparture) { _, new in if new { promptAlwaysLocationExplainer() } }
+
                     if geoNotifyOnArrival || geoNotifyOnDeparture {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack {
@@ -141,17 +137,11 @@ public struct EventEditorView: View {
                         .font(.body)
                 }
 
-                if let error {
-                    Section {
-                        Text(error).foregroundStyle(.red).font(.footnote)
-                    }
-                }
+                if let error { Section { Text(error).foregroundStyle(.red).font(.footnote) } }
             }
             .navigationTitle("New Event")
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel", action: onCancel)
-                }
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel", action: onCancel) }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") { Task { await save() } }
                         .disabled(isSaving || title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -163,34 +153,40 @@ public struct EventEditorView: View {
                 Button("Continue") { requestAlwaysLocation() }
             } message: {
                 Text("""
-                     To notify when you arrive or leave an event location,
-                     Screen Actions needs “Always & When In Use” access to your location.
-                     You can change this any time in Settings.
-                     """)
+                To notify when you arrive or leave an event location, Screen Actions needs “Always & When In Use” access to your location.
+                You can change this any time in Settings.
+                """)
             }
+            .sheet(isPresented: $showPaywall) { ProPaywallView().environmentObject(pro) }
         }
     }
 
     // MARK: - Save
     private func save() async {
-        error = nil
-        isSaving = true
-        defer { isSaving = false }
+        error = nil; isSaving = true; defer { isSaving = false }
+
+        // Build geofencing (nil if none selected)
+        let geofenceProx: GeofencingManager.GeofenceProximity? = {
+            var p: GeofencingManager.GeofenceProximity = []
+            if geoNotifyOnArrival { p.insert(.enter) }
+            if geoNotifyOnDeparture { p.insert(.exit) }
+            return p.isEmpty ? nil : p
+        }()
+
+        // Gate: only when geofencing is requested (1/day free)
+        if geofenceProx != nil {
+            let gate = QuotaManager.consume(feature: .geofencedEventCreation, isPro: pro.isPro)
+            guard gate.allowed else {
+                self.error = gate.message
+                self.showPaywall = true
+                return
+            }
+        }
 
         do {
-            // Build geofencing option set (nil if no toggle selected)
-            let geofenceProx: GeofencingManager.GeofenceProximity? = {
-                var p: GeofencingManager.GeofenceProximity = []
-                if geoNotifyOnArrival { p.insert(.enter) }
-                if geoNotifyOnDeparture { p.insert(.exit) }
-                return p.isEmpty ? nil : p
-            }()
-
             let id = try await CalendarService.shared.addEvent(
                 title: title.trimmingCharacters(in: .whitespacesAndNewlines),
-                start: start,
-                end: end,
-                notes: notes.isEmpty ? nil : notes,
+                start: start, end: end, notes: notes.isEmpty ? nil : notes,
                 locationHint: location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : location,
                 inferTimeZoneFromLocation: inferTZ,
                 alertMinutesBefore: alertMinutes == 0 ? nil : alertMinutes,
@@ -199,12 +195,7 @@ public struct EventEditorView: View {
                 geofenceProximity: geofenceProx,
                 geofenceRadius: clampRadius(geoRadius)
             )
-
-            // Persist last-used alert minutes (if any)
-            if alertMinutes > 0 {
-                AppStorageService.setDefaultAlertMinutes(alertMinutes)
-            }
-
+            if alertMinutes > 0 { AppStorageService.setDefaultAlertMinutes(alertMinutes) }
             onSaved("Event created (\(id)).")
         } catch {
             self.error = error.localizedDescription
@@ -215,21 +206,17 @@ public struct EventEditorView: View {
     private func promptAlwaysLocationExplainer() {
         if !showLocationExplainer { showLocationExplainer = true }
     }
-
     private func requestAlwaysLocation() {
         let status = locationManager.authorizationStatus
         switch status {
         case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                self.locationManager.requestAlwaysAuthorization()
-            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { self.locationManager.requestAlwaysAuthorization() }
         case .authorizedWhenInUse, .authorizedAlways, .restricted, .denied:
             locationManager.requestAlwaysAuthorization()
         @unknown default:
             locationManager.requestAlwaysAuthorization()
         }
     }
-
     private func clampRadius(_ r: Double) -> Double { max(50, min(r, 2000)) }
 }
