@@ -4,7 +4,7 @@
   const API = globalThis.browser || globalThis.chrome;
 
   // Fill with exact IDs after build (step 5).
-  const HOSTS = ["com.conornolan.Screen-Actions","com.conornolan.Screen-Actions.ScreenActionsWebExtension"];
+  const HOSTS = ["com.conornolan.Screen-Actions.ScreenActionsWebExtension"];
 
   // Promise wrapper that works with both Promise- and callback-style APIs
   function callSendNativeMessage(host, payload) {
