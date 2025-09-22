@@ -222,6 +222,7 @@
 		E1F912742E81F3DF00276157 /* pin_release_to_installed_appstore_uuids.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pin_release_to_installed_appstore_uuids.rb; sourceTree = "<group>"; };
 		E1F9134E2E81F48D00276157 /* list_profiles_for_targets_pb.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = list_profiles_for_targets_pb.rb; sourceTree = "<group>"; };
 		E1F9134F2E81F5CD00276157 /* pin_release_to_given_uuids.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pin_release_to_given_uuids.rb; sourceTree = "<group>"; };
+		E1F915022E8203B400276157 /* fix_send_native_message_sig.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = fix_send_native_message_sig.rb; sourceTree = "<group>"; };
 		ECC123338EBC93C4D0A312A9 /* popup.html */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.html; name = popup.html; path = ScreenActionsWebExtension/WebRes/popup.html; sourceTree = "<group>"; };
 		ED42160C75F4CDBD0D5F54C3 /* icon-128-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-128-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-128-squircle.png"; sourceTree = "<group>"; };
 		EFE369E487800870DC2CA3FD /* manifest.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = manifest.json; path = ScreenActionsWebExtension/WebRes/manifest.json; sourceTree = "<group>"; };
@@ -439,6 +440,7 @@
 				32FF644ED87D30DD10A7AB8A /* ensure_webext_resources.rb */,
 				3402647959D843EFFADD7210 /* fix_embed_and_resources.rb */,
 				F46DC675DE53F5A9DE57D69F /* fix_webext2.rb */,
+				E1F915022E8203B400276157 /* fix_send_native_message_sig.rb */,
 				F8CEB8DE2C0728AEB5713466 /* flatten_webext_resources.rb */,
 				24785EA68FB01033382A800E /* force_webext_sources.rb */,
 				3738AEA85627DCFF49949031 /* pick_safari_ext_profile.py */,
@@ -854,7 +856,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsActionExtension/ScreenActionsActionExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsActionExtension/Info.plist;
@@ -886,7 +888,7 @@
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsActionExtension/ScreenActionsActionExtension.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -920,7 +922,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsShareExtension/ScreenActionsShareExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsShareExtension/Info.plist;
@@ -952,7 +954,7 @@
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsShareExtension/ScreenActionsShareExtension.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -987,7 +989,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsWebExtension/ScreenActionsWebExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1031,7 +1033,7 @@
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsWebExtension/ScreenActionsWebExtension.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1203,7 +1205,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = "Screen Actions/Screen Actions.entitlements";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1251,7 +1253,7 @@
 				CODE_SIGN_ENTITLEMENTS = "Screen Actions/Screen Actions.entitlements";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				ENABLE_PREVIEWS = YES;
@@ -1301,7 +1303,7 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsControlsExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsControls/Info.plist;
@@ -1340,7 +1342,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
