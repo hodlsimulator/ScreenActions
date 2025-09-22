@@ -1,12 +1,11 @@
 // popup.js — native bridge with iOS Share Sheet fallback
-
 (function () {
   const API = globalThis.browser || globalThis.chrome;
 
   const REMEMBER_KEY = "sa.rememberLastAction.enabled";
   const LAST_ACTION_KEY = "sa.rememberLastAction.value";
 
-  // Keep a conservative host list; background.js does real work if native is available.
+  // Send a message to the background worker, which in turn calls sendNativeMessage.
   const NATIVE_MESSAGE = (action, payload) =>
     new Promise((resolve, reject) => {
       try {
@@ -31,40 +30,45 @@
 
   function decorateError(message, hint) {
     const known = [
-      { match: /Calendar access was not granted/i, guide: "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
-      { match: /Reminders access was not granted/i, guide: "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
-      { match: /Contacts access.*not granted/i,       guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions." },
-      { match: /No date found/i,                      guide: "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead." }
+      {
+        match: /Calendar access was not granted/i,
+        guide:
+          "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions.\nIf you haven’t opened the app yet, run it once so iPadOS can show the permission dialog."
+      },
+      {
+        match: /Reminders access was not granted/i,
+        guide:
+          "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions.\nIf you haven’t opened the app yet, run it once so iPadOS can show the permission dialog."
+      },
+      {
+        match: /Contacts access.*not granted/i,
+        guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions."
+      },
+      {
+        match: /No date found/i,
+        guide: "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead."
+      }
     ];
     const extra = hint || (known.find(k => k.match.test(message))?.guide);
     return extra ? `${message} — ${extra}` : message;
   }
 
   // ---- Share Sheet Fallback (iOS friendly) ----------------------------------
-
   function sharePayloadString(payload) {
     const sel = (payload.selection || "").trim();
     const title = (payload.title || "").trim();
     const url = (payload.url || "").trim();
-    // Prefer explicit selection; then title; then URL
     const base = sel || title || url || "(No selection)";
     return url && base.indexOf(url) === -1 ? `${base}\n${url}` : base;
   }
 
   async function fallbackShare(action, payload) {
     const text = sharePayloadString(payload);
-
     if (!navigator.share) {
       throw new Error("Native bridge unavailable and Share Sheet not supported on this device.");
     }
-
-    // Give the reviewer clear guidance
     setStatus("Opening iOS Share Sheet… choose “Screen Actions”.", true);
-
-    // Best-effort share; iOS will show Share Sheet where your Share Extension can do the work
     await navigator.share({ text });
-
-    // Success message (the Share Extension handles the actual creation)
     const label = {
       autoDetect: "Auto",
       createReminder: "Reminder",
@@ -72,11 +76,9 @@
       extractContact: "Contact",
       receiptCSV: "Receipt → CSV"
     }[action] || "Action";
-
     setStatus(`${label}: handed off via Share Sheet.`, true);
     return { ok: true, message: "Shared to Screen Actions." };
   }
-
   // ----------------------------------------------------------------------------
 
   async function getPageContext() {
@@ -89,8 +91,6 @@
         })
       );
       if (!tab) throw new Error("No active tab.");
-
-      // Try to extract selection from the page
       const canScript = !!(API.scripting && API.scripting.executeScript);
       if (canScript) {
         const results = await new Promise((res, rej) =>
@@ -103,7 +103,11 @@
                   if (!el) return "";
                   const tag = (el.tagName || "").toLowerCase();
                   const type = (el.type || "").toLowerCase();
-                  if (tag === "textarea" || (tag === "input" && (type === "" || type === "text" || type === "search" || type === "url" || type === "tel"))) {
+                  if (
+                    tag === "textarea" ||
+                    (tag === "input" &&
+                      (type === "" || type === "text" || type === "search" || type === "url" || type === "tel"))
+                  ) {
                     const start = el.selectionStart ?? 0;
                     const end = el.selectionEnd ?? 0;
                     const v = el.value || "";
@@ -123,12 +127,12 @@
             }
           )
         );
-        const firstWithSel = results && results.find(r => r && r.result && r.result.selection && r.result.selection.trim().length > 0);
-        return (firstWithSel && firstWithSel.result) || (results && results[0] && results[0].result) ||
-               { selection: "", title: tab.title || "", url: tab.url || "" };
+        const firstWithSel =
+          results && results.find((r) => r && r.result && r.result.selection && r.result.selection.trim().length > 0);
+        return (firstWithSel && firstWithSel.result) ||
+          (results && results[0] && results[0].result) ||
+          { selection: "", title: tab.title || "", url: tab.url || "" };
       }
-
-      // Fallback: no scripting — use tab title/url only
       return { selection: "", title: tab.title || "", url: tab.url || "" };
     } catch {
       return { selection: "", title: document.title || "", url: "" };
@@ -145,15 +149,23 @@
     }
   }
 
+  // Treat any native-bridge failure as "use the Share Sheet" (iOS-friendly).
+  function isBridgeFailure(message) {
+    const m = message || "";
+    return /sendNativeMessage unavailable/i.test(m) ||
+           /Invalid call to runtime\.sendNativeMessage/i.test(m) ||
+           /SFErrorDomain/i.test(m) ||
+           /Host.*not.*found/i.test(m) ||
+           /Native.*disconnected/i.test(m) ||
+           /connectNative/i.test(m);
+  }
+
   async function runAction(action) {
     const payload = await getPageContext();
-    document.getElementById("sel").textContent =
-      (payload.selection?.trim() || payload.title || "(No selection)");
-
+    document.getElementById("sel").textContent = (payload.selection?.trim() || payload.title || "(No selection)");
     try {
       // First: try native
       const response = await NATIVE_MESSAGE(action, payload);
-
       if (response?.ok) {
         setStatus(response.message || "Done.", true);
         const remember = (await new Promise((res) => API.storage.local.get(REMEMBER_KEY, res)))[REMEMBER_KEY] === true;
@@ -163,16 +175,11 @@
         }
         return;
       }
-
-      // Native returned a failure (rare) → decorate and then try fallback
       const msg = decorateError((response && response.message) || "Unknown error.", response && response.hint);
       throw new Error(msg);
-
     } catch (err) {
       const m = (err && err.message) || String(err);
-
-      // iOS native bridge blocked → use Share Sheet
-      if (/Invalid call to runtime\.sendNativeMessage|SFErrorDomain/i.test(m)) {
+      if (isBridgeFailure(m)) {
         try {
           await fallbackShare(action, payload);
           return;
@@ -181,7 +188,6 @@
           return;
         }
       }
-
       setStatus(decorateError(m, null), false);
     }
   }
@@ -194,7 +200,13 @@
     const btn = document.getElementById("btn-last");
     if (enabled && last) {
       row.style.display = "flex";
-      const label = { autoDetect: "Auto Detect", createReminder: "Create Reminder", addEvent: "Add Calendar Event", extractContact: "Extract Contact", receiptCSV: "Receipt \u2192 CSV" }[last] || last;
+      const label = {
+        autoDetect: "Auto Detect",
+        createReminder: "Create Reminder",
+        addEvent: "Add Calendar Event",
+        extractContact: "Extract Contact",
+        receiptCSV: "Receipt \u2192 CSV"
+      }[last] || last;
       btn.textContent = `Run Last: ${label}`;
       btn.onclick = () => runAction(last);
     } else {
