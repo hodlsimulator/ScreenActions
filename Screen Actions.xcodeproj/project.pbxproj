@@ -1338,9 +1338,11 @@
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsControlsExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 92HEPEJ42Z;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsControls/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ScreenActionsControls;
@@ -1354,6 +1356,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "com.conornolan.Screen-Actions.ScreenActionsControls";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "SA AppStore — Controls";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
