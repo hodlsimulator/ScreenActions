@@ -3,12 +3,8 @@
 (function () {
   const API = globalThis.browser || globalThis.chrome;
 
-  // Fill these with your actual IDs after a build (step 3 below).
-  // Example defaults (safe to keep):
-  const HOSTS = [
-    "com.conornolan.Screen-Actions",             // app bundle id (primary)
-    "com.conornolan.Screen-Actions.WebExtension" // extension bundle id (fallback)
-  ];
+  // Fill with exact IDs after build (step 5).
+  const HOSTS = ["com.conornolan.Screen-Actions","com.conornolan.Screen-Actions.ScreenActionsWebExtension"];
 
   // Promise wrapper that works with both Promise- and callback-style APIs
   function callSendNativeMessage(host, payload) {
