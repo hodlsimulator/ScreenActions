@@ -1,19 +1,37 @@
-// popup.js — native-only (no Share Sheet fallback)
+// popup.js — talks to background; no Share Sheet; storage-safe fallbacks.
 (function () {
-  const API = globalThis.browser || globalThis.chrome;
+  const B = typeof browser !== "undefined" ? browser : undefined;
+  const C = typeof chrome  !== "undefined" ? chrome  : undefined;
 
-  const REMEMBER_KEY = "sa.rememberLastAction.enabled";
-  const LAST_ACTION_KEY = "sa.rememberLastAction.value";
-  const PINNED_HOST_KEY = "sa.native.host";
+  const RUNTIME   = (B && B.runtime)   || (C && C.runtime);
+  const TABS      = (B && B.tabs)      || (C && C.tabs);
+  const SCRIPTING = (B && B.scripting) || (C && C.scripting);
+  const STORAGE   = (B && B.storage && B.storage.local) || (C && C.storage && C.storage.local) || null;
 
-  // Safari ignores the host string, but it must be present; we try a few.
-  const HOSTS = [
-    "application.id",
-    "com.conornolan.Screen-Actions.WebExtension",
-    "com.conornolan.Screen-Actions.ScreenActionsWebExtension",
-    "com.conornolan.Screen-Actions.ScreenActionsWebExtension2",
-    "com.conornolan.Screen-Actions.WebExtFix.1757988823"
-  ];
+  const REMEMBER_KEY   = "sa.rememberLastAction.enabled";
+  const LAST_ACTION_KEY= "sa.rememberLastAction.value";
+
+  // ---------- tiny storage wrapper (uses Web Storage if extension storage missing)
+  function lsGet(key) {
+    try { const v = localStorage.getItem(key); return v == null ? undefined : JSON.parse(v); }
+    catch { return undefined; }
+  }
+  function lsSet(obj) {
+    try { for (const [k,v] of Object.entries(obj)) localStorage.setItem(k, JSON.stringify(v)); } catch {}
+  }
+  async function storeGet(keys) {
+    if (STORAGE) return new Promise(res => STORAGE.get(keys, res));
+    if (Array.isArray(keys)) {
+      const out = {}; for (const k of keys) out[k] = lsGet(k); return out;
+    } else {
+      const out = {}; out[keys] = lsGet(keys); return out;
+    }
+  }
+  async function storeSet(obj) {
+    if (STORAGE) return new Promise(res => STORAGE.set(obj, res));
+    lsSet(obj);
+  }
+  // ---------------------------------------------------------------------------
 
   function setStatus(text, ok) {
     const s = document.getElementById("status");
@@ -36,90 +54,65 @@
     return extra ? `${message} — ${extra}` : message;
   }
 
-  // ---- Native messaging (direct from popup) ---------------------------------
-  function callSendNativeMessage(host, body) {
+  // ---- send to background (works in Safari's popup)
+  function runtimeSendMessage(msg) {
     return new Promise((resolve, reject) => {
-      if (!API.runtime?.sendNativeMessage) {
-        return reject(new Error("runtime.sendNativeMessage unavailable"));
-      }
+      if (!RUNTIME || !RUNTIME.sendMessage) return reject(new Error("runtime.sendMessage unavailable"));
       try {
         const done = (resp) => {
-          const err = globalThis.chrome?.runtime?.lastError || null;
+          const err = (C && C.runtime && C.runtime.lastError) || null;
           if (err) reject(new Error(err.message || String(err)));
           else resolve(resp);
         };
-        const maybe = API.runtime.sendNativeMessage(host, body, done);
-        if (maybe?.then) maybe.then(resolve).catch(reject);
+        const maybe = RUNTIME.sendMessage(msg, done);
+        if (maybe && typeof maybe.then === "function") maybe.then(resolve).catch(reject);
       } catch (e) {
         reject(e);
       }
     });
   }
-
-  async function NATIVE_MESSAGE(action, payload) {
-    const pinned = (await new Promise(res => API.storage.local.get(PINNED_HOST_KEY, res)))[PINNED_HOST_KEY];
-    const candidates = pinned ? [pinned, ...HOSTS.filter(h => h !== pinned)] : HOSTS;
-
-    let lastErr = null;
-    for (const host of candidates) {
-      try {
-        const resp = await callSendNativeMessage(host, { action, payload });
-        await new Promise(res => API.storage.local.set({ [PINNED_HOST_KEY]: host }, res));
-        return resp;
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    throw lastErr || new Error("Native messaging failed.");
-  }
-  // ---------------------------------------------------------------------------
+  const NATIVE_MESSAGE = (action, payload) => runtimeSendMessage({ cmd: "native", action, payload });
 
   async function getPageContext() {
     try {
-      const [tab] = await new Promise((res, rej) =>
-        API.tabs.query({ active: true, currentWindow: true }, (t) => {
-          const err = globalThis.chrome?.runtime?.lastError || null;
-          if (err) return rej(new Error(err.message || String(err)));
-          res(t);
-        })
-      );
+      const [tab] = await new Promise((res, rej) => {
+        const ret = TABS.query({ active: true, currentWindow: true }, (t) => {
+          const err = (C && C.runtime && C.runtime.lastError) || null;
+          if (err) rej(new Error(err.message || String(err))); else res(t);
+        });
+        if (ret && typeof ret.then === "function") ret.then(res).catch(rej);
+      });
       if (!tab) throw new Error("No active tab.");
 
-      const canScript = !!(API.scripting && API.scripting.executeScript);
-      if (canScript) {
-        const results = await new Promise((res, rej) =>
-          API.scripting.executeScript(
-            {
-              target: { tabId: tab.id, allFrames: true },
-              func: () => {
-                function selectionFromActiveElement() {
-                  const el = document.activeElement;
-                  if (!el) return "";
-                  const tag = (el.tagName || "").toLowerCase();
-                  const type = (el.type || "").toLowerCase();
-                  if (tag === "textarea" ||
-                      (tag === "input" && (type === "" || type === "text" || type === "search" || type === "url" || type === "tel"))) {
-                    const start = el.selectionStart ?? 0;
-                    const end = el.selectionEnd ?? 0;
-                    const v = el.value || "";
-                    if (end > start) return v.substring(start, end);
-                    return v;
-                  }
-                  return "";
+      if (SCRIPTING && SCRIPTING.executeScript) {
+        const results = await new Promise((res, rej) => {
+          const ret = SCRIPTING.executeScript({
+            target: { tabId: tab.id, allFrames: true },
+            func: () => {
+              function selectionFromActiveElement() {
+                const el = document.activeElement;
+                if (!el) return "";
+                const tag = (el.tagName || "").toLowerCase();
+                const type = (el.type || "").toLowerCase();
+                if (tag === "textarea" || (tag === "input" && (type === "" || type === "text" || type === "search" || type === "url" || type === "tel"))) {
+                  const start = el.selectionStart ?? 0;
+                  const end   = el.selectionEnd   ?? 0;
+                  const v = el.value || "";
+                  if (end > start) return v.substring(start, end);
+                  return v;
                 }
-                const sel = String(window.getSelection ? window.getSelection() : "") || selectionFromActiveElement();
-                return { selection: sel, title: document.title || "", url: location.href || "" };
+                return "";
               }
-            },
-            (r) => {
-              const err = globalThis.chrome?.runtime?.lastError || null;
-              if (err) return rej(new Error(err.message || String(err)));
-              res(r);
+              const sel = String(window.getSelection ? window.getSelection() : "") || selectionFromActiveElement();
+              return { selection: sel, title: document.title || "", url: location.href || "" };
             }
-          )
-        );
-        const firstWithSel =
-          results && results.find((r) => r && r.result && r.result.selection && r.result.selection.trim().length > 0);
+          }, (r) => {
+            const err = (C && C.runtime && C.runtime.lastError) || null;
+            if (err) rej(new Error(err.message || String(err))); else res(r);
+          });
+          if (ret && typeof ret.then === "function") ret.then(res).catch(rej);
+        });
+        const firstWithSel = results && results.find(r => r && r.result && r.result.selection && r.result.selection.trim().length > 0);
         return (firstWithSel && firstWithSel.result) ||
                (results && results[0] && results[0].result) ||
                { selection: "", title: tab.title || "", url: tab.url || "" };
@@ -146,9 +139,9 @@
       const response = await NATIVE_MESSAGE(action, payload);
       if (response?.ok) {
         setStatus(response.message || "Done.", true);
-        const remember = (await new Promise((res) => API.storage.local.get(REMEMBER_KEY, res)))[REMEMBER_KEY] === true;
+        const remember = (await storeGet(REMEMBER_KEY))[REMEMBER_KEY] === true;
         if (remember) {
-          await new Promise((res) => API.storage.local.set({ [LAST_ACTION_KEY]: action }, res));
+          await storeSet({ [LAST_ACTION_KEY]: action });
           updateRunLast();
         }
       } else {
@@ -161,7 +154,7 @@
   }
 
   async function updateRunLast() {
-    const store = await new Promise((res) => API.storage.local.get([REMEMBER_KEY, LAST_ACTION_KEY], res));
+    const store = await storeGet([REMEMBER_KEY, LAST_ACTION_KEY]);
     const enabled = store[REMEMBER_KEY] === true;
     const last = store[LAST_ACTION_KEY];
     const row = document.getElementById("last-row");
@@ -201,10 +194,10 @@
     if (isPro) {
       wrap.style.display = "block";
       const t = document.getElementById("remember-toggle");
-      const store = await new Promise((res) => API.storage.local.get(REMEMBER_KEY, res));
+      const store = await storeGet(REMEMBER_KEY);
       t.checked = store[REMEMBER_KEY] === true;
       t.addEventListener("change", async () => {
-        await new Promise((res) => API.storage.local.set({ [REMEMBER_KEY]: t.checked }, res));
+        await storeSet({ [REMEMBER_KEY]: t.checked });
         updateRunLast();
       });
       await updateRunLast();
@@ -212,12 +205,11 @@
       wrap.style.display = "none";
     }
 
-    // Quick preflight to surface native availability
+    // Quick preflight
     try {
       const ping = await NATIVE_MESSAGE("ping", {});
-      if (ping?.ok) setStatus("Ready.", true);
-      else setStatus("Native bridge error.", false);
-    } catch (e) {
+      setStatus(ping?.ok ? "Ready." : "Native bridge error.", !!ping?.ok);
+    } catch {
       setStatus("Native bridge unavailable.", false);
     }
   });
