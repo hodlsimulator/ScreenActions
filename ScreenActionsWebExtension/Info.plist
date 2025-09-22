@@ -36,7 +36,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.Safari.web-extension</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>SafariWebExtensionHandler</string>
+		<string>SAWebExtensionHandler</string>
 	</dict>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>Screen Actions creates reminders you choose from shared text.</string>

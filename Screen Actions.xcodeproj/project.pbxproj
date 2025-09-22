@@ -14,23 +14,16 @@
 		3756491F29D841861EE7ACDD /* popup.css in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 2B5F78CCA07D8E88CE446DA8 /* popup.css */; };
 		3D5EC9CC98CC68A2CFA6952F /* icon-48-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 952D08346EE5C5A81C02EE38 /* icon-48-squircle.png */; };
 		407B9B2E6040EAA289CDF876 /* icon-64-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = C26A4DBC102C9BD0BCD4D89B /* icon-64-squircle.png */; };
-		4727668F83D39E04902C34DB /* icon-256-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = 48E26C8E584553B1355630BA /* icon-256-squircle.png */; };
 		48C530587830721C8B30B34A /* toolbar-icon.svg in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 215E50FC8537B58F4619D6B7 /* toolbar-icon.svg */; };
-		4ED60A53736EE3667D1733AB /* icon-128-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = ED42160C75F4CDBD0D5F54C3 /* icon-128-squircle.png */; };
 		5E59F67AC98F01D2AB7DC154 /* icon-96-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = 9D615E2EAB16C3B69222AD08 /* icon-96-squircle.png */; };
-		646753DCB4B5C10E74D3A801 /* icon-512-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = A2B308C9B01DABFEB0C859F6 /* icon-512-squircle.png */; };
 		8112B3AD00B23B97DBB219E2 /* messages.json in Copy WebRes (_locales/en) */ = {isa = PBXBuildFile; fileRef = 33ED9BDCF003AA49167DD0E2 /* messages.json */; };
-		8132E0C01475E9B8AFD19076 /* toolbar-icon.svg in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = 215E50FC8537B58F4619D6B7 /* toolbar-icon.svg */; };
 		8B5E637F9DE8AA973FF4453E /* icon-96-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 9D615E2EAB16C3B69222AD08 /* icon-96-squircle.png */; };
 		973FC772644CC984A14EEAB6 /* manifest.json in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = EFE369E487800870DC2CA3FD /* manifest.json */; };
 		99AF63A4A584A78CD6683F60 /* icon-48-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = 952D08346EE5C5A81C02EE38 /* icon-48-squircle.png */; };
-		A383B1D8D946817B0BE4A02D /* icon-48-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = 952D08346EE5C5A81C02EE38 /* icon-48-squircle.png */; };
 		B5DDDABAC73728E41CFEDCFD /* icon-256-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = 48E26C8E584553B1355630BA /* icon-256-squircle.png */; };
-		BA6C6E87E84D2CE3BB210459 /* icon-96-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = 9D615E2EAB16C3B69222AD08 /* icon-96-squircle.png */; };
 		C8297562DF5A3179DDF6DBB2 /* background.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = D462D5C20FCE4BBF2EC032AC /* background.js */; };
 		CA8EDFD6042F1482735D8388 /* popup.html in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = ECC123338EBC93C4D0A312A9 /* popup.html */; };
 		CB32DB9ABFCAB8FA7D538789 /* icon-512-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = A2B308C9B01DABFEB0C859F6 /* icon-512-squircle.png */; };
-		D1559C628DB1F11D1CE92E9D /* icon-64-squircle.png in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = C26A4DBC102C9BD0BCD4D89B /* icon-64-squircle.png */; };
 		D77F9449730ABFFBCFAE8D16 /* toolbar-icon.svg in Copy Root (images) */ = {isa = PBXBuildFile; fileRef = 215E50FC8537B58F4619D6B7 /* toolbar-icon.svg */; };
 		E115D2532E77619700C8F5EE /* EventEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2522E77619500C8F5EE /* EventEditorView.swift */; };
 		E115D2552E7761AB00C8F5EE /* ReminderEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */; };
@@ -647,6 +640,7 @@
 					};
 					E12A855D2E760EBD00E07869 = {
 						CreatedOnToolsVersion = 26.0;
+						LastSwiftMigration = 2600;
 					};
 					E183E1342E75ABC700E8D263 = {
 						CreatedOnToolsVersion = 26.0;
@@ -931,6 +925,7 @@
 		E12A85782E760EBD00E07869 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsWebExtension/ScreenActionsWebExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
@@ -960,6 +955,7 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -969,6 +965,7 @@
 		E12A85792E760EBD00E07869 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsWebExtension/ScreenActionsWebExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
