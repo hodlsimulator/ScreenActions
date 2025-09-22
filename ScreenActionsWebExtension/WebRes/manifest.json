@@ -5,25 +5,23 @@
   "default_locale": "en",
   "description": "One-tap actions: reminder, calendar, contact, and receipt → CSV.",
   "icons": {
-    "48": "images/icon-48.png",
-    "64": "images/icon-64.png",
-    "96": "images/icon-96.png",
-    "128": "images/icon-128.png",
-    "256": "images/icon-256.png",
-    "512": "images/icon-512.png"
+    "48": "images/icon-48-squircle.png",
+    "64": "images/icon-64-squircle.png",
+    "96": "images/icon-96-squircle.png",
+    "128": "images/icon-128-squircle.png",
+    "256": "images/icon-256-squircle.png",
+    "512": "images/icon-512-squircle.png"
   },
   "action": {
     "default_title": "Screen Actions",
     "default_popup": "popup.html",
     "default_icon": {
-      "48": "images/icon-48.png",
-      "96": "images/icon-96.png",
-      "128": "images/icon-128.png"
+      "48": "images/icon-48-squircle.png",
+      "96": "images/icon-96-squircle.png",
+      "128": "images/icon-128-squircle.png"
     }
   },
-  "background": {
-    "service_worker": "background.js"
-  },
+  "background": { "service_worker": "background.js" },
   "permissions": [
     "activeTab",
     "tabs",

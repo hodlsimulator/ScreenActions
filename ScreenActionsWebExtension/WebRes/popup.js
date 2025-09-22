@@ -1,5 +1,4 @@
 const NATIVE_APP_ID = "com.conornolan.Screen-Actions";
-
 const REMEMBER_KEY = "sa.rememberLastAction.enabled";
 const LAST_ACTION_KEY = "sa.rememberLastAction.value";
 
@@ -39,10 +38,11 @@ function setStatus(text, ok) {
 
 function decorateError(message, hint) {
   const known = [
-    { match: /Calendar access was not granted/i, guide: "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions." },
-    { match: /Reminders access was not granted/i, guide: "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions." },
+    { match: /Calendar access was not granted/i, guide: "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
+    { match: /Reminders access was not granted/i, guide: "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
     { match: /Contacts access.*not granted/i, guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions." },
-    { match: /cannot connect|connectNative|native/i, guide: "Enable the extension under Settings → Safari → Extensions → Screen Actions." }
+    { match: /cannot connect|connectNative|native/i, guide: "Enable the extension under Settings → Safari → Extensions → Screen Actions." },
+    { match: /No date found/i, guide: "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead." }
   ];
   const extra = hint || (known.find(k => k.match.test(message))?.guide);
   return extra ? `${message} — ${extra}` : message;
@@ -67,9 +67,11 @@ async function runAction(action) {
       if ((action === "receiptCSV" || action === "autoDetect") && response.fileURL) {
         try { await navigator.clipboard.writeText(response.fileURL); } catch { /* best-effort */ }
       }
-      // Remember last action if toggle is on
       const remember = (await browser.storage.local.get(REMEMBER_KEY))[REMEMBER_KEY] === true;
-      if (remember) { await browser.storage.local.set({ [LAST_ACTION_KEY]: action }); updateRunLast(); }
+      if (remember) {
+        await browser.storage.local.set({ [LAST_ACTION_KEY]: action });
+        updateRunLast();
+      }
     } else {
       const msg = decorateError((response && response.message) || "Unknown error.", response && response.hint);
       throw new Error(msg);
@@ -87,13 +89,7 @@ async function updateRunLast() {
   const btn = document.getElementById("btn-last");
   if (enabled && last) {
     row.style.display = "flex";
-    const label = {
-      autoDetect: "Auto Detect",
-      createReminder: "Create Reminder",
-      addEvent: "Add Calendar Event",
-      extractContact: "Extract Contact",
-      receiptCSV: "Receipt \u2192 CSV"
-    }[last] || last;
+    const label = { autoDetect: "Auto Detect", createReminder: "Create Reminder", addEvent: "Add Calendar Event", extractContact: "Extract Contact", receiptCSV: "Receipt \u2192 CSV" }[last] || last;
     btn.textContent = `Run Last: ${label}`;
     btn.onclick = () => runAction(last);
   } else {
@@ -109,14 +105,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("sel").textContent = "(Unable to read page)";
   }
 
-  // Wire buttons
   document.getElementById("btn-auto").addEventListener("click", () => runAction("autoDetect"));
   document.getElementById("btn-rem").addEventListener("click", () => runAction("createReminder"));
   document.getElementById("btn-cal").addEventListener("click", () => runAction("addEvent"));
   document.getElementById("btn-ctc").addEventListener("click", () => runAction("extractContact"));
   document.getElementById("btn-csv").addEventListener("click", () => runAction("receiptCSV"));
 
-  // Pro-only toggle
   const isPro = await askProStatus();
   const wrap = document.getElementById("remember-wrap");
   if (isPro) {

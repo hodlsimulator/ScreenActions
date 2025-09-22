@@ -4,6 +4,8 @@
 //
 //  Created by . . on 9/13/25.
 //
+//  Updated: 22/09/2025 – clearer permission hints for Calendars/Reminders; same behaviour otherwise.
+//
 
 import Foundation
 import SafariServices
@@ -23,10 +25,10 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             return
         }
 
-        let action  = (body["action"] as? String) ?? ""
+        let action = (body["action"] as? String) ?? ""
         let payload = (body["payload"] as? [String: Any]) ?? [:]
         let selection = (payload["selection"] as? String) ?? ""
-        let title     = (payload["title"] as? String) ?? ""
+        let title = (payload["title"] as? String) ?? ""
         let urlString = (payload["url"] as? String) ?? ""
         let text = composeInput(selection: selection, title: title, url: urlString)
 
@@ -36,14 +38,19 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
                 switch action {
                 case "getProStatus":
                     result = ["ok": true, "pro": Self.isProActive()]
+
                 case "autoDetect":
                     result = try await handleAutoDetect(text: text, title: title, selection: selection)
+
                 case "createReminder":
                     result = try await handleCreateReminder(text: text, title: title, selection: selection)
+
                 case "addEvent":
                     result = try await handleAddEvent(text: text, title: title, selection: selection)
+
                 case "extractContact":
                     result = try await handleExtractContact(text: text)
+
                 case "receiptCSV":
                     // Gate CSV exports here as well (3/day for free)
                     let gate = QuotaManager.consume(feature: .receiptCSVExport, isPro: Self.isProActive())
@@ -53,10 +60,13 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
                         return
                     }
                     result = try handleReceiptCSV(text: text)
+
                 default:
                     result = ["ok": false, "message": "Unknown action."]
                 }
+
                 reply(context, result)
+
             } catch {
                 var payload: [String: Any] = ["ok": false, "message": error.localizedDescription]
                 if let hint = Self.permissionHint(for: error.localizedDescription, action: action) {
@@ -68,7 +78,6 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     }
 
     // MARK: - Reply helper
-
     private func reply(_ context: NSExtensionContext, _ payload: [String: Any]) {
         let response = NSExtensionItem()
         response.userInfo = [SFExtensionMessageKey: payload]
@@ -76,7 +85,6 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     }
 
     // MARK: - Compose helper
-
     private func composeInput(selection: String, title: String, url: String) -> String {
         var t = selection.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty, !title.isEmpty { t = title }
@@ -86,20 +94,29 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
     private static func permissionHint(for message: String, action: String) -> String? {
         let lower = message.lowercased()
+
+        // Calendars / Reminders permission guidance
         if lower.contains("calendar access") || (action == "addEvent" && lower.contains("not granted")) {
-            return "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions."
+            return "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog."
         }
         if lower.contains("reminders access") || (action == "createReminder" && lower.contains("not granted")) {
-            return "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions."
+            return "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog."
         }
+
+        // Contacts
         if lower.contains("contacts") && lower.contains("not granted") {
             return "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions."
         }
+
+        // Date parse fallback
+        if lower.contains("no date found") {
+            return "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead."
+        }
+
         return nil
     }
 
     // MARK: - Pro status bridge (App Group)
-
     private static let groupID = AppStorageService.appGroupID
     private static func isProActive() -> Bool {
         let d = UserDefaults(suiteName: groupID) ?? .standard
@@ -107,7 +124,6 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     }
 
     // MARK: - Actions (reuse Core services)
-
     private func handleAutoDetect(text: String, title: String, selection: String) async throws -> [String: Any] {
         let decision = ActionRouter.route(text: text)
         switch decision.kind {

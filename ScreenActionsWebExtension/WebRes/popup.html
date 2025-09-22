@@ -2,49 +2,37 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Screen Actions</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="popup.css">
-  <style>
-    body { font-family: -apple-system, system-ui, Segoe UI, Roboto, sans-serif; margin: 12px; }
-    h1 { font-size: 16px; margin: 0 0 6px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-    button { padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.15); background: #fff; cursor: pointer; }
-    button.primary { background: #007aff; color: #fff; border-color: #007aff; }
-    .status { margin-top: 10px; font-size: 12px; color: #666; }
-    .status.ok { color: #2a7f2a; }
-    .status.err { color: #b00020; }
-    .small { font-size: 12px; color: #666; }
-    #remember-wrap { display: none; margin-top: 8px; }
-    #last-row { display: none; margin-top: 8px; }
-  </style>
 </head>
 <body>
-  <h1>Screen Actions</h1>
+  <header class="card">
+    <img src="images/icon-48-squircle.png" alt="" width="20" height="20">
+    <h1>Screen Actions</h1>
+  </header>
 
-  <div class="small">Selected Text</div>
-  <div id="sel" class="small">(Loading…)</div>
+  <section class="card">
+    <label>Selected Text</label>
+    <pre id="sel" class="selection">(Loading…)</pre>
+  </section>
 
-  <div id="last-row" class="row">
-    <button id="btn-last" class="primary">Run Last</button>
-  </div>
-
-  <div class="row">
-    <button id="btn-auto">Auto Detect</button>
+  <section class="card buttons">
+    <button id="btn-auto" class="primary">Auto Detect</button>
     <button id="btn-rem">Create Reminder</button>
     <button id="btn-cal">Add Calendar Event</button>
     <button id="btn-ctc">Extract Contact</button>
     <button id="btn-csv">Receipt → CSV</button>
-  </div>
+  </section>
 
-  <div id="remember-wrap">
-    <label class="small">
-      <input type="checkbox" id="remember-toggle">
-      Remember last action (Pro)
-    </label>
-  </div>
+  <section id="remember-wrap" class="card" style="display:none">
+    <div id="last-row" style="display:none; gap:8px; align-items:center; margin-bottom:8px;">
+      <button id="btn-last">Run Last</button>
+    </div>
+    <label><input type="checkbox" id="remember-toggle"> Remember last action (Pro)</label>
+  </section>
 
-  <div id="status" class="status">(Idle)</div>
+  <p id="status" class="status">(Idle)</p>
 
   <script src="popup.js"></script>
 </body>

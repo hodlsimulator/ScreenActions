@@ -34,7 +34,6 @@ struct SettingsView: View {
                     HStack {
                         Image(systemName: pro.isPro ? "star.circle.fill" : "star.circle")
                             .foregroundStyle(pro.isPro ? .yellow : .secondary)
-
                         VStack(alignment: .leading) {
                             Text(pro.isPro ? "You’re Pro" : "Unlock Pro")
                                 .font(.headline)
@@ -74,12 +73,10 @@ struct SettingsView: View {
                             Task { await tip { try await pro.purchaseTipLarge() } }
                         }
                     }
-
                     if pro.tipSmall == nil && pro.tipMedium == nil && pro.tipLarge == nil {
                         Text("Loading prices…")
                             .foregroundStyle(.secondary)
                     }
-
                     if let e = tipError {
                         Text(e)
                             .foregroundStyle(.red)
@@ -150,12 +147,12 @@ struct SettingsView: View {
     // MARK: - Location helpers
     private var statusText: String {
         switch authStatus {
-        case .notDetermined: return "Not requested"
-        case .restricted: return "Restricted"
-        case .denied: return "Denied"
+        case .notDetermined:       return "Not requested"
+        case .restricted:          return "Restricted"
+        case .denied:              return "Denied"
         case .authorizedWhenInUse: return "While Using"
-        case .authorizedAlways: return "Always"
-        @unknown default: return "Unknown"
+        case .authorizedAlways:    return "Always"
+        @unknown default:          return "Unknown"
         }
     }
 
