@@ -35,7 +35,6 @@ static os_log_t SAWebLog(void) {
 
 - (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
     os_log(SAWebLog(), "[SA] beginRequest");
-
     NSExtensionItem *item = (NSExtensionItem *)context.inputItems.firstObject;
     NSDictionary *userInfo = item.userInfo ?: @{};
     id body = userInfo[SFExtensionMessageKey];
@@ -51,6 +50,7 @@ static os_log_t SAWebLog(void) {
     NSDictionary *payload = [dict[@"payload"] isKindOfClass:[NSDictionary class]] ? dict[@"payload"] : @{};
 
     os_log(SAWebLog(), "[SA] action=%{public}@", action);
+
     [SAWebBridge handle:action payload:payload completion:^(NSDictionary *response) {
         [self reply:context payload:response ?: @{@"ok": @NO, @"message": @"No response"}];
     }];
