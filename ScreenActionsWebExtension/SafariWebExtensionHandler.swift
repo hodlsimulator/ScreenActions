@@ -12,6 +12,7 @@ import SafariServices
 import Contacts
 import EventKit
 
+@objc(SafariWebExtensionHandler)
 @MainActor
 final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
