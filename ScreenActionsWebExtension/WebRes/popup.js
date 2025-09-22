@@ -1,4 +1,5 @@
-const NATIVE_APP_ID = "com.conornolan.Screen-Actions";
+// popup.js — talks to background (which talks to native)
+
 const REMEMBER_KEY = "sa.rememberLastAction.enabled";
 const LAST_ACTION_KEY = "sa.rememberLastAction.value";
 
@@ -40,17 +41,21 @@ function decorateError(message, hint) {
   const known = [
     { match: /Calendar access was not granted/i, guide: "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
     { match: /Reminders access was not granted/i, guide: "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
-    { match: /Contacts access.*not granted/i, guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions." },
-    { match: /cannot connect|connectNative|native/i, guide: "Enable the extension under Settings → Safari → Extensions → Screen Actions." },
-    { match: /No date found/i, guide: "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead." }
+    { match: /Contacts access.*not granted/i,       guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions." },
+    { match: /cannot connect|connectNative|native|helper application/i, guide: "Enable the extension under Settings → Safari → Extensions → Screen Actions, then open the Screen Actions app once and try again." },
+    { match: /No date found/i,                      guide: "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead." }
   ];
   const extra = hint || (known.find(k => k.match.test(message))?.guide);
   return extra ? `${message} — ${extra}` : message;
 }
 
+async function native(action, payload) {
+  return await browser.runtime.sendMessage({ cmd: "native", action, payload });
+}
+
 async function askProStatus() {
   try {
-    const resp = await browser.runtime.sendNativeMessage(NATIVE_APP_ID, { action: "getProStatus", payload: {} });
+    const resp = await native("getProStatus", {});
     return !!(resp && resp.ok && resp.pro);
   } catch {
     return false;
@@ -61,11 +66,11 @@ async function runAction(action) {
   try {
     const payload = await getPageContext();
     document.getElementById("sel").textContent = (payload.selection?.trim() || payload.title || "(No selection)");
-    const response = await browser.runtime.sendNativeMessage(NATIVE_APP_ID, { action, payload });
+    const response = await native(action, payload);
     if (response?.ok) {
       setStatus(response.message || "Done.", true);
       if ((action === "receiptCSV" || action === "autoDetect") && response.fileURL) {
-        try { await navigator.clipboard.writeText(response.fileURL); } catch { /* best-effort */ }
+        try { await navigator.clipboard.writeText(response.fileURL); } catch {}
       }
       const remember = (await browser.storage.local.get(REMEMBER_KEY))[REMEMBER_KEY] === true;
       if (remember) {
