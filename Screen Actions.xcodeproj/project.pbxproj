@@ -213,6 +213,15 @@
 		E183E1622E75B2A100E8D263 /* ScreenActionsControlsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ScreenActionsControlsExtension.entitlements; sourceTree = "<group>"; };
 		E1F90E2E2E81BDF400276157 /* set_release_distribution_signing.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = set_release_distribution_signing.rb; sourceTree = "<group>"; };
 		E1F90F082E81C00700276157 /* reset_signing_overrides.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = reset_signing_overrides.rb; sourceTree = "<group>"; };
+		E1F911942E81C41800276157 /* pin_manual_appstore_profiles.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pin_manual_appstore_profiles.rb; sourceTree = "<group>"; };
+		E1F911952E81D0B600276157 /* show_bundle_ids.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = show_bundle_ids.rb; sourceTree = "<group>"; };
+		E1F911962E81D0ED00276157 /* list_profiles_for_targets.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = list_profiles_for_targets.rb; sourceTree = "<group>"; };
+		E1F911982E81D3FF00276157 /* force_release_automatic.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = force_release_automatic.rb; sourceTree = "<group>"; };
+		E1F912722E81ED5100276157 /* install_appstore_profiles_from_dir.zsh */ = {isa = PBXFileReference; lastKnownFileType = text; path = install_appstore_profiles_from_dir.zsh; sourceTree = "<group>"; };
+		E1F912732E81EE3000276157 /* profile_type.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = profile_type.rb; sourceTree = "<group>"; };
+		E1F912742E81F3DF00276157 /* pin_release_to_installed_appstore_uuids.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pin_release_to_installed_appstore_uuids.rb; sourceTree = "<group>"; };
+		E1F9134E2E81F48D00276157 /* list_profiles_for_targets_pb.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = list_profiles_for_targets_pb.rb; sourceTree = "<group>"; };
+		E1F9134F2E81F5CD00276157 /* pin_release_to_given_uuids.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pin_release_to_given_uuids.rb; sourceTree = "<group>"; };
 		ECC123338EBC93C4D0A312A9 /* popup.html */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.html; name = popup.html; path = ScreenActionsWebExtension/WebRes/popup.html; sourceTree = "<group>"; };
 		ED42160C75F4CDBD0D5F54C3 /* icon-128-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-128-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-128-squircle.png"; sourceTree = "<group>"; };
 		EFE369E487800870DC2CA3FD /* manifest.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = manifest.json; path = ScreenActionsWebExtension/WebRes/manifest.json; sourceTree = "<group>"; };
@@ -433,11 +442,20 @@
 				F8CEB8DE2C0728AEB5713466 /* flatten_webext_resources.rb */,
 				24785EA68FB01033382A800E /* force_webext_sources.rb */,
 				3738AEA85627DCFF49949031 /* pick_safari_ext_profile.py */,
+				E1F9134F2E81F5CD00276157 /* pin_release_to_given_uuids.rb */,
+				E1F9134E2E81F48D00276157 /* list_profiles_for_targets_pb.rb */,
 				4E24688813CC0AD3B1D77DD4 /* purge_profiles_and_sources.rb */,
+				E1F912732E81EE3000276157 /* profile_type.rb */,
+				E1F912742E81F3DF00276157 /* pin_release_to_installed_appstore_uuids.rb */,
 				AB18E6CCA40E410C21B725D5 /* repair_tools_group.rb */,
+				E1F912722E81ED5100276157 /* install_appstore_profiles_from_dir.zsh */,
 				DDD3B9BC3555314AF2683847 /* reset_webext_packaging.rb */,
 				E1F90E2E2E81BDF400276157 /* set_release_distribution_signing.rb */,
 				E1F90F082E81C00700276157 /* reset_signing_overrides.rb */,
+				E1F911942E81C41800276157 /* pin_manual_appstore_profiles.rb */,
+				E1F911982E81D3FF00276157 /* force_release_automatic.rb */,
+				E1F911952E81D0B600276157 /* show_bundle_ids.rb */,
+				E1F911962E81D0ED00276157 /* list_profiles_for_targets.rb */,
 				D4FC27B02471AE76440C60C3 /* select_ext_profile.py */,
 				8D30C7D4883D02008D8A2F0D /* verify_archive_entitlements.rb */,
 			);
@@ -866,9 +884,11 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsActionExtension/ScreenActionsActionExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 92HEPEJ42Z;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsActionExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ScreenActionsActionExtension;
@@ -881,6 +901,8 @@
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.conornolan.Screen-Actions.ScreenActionsActionExtension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "SA AppStore — Action";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -928,9 +950,11 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsShareExtension/ScreenActionsShareExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 92HEPEJ42Z;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsShareExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ScreenActionsShareExtension;
@@ -943,6 +967,8 @@
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.conornolan.Screen-Actions.ScreenActionsShareExtension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "SA AppStore — Share";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -1003,9 +1029,10 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsWebExtension/ScreenActionsWebExtension.entitlements;
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 92HEPEJ42Z;
+				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScreenActionsWebExtension/Info.plist;
@@ -1024,6 +1051,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = "com.conornolan.Screen-Actions.ScreenActionsWebExtension";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "SA AppStore — WebExt";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -1220,9 +1249,11 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = "Screen Actions/Screen Actions.entitlements";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 4;
-				DEVELOPMENT_TEAM = 92HEPEJ42Z;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "/Users/conor/Developer/ScreenActions-clone/Screen Actions/Screen-Actions-info.plist";
@@ -1245,6 +1276,8 @@
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.conornolan.Screen-Actions";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "SA AppStore — App";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
@@ -1304,6 +1337,7 @@
 				CODE_SIGNING_ALLOWED = YES;
 				CODE_SIGNING_REQUIRED = YES;
 				CODE_SIGN_ENTITLEMENTS = ScreenActionsControlsExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
@@ -1319,6 +1353,7 @@
 				MARKETING_VERSION = 1.0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.conornolan.Screen-Actions.ScreenActionsControls";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
