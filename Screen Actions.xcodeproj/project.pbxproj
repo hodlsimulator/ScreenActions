@@ -8,16 +8,39 @@
 
 /* Begin PBXBuildFile section */
 		00FBA01AD894F9BAE28BA032 /* icon-128-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = ED42160C75F4CDBD0D5F54C3 /* icon-128-squircle.png */; };
+		04475ADBB006F7116D773568 /* popup.html in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = ECC123338EBC93C4D0A312A9 /* popup.html */; };
+		06CCD6036D375B8E12D5F250 /* icon-64-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = C26A4DBC102C9BD0BCD4D89B /* icon-64-squircle.png */; };
 		07472031DC3C93DCEB053B7B /* icon-96-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 9D615E2EAB16C3B69222AD08 /* icon-96-squircle.png */; };
 		08CB1F2B082B9206DD03DE97 /* popup.html in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = ECC123338EBC93C4D0A312A9 /* popup.html */; };
+		0E2E58B7084B9837207517A0 /* manifest.json in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = EFE369E487800870DC2CA3FD /* manifest.json */; };
 		11C244A8D5FA5561E7BD33D6 /* messages.json in Copy WebRes (_locales/en) */ = {isa = PBXBuildFile; fileRef = 33ED9BDCF003AA49167DD0E2 /* messages.json */; };
+		191564CC13AF1588614092FE /* messages.json in Copy WebRes (_locales/en) */ = {isa = PBXBuildFile; fileRef = 33ED9BDCF003AA49167DD0E2 /* messages.json */; };
+		2672E61AFC794D13A23BF606 /* popup.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 017D43B1C8D29B525B301493 /* popup.js */; };
+		276BFAAAE396239E414D506A /* icon-48-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 952D08346EE5C5A81C02EE38 /* icon-48-squircle.png */; };
 		31FC764574FB3D736A7DDB2F /* manifest.json in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = EFE369E487800870DC2CA3FD /* manifest.json */; };
 		3D023B92D1EEAFB65FE9454A /* icon-64-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = C26A4DBC102C9BD0BCD4D89B /* icon-64-squircle.png */; };
+		40C6698561D8C4A878642BF9 /* icon-128-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = ED42160C75F4CDBD0D5F54C3 /* icon-128-squircle.png */; };
+		50BEF2928C70B8EE6695CB72 /* popup.html in Copy ExtRes (root) */ = {isa = PBXBuildFile; fileRef = ECC123338EBC93C4D0A312A9 /* popup.html */; };
+		56E38E163D9577801C063FF0 /* popup.css in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 2B5F78CCA07D8E88CE446DA8 /* popup.css */; };
+		71E25EF67DBA0A5F80DFD671 /* manifest.json in Copy ExtRes (root) */ = {isa = PBXBuildFile; fileRef = EFE369E487800870DC2CA3FD /* manifest.json */; };
 		72BF27685735A929E66A6549 /* icon-512-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = A2B308C9B01DABFEB0C859F6 /* icon-512-squircle.png */; };
+		79453AEB72C76415F42BDA55 /* popup.css in Copy ExtRes (root) */ = {isa = PBXBuildFile; fileRef = 2B5F78CCA07D8E88CE446DA8 /* popup.css */; };
 		7AEFB2D0CD3596E4DA53B758 /* popup.css in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 2B5F78CCA07D8E88CE446DA8 /* popup.css */; };
+		7D41A43F771EE6445700803D /* icon-128-squircle.png in Copy ExtRes (images) */ = {isa = PBXBuildFile; fileRef = ED42160C75F4CDBD0D5F54C3 /* icon-128-squircle.png */; };
+		7DD43E8ED6E3322EAB4BC71E /* toolbar-icon.svg in Copy ExtRes (images) */ = {isa = PBXBuildFile; fileRef = 215E50FC8537B58F4619D6B7 /* toolbar-icon.svg */; };
+		89C2D8F2DC07FD75D40268D0 /* messages.json in Copy ExtRes (_locales/en) */ = {isa = PBXBuildFile; fileRef = 33ED9BDCF003AA49167DD0E2 /* messages.json */; };
+		8C3A180F2DBBC2EA3C6F14FE /* icon-96-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 9D615E2EAB16C3B69222AD08 /* icon-96-squircle.png */; };
+		9225399369A46AC4F3334B81 /* icon-256-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 48E26C8E584553B1355630BA /* icon-256-squircle.png */; };
+		9A4D3259D5E536D6D4491CAC /* icon-48-squircle.png in Copy ExtRes (images) */ = {isa = PBXBuildFile; fileRef = 952D08346EE5C5A81C02EE38 /* icon-48-squircle.png */; };
 		A1821DC83CC2379DF06E4ED0 /* popup.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 017D43B1C8D29B525B301493 /* popup.js */; };
 		B9C879F380776D2CEC427BCE /* icon-48-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 952D08346EE5C5A81C02EE38 /* icon-48-squircle.png */; };
+		BA4951E533B21EC26007FA00 /* icon-64-squircle.png in Copy ExtRes (images) */ = {isa = PBXBuildFile; fileRef = C26A4DBC102C9BD0BCD4D89B /* icon-64-squircle.png */; };
 		BA51F094D046F78E3A504F7A /* toolbar-icon.svg in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 215E50FC8537B58F4619D6B7 /* toolbar-icon.svg */; };
+		C4CA4EAC6DA4134C7C6E71F4 /* icon-256-squircle.png in Copy ExtRes (images) */ = {isa = PBXBuildFile; fileRef = 48E26C8E584553B1355630BA /* icon-256-squircle.png */; };
+		CCF8FA522EF953CE6D06E23A /* popup.js in Copy ExtRes (root) */ = {isa = PBXBuildFile; fileRef = 017D43B1C8D29B525B301493 /* popup.js */; };
+		CEC0EFC5C464862FFD0DD807 /* toolbar-icon.svg in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 215E50FC8537B58F4619D6B7 /* toolbar-icon.svg */; };
+		D288E70D0FD500E6224283D7 /* icon-512-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = A2B308C9B01DABFEB0C859F6 /* icon-512-squircle.png */; };
+		E02EC895D3D23702613253C3 /* background.js in Copy ExtRes (root) */ = {isa = PBXBuildFile; fileRef = D462D5C20FCE4BBF2EC032AC /* background.js */; };
 		E115D2532E77619700C8F5EE /* EventEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2522E77619500C8F5EE /* EventEditorView.swift */; };
 		E115D2552E7761AB00C8F5EE /* ReminderEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */; };
 		E115D25A2E77632300C8F5EE /* ReceiptCSVPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */; };
@@ -42,6 +65,9 @@
 		E183E14C2E75ACF400E8D263 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E14B2E75ACF400E8D263 /* SwiftUI.framework */; };
 		E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ED751CCCF7E835BC73A81B60 /* icon-256-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 48E26C8E584553B1355630BA /* icon-256-squircle.png */; };
+		F6FDC6685FF21FB069789461 /* background.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = D462D5C20FCE4BBF2EC032AC /* background.js */; };
+		F8424B03515AA907EE8A405A /* icon-96-squircle.png in Copy ExtRes (images) */ = {isa = PBXBuildFile; fileRef = 9D615E2EAB16C3B69222AD08 /* icon-96-squircle.png */; };
+		F9F5CA9B41A35931BC6433B5 /* icon-512-squircle.png in Copy ExtRes (images) */ = {isa = PBXBuildFile; fileRef = A2B308C9B01DABFEB0C859F6 /* icon-512-squircle.png */; };
 		FA4D9685E7CE418579BB1986 /* background.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = D462D5C20FCE4BBF2EC032AC /* background.js */; };
 /* End PBXBuildFile section */
 
@@ -77,45 +103,45 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		34A0B5EE4504735CE54E2107 /* Copy WebRes (root) */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = WebRes;
-			dstSubfolderSpec = 7;
-			files = (
-				31FC764574FB3D736A7DDB2F /* manifest.json in Copy WebRes (root) */,
-				FA4D9685E7CE418579BB1986 /* background.js in Copy WebRes (root) */,
-				08CB1F2B082B9206DD03DE97 /* popup.html in Copy WebRes (root) */,
-				7AEFB2D0CD3596E4DA53B758 /* popup.css in Copy WebRes (root) */,
-				A1821DC83CC2379DF06E4ED0 /* popup.js in Copy WebRes (root) */,
-			);
-			name = "Copy WebRes (root)";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		7BC9A4410591B64D7E1A5371 /* Copy WebRes (_locales/en) */ = {
+		05DF0EDDB8866833770776D2 /* Copy WebRes (_locales/en) */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = WebRes/_locales/en;
 			dstSubfolderSpec = 7;
 			files = (
-				11C244A8D5FA5561E7BD33D6 /* messages.json in Copy WebRes (_locales/en) */,
+				191564CC13AF1588614092FE /* messages.json in Copy WebRes (_locales/en) */,
 			);
 			name = "Copy WebRes (_locales/en)";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		DD283766B1F6B7801F43285A /* Copy WebRes (images) */ = {
+		7A5C98776DB2699287B7D67A /* Copy WebRes (root) */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = WebRes;
+			dstSubfolderSpec = 7;
+			files = (
+				0E2E58B7084B9837207517A0 /* manifest.json in Copy WebRes (root) */,
+				F6FDC6685FF21FB069789461 /* background.js in Copy WebRes (root) */,
+				04475ADBB006F7116D773568 /* popup.html in Copy WebRes (root) */,
+				56E38E163D9577801C063FF0 /* popup.css in Copy WebRes (root) */,
+				2672E61AFC794D13A23BF606 /* popup.js in Copy WebRes (root) */,
+			);
+			name = "Copy WebRes (root)";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DC75A660CD86ACA83A8F8D5C /* Copy WebRes (images) */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = WebRes/images;
 			dstSubfolderSpec = 7;
 			files = (
-				BA51F094D046F78E3A504F7A /* toolbar-icon.svg in Copy WebRes (images) */,
-				ED751CCCF7E835BC73A81B60 /* icon-256-squircle.png in Copy WebRes (images) */,
-				07472031DC3C93DCEB053B7B /* icon-96-squircle.png in Copy WebRes (images) */,
-				3D023B92D1EEAFB65FE9454A /* icon-64-squircle.png in Copy WebRes (images) */,
-				B9C879F380776D2CEC427BCE /* icon-48-squircle.png in Copy WebRes (images) */,
-				00FBA01AD894F9BAE28BA032 /* icon-128-squircle.png in Copy WebRes (images) */,
-				72BF27685735A929E66A6549 /* icon-512-squircle.png in Copy WebRes (images) */,
+				CEC0EFC5C464862FFD0DD807 /* toolbar-icon.svg in Copy WebRes (images) */,
+				9225399369A46AC4F3334B81 /* icon-256-squircle.png in Copy WebRes (images) */,
+				8C3A180F2DBBC2EA3C6F14FE /* icon-96-squircle.png in Copy WebRes (images) */,
+				06CCD6036D375B8E12D5F250 /* icon-64-squircle.png in Copy WebRes (images) */,
+				276BFAAAE396239E414D506A /* icon-48-squircle.png in Copy WebRes (images) */,
+				40C6698561D8C4A878642BF9 /* icon-128-squircle.png in Copy WebRes (images) */,
+				D288E70D0FD500E6224283D7 /* icon-512-squircle.png in Copy WebRes (images) */,
 			);
 			name = "Copy WebRes (images)";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -535,9 +561,9 @@
 				E12A855A2E760EBD00E07869 /* Sources */,
 				E12A855B2E760EBD00E07869 /* Frameworks */,
 				E12A855C2E760EBD00E07869 /* Resources */,
-				34A0B5EE4504735CE54E2107 /* Copy WebRes (root) */,
-				7BC9A4410591B64D7E1A5371 /* Copy WebRes (_locales/en) */,
-				DD283766B1F6B7801F43285A /* Copy WebRes (images) */,
+				7A5C98776DB2699287B7D67A /* Copy WebRes (root) */,
+				05DF0EDDB8866833770776D2 /* Copy WebRes (_locales/en) */,
+				DC75A660CD86ACA83A8F8D5C /* Copy WebRes (images) */,
 			);
 			buildRules = (
 			);

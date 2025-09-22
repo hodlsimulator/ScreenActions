@@ -1,9 +1,8 @@
 {
   "manifest_version": 3,
-  "version": "1.0.1",
-  "name": "__MSG_extension_name__",
-  "description": "__MSG_extension_description__",
-  "default_locale": "en",
+  "version": "1.0.4",
+  "name": "Screen Actions",
+  "description": "One-tap actions: reminder, calendar, contact, and receipt → CSV.",
 
   "icons": {
     "48": "images/icon-48-squircle.png",
@@ -15,7 +14,7 @@
   },
 
   "action": {
-    "default_title": "__MSG_extension_name__",
+    "default_title": "Screen Actions",
     "default_popup": "popup.html",
     "default_icon": {
       "48": "images/icon-48-squircle.png",

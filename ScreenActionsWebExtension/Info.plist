@@ -2,43 +2,43 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key>
-    <string>en</string>
-    <key>CFBundleDisplayName</key>
-    <string>Screen Actions</string>
-    <key>CFBundleExecutable</key>
-    <string>$(EXECUTABLE_NAME)</string>
-    <key>CFBundleIdentifier</key>
-    <string>com.conornolan.Screen-Actions.WebExtension</string>
-    <key>CFBundleInfoDictionaryVersion</key>
-    <string>6.0</string>
-    <key>CFBundleName</key>
-    <string>ScreenActionsWebExtension</string>
-    <key>CFBundlePackageType</key>
-    <string>XPC!</string>
-    <key>CFBundleShortVersionString</key>
-    <string>$(MARKETING_VERSION)</string>
-    <key>CFBundleVersion</key>
-    <string>$(CURRENT_PROJECT_VERSION)</string>
-    <key>NSCalendarsFullAccessUsageDescription</key>
-    <string>Screen Actions adds events you choose from shared text.</string>
-    <key>NSRemindersFullAccessUsageDescription</key>
-    <string>Screen Actions creates reminders you choose from shared text.</string>
-    <key>NSContactsUsageDescription</key>
-    <string>Screen Actions saves contacts you choose from shared text.</string>
-    <key>NSExtension</key>
-    <dict>
-        <key>NSExtensionPointIdentifier</key>
-        <string>com.apple.Safari.web-extension</string>
-        <key>NSExtensionPrincipalClass</key>
-        <string>$(PRODUCT_MODULE_NAME).SafariWebExtensionHandler</string>
-        <key>NSExtensionAttributes</key>
-        <dict>
-            <key>SFExtensionDisplayName</key>
-            <string>Screen Actions</string>
-            <key>SFSafariWebExtensionManifestPath</key>
-            <string>WebRes/manifest.json</string>
-        </dict>
-    </dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Screen Actions</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.conornolan.Screen-Actions.WebExtension</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>ScreenActionsWebExtension</string>
+	<key>CFBundlePackageType</key>
+	<string>XPC!</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Screen Actions adds events you choose from shared text.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Screen Actions saves contacts you choose from shared text.</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>SFExtensionDisplayName</key>
+			<string>Screen Actions</string>
+			<key>SFSafariWebExtensionManifestPath</key>
+			<string>WebRes/manifest.json</string>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.Safari.web-extension</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string>$(PRODUCT_MODULE_NAME).SafariWebExtensionHandler</string>
+	</dict>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Screen Actions creates reminders you choose from shared text.</string>
 </dict>
 </plist>
