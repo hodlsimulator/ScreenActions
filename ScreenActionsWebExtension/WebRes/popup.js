@@ -1,9 +1,27 @@
-// popup.js — talks to background (which talks to native); Safari-friendly APIs
+// popup.js — native bridge with iOS Share Sheet fallback
 
 (function () {
   const API = globalThis.browser || globalThis.chrome;
+
   const REMEMBER_KEY = "sa.rememberLastAction.enabled";
   const LAST_ACTION_KEY = "sa.rememberLastAction.value";
+
+  // Keep a conservative host list; background.js does real work if native is available.
+  const NATIVE_MESSAGE = (action, payload) =>
+    new Promise((resolve, reject) => {
+      try {
+        const msg = { cmd: "native", action, payload };
+        const cb = (resp) => {
+          const err = globalThis.chrome?.runtime?.lastError || null;
+          if (err) return reject(new Error(err.message || String(err)));
+          resolve(resp);
+        };
+        const maybe = API.runtime.sendMessage(msg, cb);
+        if (maybe?.then) maybe.then(resolve).catch(reject);
+      } catch (e) {
+        reject(e);
+      }
+    });
 
   function setStatus(text, ok) {
     const s = document.getElementById("status");
@@ -16,30 +34,50 @@
       { match: /Calendar access was not granted/i, guide: "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
       { match: /Reminders access was not granted/i, guide: "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions. If you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
       { match: /Contacts access.*not granted/i,       guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions." },
-      { match: /cannot connect|connectNative|native|helper application/i, guide: "Enable the extension under Settings → Safari → Extensions → Screen Actions, then open the Screen Actions app once and try again." },
       { match: /No date found/i,                      guide: "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead." }
     ];
     const extra = hint || (known.find(k => k.match.test(message))?.guide);
     return extra ? `${message} — ${extra}` : message;
   }
 
-  function sendMessageAsync(msg) {
-    return new Promise((resolve, reject) => {
-      try {
-        API.runtime.sendMessage(msg, (resp) => {
-          const err = (globalThis.chrome && chrome.runtime && chrome.runtime.lastError) || null;
-          if (err) return reject(new Error(err.message || String(err)));
-          resolve(resp);
-        });
-      } catch (e) {
-        reject(e);
-      }
-    });
+  // ---- Share Sheet Fallback (iOS friendly) ----------------------------------
+
+  function sharePayloadString(payload) {
+    const sel = (payload.selection || "").trim();
+    const title = (payload.title || "").trim();
+    const url = (payload.url || "").trim();
+    // Prefer explicit selection; then title; then URL
+    const base = sel || title || url || "(No selection)";
+    return url && base.indexOf(url) === -1 ? `${base}\n${url}` : base;
   }
 
-  async function native(action, payload) {
-    return await sendMessageAsync({ cmd: "native", action, payload });
+  async function fallbackShare(action, payload) {
+    const text = sharePayloadString(payload);
+
+    if (!navigator.share) {
+      throw new Error("Native bridge unavailable and Share Sheet not supported on this device.");
+    }
+
+    // Give the reviewer clear guidance
+    setStatus("Opening iOS Share Sheet… choose “Screen Actions”.", true);
+
+    // Best-effort share; iOS will show Share Sheet where your Share Extension can do the work
+    await navigator.share({ text });
+
+    // Success message (the Share Extension handles the actual creation)
+    const label = {
+      autoDetect: "Auto",
+      createReminder: "Reminder",
+      addEvent: "Calendar Event",
+      extractContact: "Contact",
+      receiptCSV: "Receipt → CSV"
+    }[action] || "Action";
+
+    setStatus(`${label}: handed off via Share Sheet.`, true);
+    return { ok: true, message: "Shared to Screen Actions." };
   }
+
+  // ----------------------------------------------------------------------------
 
   async function getPageContext() {
     try {
@@ -52,7 +90,7 @@
       );
       if (!tab) throw new Error("No active tab.");
 
-      // Try scripting API; fall back to title/url only if not available
+      // Try to extract selection from the page
       const canScript = !!(API.scripting && API.scripting.executeScript);
       if (canScript) {
         const results = await new Promise((res, rej) =>
@@ -85,9 +123,9 @@
             }
           )
         );
-
         const firstWithSel = results && results.find(r => r && r.result && r.result.selection && r.result.selection.trim().length > 0);
-        return (firstWithSel && firstWithSel.result) || (results && results[0] && results[0].result) || { selection: "", title: tab.title || "", url: tab.url || "" };
+        return (firstWithSel && firstWithSel.result) || (results && results[0] && results[0].result) ||
+               { selection: "", title: tab.title || "", url: tab.url || "" };
       }
 
       // Fallback: no scripting — use tab title/url only
@@ -99,34 +137,52 @@
 
   async function askProStatus() {
     try {
-      const resp = await native("getProStatus", {});
+      const resp = await NATIVE_MESSAGE("getProStatus", {});
       return !!(resp && resp.ok && resp.pro);
     } catch {
+      // If native is blocked, don’t gate the UI here
       return false;
     }
   }
 
   async function runAction(action) {
+    const payload = await getPageContext();
+    document.getElementById("sel").textContent =
+      (payload.selection?.trim() || payload.title || "(No selection)");
+
     try {
-      const payload = await getPageContext();
-      document.getElementById("sel").textContent = (payload.selection?.trim() || payload.title || "(No selection)");
-      const response = await native(action, payload);
+      // First: try native
+      const response = await NATIVE_MESSAGE(action, payload);
+
       if (response?.ok) {
         setStatus(response.message || "Done.", true);
-        if ((action === "receiptCSV" || action === "autoDetect") && response.fileURL) {
-          try { await navigator.clipboard.writeText(response.fileURL); } catch {}
-        }
         const remember = (await new Promise((res) => API.storage.local.get(REMEMBER_KEY, res)))[REMEMBER_KEY] === true;
         if (remember) {
           await new Promise((res) => API.storage.local.set({ [LAST_ACTION_KEY]: action }, res));
           updateRunLast();
         }
-      } else {
-        const msg = decorateError((response && response.message) || "Unknown error.", response && response.hint);
-        throw new Error(msg);
+        return;
       }
+
+      // Native returned a failure (rare) → decorate and then try fallback
+      const msg = decorateError((response && response.message) || "Unknown error.", response && response.hint);
+      throw new Error(msg);
+
     } catch (err) {
-      setStatus((err && err.message) || String(err), false);
+      const m = (err && err.message) || String(err);
+
+      // iOS native bridge blocked → use Share Sheet
+      if (/Invalid call to runtime\.sendNativeMessage|SFErrorDomain/i.test(m)) {
+        try {
+          await fallbackShare(action, payload);
+          return;
+        } catch (shareErr) {
+          setStatus((shareErr && shareErr.message) || String(shareErr), false);
+          return;
+        }
+      }
+
+      setStatus(decorateError(m, null), false);
     }
   }
 
@@ -147,7 +203,6 @@
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    setStatus("Ready.", true);
     try {
       const ctx = await getPageContext();
       document.getElementById("sel").textContent = (ctx.selection?.trim() || ctx.title || "(No selection)").toString();
@@ -176,5 +231,7 @@
     } else {
       wrap.style.display = "none";
     }
+
+    setStatus("Ready.", true);
   });
 })();
