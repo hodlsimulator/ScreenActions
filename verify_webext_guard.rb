@@ -1,4 +1,4 @@
-# // verify_webext_guard.rb — Accept either SAWebExtensionHandler (Obj-C) or SafariWebExtensionHandler (Swift)
+# // verify_webext_guard.rb — Accept SAWebExtensionHandler (Obj‑C) or SafariWebExtensionHandler (Swift)
 #!/usr/bin/env ruby
 require 'xcodeproj'
 
@@ -17,7 +17,7 @@ app ? ok("Found app target: #{app.name}") : fail(failures, 'App target “Screen
 ext ? ok("Found web-extension target: #{ext.name}") : fail(failures, 'Web-extension target is missing')
 
 if app && ext
-  phase = app.copy_files_build_phases.find { |ph| ph.dst_subfolder_spec.to_s == '13' }
+  phase = app.copy_files_build_phases.find { |ph| ph.dst_subfolder_spec.to_s == '13' } # 13 = PlugIns
   if phase
     ok 'App has “Embed Foundation Extensions” phase'
     pr = ext.product_reference
@@ -29,6 +29,7 @@ if app && ext
   else
     fail(failures, 'Missing “Embed Foundation Extensions” copy phase on the app target')
   end
+
   if app.dependencies.any? { |d| d.target == ext }
     ok 'App has a target dependency on the web-extension'
   else
@@ -45,14 +46,30 @@ if ext
       'SFSafariWebExtensionManifestPath' => 'WebRes/manifest.json' }.each do |k,v|
       (plist.include?(k) && plist.include?(v)) ? ok("Info.plist has #{k}=#{v}") : fail(failures, "Info.plist missing/mismatched: #{k}=#{v}")
     end
-    if plist.include?('NSExtensionPrincipalClass') &&
-       (plist.include?('SAWebExtensionHandler') || plist.include?('SafariWebExtensionHandler'))
+    if plist.include?('NSExtensionPrincipalClass') && (plist.include?('SAWebExtensionHandler') || plist.include?('SafariWebExtensionHandler'))
       ok 'Principal class is set (SAWebExtensionHandler / SafariWebExtensionHandler)'
     else
       fail(failures, 'Principal class not set correctly')
     end
   else
     fail(failures, 'Web-extension Info.plist not found from build settings')
+  end
+
+  ents_rel = bs['CODE_SIGN_ENTITLEMENTS']
+  if ents_rel && File.exist?(ents_rel)
+    raw = File.read(ents_rel) rescue ''
+    if raw.include?('com.apple.developer.extensionkit.extension-point-identifiers')
+      fail(failures, 'Entitlements request ExtensionKit — remove per README (ship with App Group only).')
+    else
+      ok 'Entitlements do NOT request ExtensionKit (good).'
+    end
+    if raw.include?('group.com.conornolan.screenactions')
+      ok 'Entitlements include required App Group.'
+    else
+      fail(failures, 'Entitlements missing App Group group.com.conornolan.screenactions.')
+    end
+  else
+    fail(failures, 'Entitlements file not found from build settings (CODE_SIGN_ENTITLEMENTS).')
   end
 end
 
@@ -62,6 +79,6 @@ if failures.empty?
   exit 0
 else
   puts failures.join("\n")
-  puts "\nRun your existing fix scripts if needed (e.g. tools/fix_embed_and_resources.rb)."
+  puts "\nRun the fixer (tools/fix_embed_and_resources.rb) if needed."
   exit 1
 end
