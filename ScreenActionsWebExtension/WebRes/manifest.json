@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Screen Actions",
-  "version": "1.0",
+  "version": "1.0.1",
+  "name": "__MSG_extension_name__",
+  "description": "__MSG_extension_description__",
   "default_locale": "en",
-  "description": "One-tap actions: reminder, calendar, contact, and receipt → CSV.",
+
   "icons": {
     "48": "images/icon-48-squircle.png",
     "64": "images/icon-64-squircle.png",
@@ -12,8 +13,9 @@
     "256": "images/icon-256-squircle.png",
     "512": "images/icon-512-squircle.png"
   },
+
   "action": {
-    "default_title": "Screen Actions",
+    "default_title": "__MSG_extension_name__",
     "default_popup": "popup.html",
     "default_icon": {
       "48": "images/icon-48-squircle.png",
@@ -21,7 +23,9 @@
       "128": "images/icon-128-squircle.png"
     }
   },
+
   "background": { "service_worker": "background.js" },
+
   "permissions": [
     "activeTab",
     "tabs",
