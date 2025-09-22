@@ -1,26 +1,19 @@
-// popup.js — native bridge with iOS Share Sheet fallback
+// popup.js — native-only (no Share Sheet fallback)
 (function () {
   const API = globalThis.browser || globalThis.chrome;
 
   const REMEMBER_KEY = "sa.rememberLastAction.enabled";
   const LAST_ACTION_KEY = "sa.rememberLastAction.value";
+  const PINNED_HOST_KEY = "sa.native.host";
 
-  // Send a message to the background worker, which in turn calls sendNativeMessage.
-  const NATIVE_MESSAGE = (action, payload) =>
-    new Promise((resolve, reject) => {
-      try {
-        const msg = { cmd: "native", action, payload };
-        const cb = (resp) => {
-          const err = globalThis.chrome?.runtime?.lastError || null;
-          if (err) return reject(new Error(err.message || String(err)));
-          resolve(resp);
-        };
-        const maybe = API.runtime.sendMessage(msg, cb);
-        if (maybe?.then) maybe.then(resolve).catch(reject);
-      } catch (e) {
-        reject(e);
-      }
-    });
+  // Safari ignores the host string, but it must be present; we try a few.
+  const HOSTS = [
+    "application.id",
+    "com.conornolan.Screen-Actions.WebExtension",
+    "com.conornolan.Screen-Actions.ScreenActionsWebExtension",
+    "com.conornolan.Screen-Actions.ScreenActionsWebExtension2",
+    "com.conornolan.Screen-Actions.WebExtFix.1757988823"
+  ];
 
   function setStatus(text, ok) {
     const s = document.getElementById("status");
@@ -30,67 +23,68 @@
 
   function decorateError(message, hint) {
     const known = [
-      {
-        match: /Calendar access was not granted/i,
-        guide:
-          "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions.\nIf you haven’t opened the app yet, run it once so iPadOS can show the permission dialog."
-      },
-      {
-        match: /Reminders access was not granted/i,
-        guide:
-          "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions.\nIf you haven’t opened the app yet, run it once so iPadOS can show the permission dialog."
-      },
-      {
-        match: /Contacts access.*not granted/i,
-        guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions."
-      },
-      {
-        match: /No date found/i,
-        guide: "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead."
-      }
+      { match: /Calendar access was not granted/i,
+        guide: "Open Settings → Privacy & Security → Calendars and allow access for Screen Actions.\nIf you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
+      { match: /Reminders access was not granted/i,
+        guide: "Open Settings → Privacy & Security → Reminders and allow access for Screen Actions.\nIf you haven’t opened the app yet, run it once so iPadOS can show the permission dialog." },
+      { match: /Contacts access.*not granted/i,
+        guide: "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions." },
+      { match: /No date found/i,
+        guide: "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’ instead." }
     ];
     const extra = hint || (known.find(k => k.match.test(message))?.guide);
     return extra ? `${message} — ${extra}` : message;
   }
 
-  // ---- Share Sheet Fallback (iOS friendly) ----------------------------------
-  function sharePayloadString(payload) {
-    const sel = (payload.selection || "").trim();
-    const title = (payload.title || "").trim();
-    const url = (payload.url || "").trim();
-    const base = sel || title || url || "(No selection)";
-    return url && base.indexOf(url) === -1 ? `${base}\n${url}` : base;
+  // ---- Native messaging (direct from popup) ---------------------------------
+  function callSendNativeMessage(host, body) {
+    return new Promise((resolve, reject) => {
+      if (!API.runtime?.sendNativeMessage) {
+        return reject(new Error("runtime.sendNativeMessage unavailable"));
+      }
+      try {
+        const done = (resp) => {
+          const err = globalThis.chrome?.runtime?.lastError || null;
+          if (err) reject(new Error(err.message || String(err)));
+          else resolve(resp);
+        };
+        const maybe = API.runtime.sendNativeMessage(host, body, done);
+        if (maybe?.then) maybe.then(resolve).catch(reject);
+      } catch (e) {
+        reject(e);
+      }
+    });
   }
 
-  async function fallbackShare(action, payload) {
-    const text = sharePayloadString(payload);
-    if (!navigator.share) {
-      throw new Error("Native bridge unavailable and Share Sheet not supported on this device.");
+  async function NATIVE_MESSAGE(action, payload) {
+    const pinned = (await new Promise(res => API.storage.local.get(PINNED_HOST_KEY, res)))[PINNED_HOST_KEY];
+    const candidates = pinned ? [pinned, ...HOSTS.filter(h => h !== pinned)] : HOSTS;
+
+    let lastErr = null;
+    for (const host of candidates) {
+      try {
+        const resp = await callSendNativeMessage(host, { action, payload });
+        await new Promise(res => API.storage.local.set({ [PINNED_HOST_KEY]: host }, res));
+        return resp;
+      } catch (e) {
+        lastErr = e;
+      }
     }
-    setStatus("Opening iOS Share Sheet… choose “Screen Actions”.", true);
-    await navigator.share({ text });
-    const label = {
-      autoDetect: "Auto",
-      createReminder: "Reminder",
-      addEvent: "Calendar Event",
-      extractContact: "Contact",
-      receiptCSV: "Receipt → CSV"
-    }[action] || "Action";
-    setStatus(`${label}: handed off via Share Sheet.`, true);
-    return { ok: true, message: "Shared to Screen Actions." };
+    throw lastErr || new Error("Native messaging failed.");
   }
-  // ----------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
 
   async function getPageContext() {
     try {
       const [tab] = await new Promise((res, rej) =>
         API.tabs.query({ active: true, currentWindow: true }, (t) => {
-          const err = (globalThis.chrome && chrome.runtime && chrome.runtime.lastError) || null;
+          const err = globalThis.chrome?.runtime?.lastError || null;
           if (err) return rej(new Error(err.message || String(err)));
           res(t);
         })
       );
       if (!tab) throw new Error("No active tab.");
+
       const canScript = !!(API.scripting && API.scripting.executeScript);
       if (canScript) {
         const results = await new Promise((res, rej) =>
@@ -103,11 +97,8 @@
                   if (!el) return "";
                   const tag = (el.tagName || "").toLowerCase();
                   const type = (el.type || "").toLowerCase();
-                  if (
-                    tag === "textarea" ||
-                    (tag === "input" &&
-                      (type === "" || type === "text" || type === "search" || type === "url" || type === "tel"))
-                  ) {
+                  if (tag === "textarea" ||
+                      (tag === "input" && (type === "" || type === "text" || type === "search" || type === "url" || type === "tel"))) {
                     const start = el.selectionStart ?? 0;
                     const end = el.selectionEnd ?? 0;
                     const v = el.value || "";
@@ -121,7 +112,7 @@
               }
             },
             (r) => {
-              const err = (globalThis.chrome && chrome.runtime && chrome.runtime.lastError) || null;
+              const err = globalThis.chrome?.runtime?.lastError || null;
               if (err) return rej(new Error(err.message || String(err)));
               res(r);
             }
@@ -130,8 +121,8 @@
         const firstWithSel =
           results && results.find((r) => r && r.result && r.result.selection && r.result.selection.trim().length > 0);
         return (firstWithSel && firstWithSel.result) ||
-          (results && results[0] && results[0].result) ||
-          { selection: "", title: tab.title || "", url: tab.url || "" };
+               (results && results[0] && results[0].result) ||
+               { selection: "", title: tab.title || "", url: tab.url || "" };
       }
       return { selection: "", title: tab.title || "", url: tab.url || "" };
     } catch {
@@ -144,27 +135,14 @@
       const resp = await NATIVE_MESSAGE("getProStatus", {});
       return !!(resp && resp.ok && resp.pro);
     } catch {
-      // If native is blocked, don’t gate the UI here
       return false;
     }
-  }
-
-  // Treat any native-bridge failure as "use the Share Sheet" (iOS-friendly).
-  function isBridgeFailure(message) {
-    const m = message || "";
-    return /sendNativeMessage unavailable/i.test(m) ||
-           /Invalid call to runtime\.sendNativeMessage/i.test(m) ||
-           /SFErrorDomain/i.test(m) ||
-           /Host.*not.*found/i.test(m) ||
-           /Native.*disconnected/i.test(m) ||
-           /connectNative/i.test(m);
   }
 
   async function runAction(action) {
     const payload = await getPageContext();
     document.getElementById("sel").textContent = (payload.selection?.trim() || payload.title || "(No selection)");
     try {
-      // First: try native
       const response = await NATIVE_MESSAGE(action, payload);
       if (response?.ok) {
         setStatus(response.message || "Done.", true);
@@ -173,22 +151,12 @@
           await new Promise((res) => API.storage.local.set({ [LAST_ACTION_KEY]: action }, res));
           updateRunLast();
         }
-        return;
+      } else {
+        const msg = decorateError((response && response.message) || "Unknown error.", response && response.hint);
+        setStatus(msg, false);
       }
-      const msg = decorateError((response && response.message) || "Unknown error.", response && response.hint);
-      throw new Error(msg);
     } catch (err) {
-      const m = (err && err.message) || String(err);
-      if (isBridgeFailure(m)) {
-        try {
-          await fallbackShare(action, payload);
-          return;
-        } catch (shareErr) {
-          setStatus((shareErr && shareErr.message) || String(shareErr), false);
-          return;
-        }
-      }
-      setStatus(decorateError(m, null), false);
+      setStatus(decorateError((err && err.message) || String(err), null), false);
     }
   }
 
@@ -244,6 +212,13 @@
       wrap.style.display = "none";
     }
 
-    setStatus("Ready.", true);
+    // Quick preflight to surface native availability
+    try {
+      const ping = await NATIVE_MESSAGE("ping", {});
+      if (ping?.ok) setStatus("Ready.", true);
+      else setStatus("Native bridge error.", false);
+    } catch (e) {
+      setStatus("Native bridge unavailable.", false);
+    }
   });
 })();
