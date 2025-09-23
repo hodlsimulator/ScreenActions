@@ -50,7 +50,9 @@ struct ContentView: View {
             status: $status,
             onTapSettings: { showSettings = true },
             onAutoDetect: { autoDetect() },
-            onScan: { showScanner = true }
+            onScan: { showScanner = true },
+            // 👇 ensure handoff is consumed when the UI appears/activates
+            onCheckHandoff: { consumeHandoffIfAny() }
         )
         // Sheets
         .sheet(isPresented: $showSettings) {
@@ -123,6 +125,18 @@ struct ContentView: View {
         }
     }
 
+    private func consumeHandoffIfAny() {
+        if let h = Handoff.take() {
+            inputText = h.text
+            switch h.kind {
+            case .event:    showEvent = true
+            case .reminder: showReminder = true
+            case .contact:  showContact = true
+            case .csv:      showCSV = true
+            }
+        }
+    }
+
     // MARK: - Any tab tap (including reselection)
     private func handleTabTap(_ tab: ActionTab) {
         switch tab {
@@ -167,6 +181,8 @@ struct ContentView: View {
         var onTapSettings: () -> Void
         var onAutoDetect: () -> Void
         var onScan: () -> Void
+        // 👇 new callback so MainScreen can trigger the outer handoff reader
+        var onCheckHandoff: () -> Void
 
         @FocusState private var isEditorFocused: Bool
         @Environment(\.scenePhase) private var scenePhase
@@ -356,9 +372,15 @@ struct ContentView: View {
                 }
             }
             // Keep Paste button state fresh
-            .onAppear { canPaste = UIPasteboard.general.hasStrings }
+            .onAppear {
+                canPaste = UIPasteboard.general.hasStrings
+                onCheckHandoff()              // ✅ consume handoff on appear
+            }
             .onChange(of: scenePhase) { _, newValue in
-                if newValue == .active { canPaste = UIPasteboard.general.hasStrings }
+                if newValue == .active {
+                    canPaste = UIPasteboard.general.hasStrings
+                    onCheckHandoff()          // ✅ consume handoff when active
+                }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
                 canPaste = UIPasteboard.general.hasStrings
@@ -518,17 +540,19 @@ struct ContentView: View {
         var onTapSettings: () -> Void
         var onAutoDetect: () -> Void
         var onScan: () -> Void
+        // 👇 new: pass through to MainScreen
+        var onCheckHandoff: () -> Void
 
         func makeUIViewController(context: Context) -> UITabBarController {
             let tbc = UITabBarController()
             tbc.delegate = context.coordinator
 
             // Build five hosts with identical content but different tab items.
-            let composeVC  = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan))
-            let calendarVC = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan))
-            let reminderVC = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan))
-            let contactVC  = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan))
-            let csvVC      = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan))
+            let composeVC  = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan, onCheckHandoff: onCheckHandoff))
+            let calendarVC = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan, onCheckHandoff: onCheckHandoff))
+            let reminderVC = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan, onCheckHandoff: onCheckHandoff))
+            let contactVC  = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan, onCheckHandoff: onCheckHandoff))
+            let csvVC      = UIHostingController(rootView: MainScreen(inputText: $inputText, status: $status, onTapSettings: onTapSettings, onAutoDetect: onAutoDetect, onScan: onScan, onCheckHandoff: onCheckHandoff))
 
             composeVC.tabBarItem  = UITabBarItem(title: "Compose", image: UIImage(systemName: symbolName(["square.and.pencil"])), selectedImage: nil)
             calendarVC.tabBarItem = UITabBarItem(title: "Calendar", image: UIImage(systemName: symbolName(["calendar.badge.plus", "calendar"])), selectedImage: nil)

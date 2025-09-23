@@ -16,22 +16,17 @@
 #endif
 
 static os_log_t SAWebLog(void) {
-    static os_log_t log;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        log = os_log_create("com.conornolan.Screen-Actions.WebExtension", "native");
-    });
+    static os_log_t log; static dispatch_once_t once;
+    dispatch_once(&once, ^{ log = os_log_create("com.conornolan.Screen-Actions.WebExtension", "native"); });
     return log;
 }
 
-@interface SAWebExtensionHandler : NSObject <NSExtensionRequestHandling>
+@interface SAWebExtensionHandler : NSObject
 @end
 
 @implementation SAWebExtensionHandler
 
-+ (void)load {
-    os_log(SAWebLog(), "[SA] Obj-C principal loaded");
-}
++ (void)load { os_log(SAWebLog(), "[SA] Obj-C principal loaded"); }
 
 - (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
     os_log(SAWebLog(), "[SA] beginRequest items=%{public}lu", (unsigned long)context.inputItems.count);
@@ -49,9 +44,7 @@ static os_log_t SAWebLog(void) {
     NSDictionary *dict = (NSDictionary *)body;
     NSString *action = [dict[@"action"] isKindOfClass:[NSString class]] ? dict[@"action"] : @"";
     NSDictionary *payload = [dict[@"payload"] isKindOfClass:[NSDictionary class]] ? dict[@"payload"] : @{};
-
-    os_log(SAWebLog(), "[SA] action=%{public}@ keys=%{public}@",
-          action, [[payload allKeys] componentsJoinedByString:@","]);
+    os_log(SAWebLog(), "[SA] action=%{public}@ keys=%{public}@", action, [[payload allKeys] componentsJoinedByString:@","]);
 
     if (![SAWebBridge respondsToSelector:@selector(handle:payload:completion:)]) {
         os_log(SAWebLog(), "[SA] SAWebBridge missing");
@@ -60,8 +53,17 @@ static os_log_t SAWebLog(void) {
     }
 
     [SAWebBridge handle:action payload:payload completion:^(NSDictionary *response) {
-        NSDictionary *out = [response isKindOfClass:[NSDictionary class]] ? response
-                            : @{@"ok": @NO, @"message": @"No response"};
+        NSDictionary *out = [response isKindOfClass:[NSDictionary class]] ? response : @{@"ok": @NO, @"message": @"No response"};
+        // If the bridge asks us to open the app, do it here.
+        NSString *open = [out objectForKey:@"openURL"];
+        if ([open isKindOfClass:[NSString class]] && open.length > 0) {
+            NSURL *url = [NSURL URLWithString:open];
+            if (url) {
+                [context openURL:url completionHandler:^(BOOL success) {
+                    os_log(SAWebLog(), "[SA] openURL(%{public}@) success=%{public}d", open, success);
+                }];
+            }
+        }
         [self reply:context payload:out];
     }];
 }
