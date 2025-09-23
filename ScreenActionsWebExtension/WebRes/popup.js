@@ -1,4 +1,4 @@
-// popup.js — call native directly; fall back to background proxy if needed
+// popup.js — call native directly; fallback to background proxy if needed
 (() => {
   const BR = (typeof browser !== "undefined" && browser.runtime &&
               typeof browser.runtime.sendNativeMessage === "function")
@@ -16,7 +16,6 @@
       const p = BR.sendNativeMessage({action, payload});
       if (p && typeof p.then==="function") return await p;
     }
-    // background proxy fallback
     return await new Promise((resolve,reject)=>{
       if (!RT || !RT.sendMessage) return reject(new Error("runtime.sendMessage unavailable"));
       try{

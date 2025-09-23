@@ -7,29 +7,17 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0058266809EA38219B610C75 /* icon-512-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = BE5948C242ECD5D1C80F6E3E /* icon-512-squircle.png */; };
-		16DD4C8A64F86221CCE39700 /* icon-128-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 9E0DA64ED30DABA1BEF9C3EF /* icon-128-squircle.png */; };
-		1857C757538094E11CA6FCAF /* popup.css in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = A01C7E473EA8A1673F486A02 /* popup.css */; };
-		2A3DFC10F4DE538017D88A0E /* icon-256-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = E050D029393017ABE53DE276 /* icon-256-squircle.png */; };
-		2F6E2ECB2DA7C8F12FA620DD /* icon-64-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = D2175A571DCB07FC1499AA39 /* icon-64-squircle.png */; };
-		34267564B08F664640DA7E26 /* icon-48-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 81E77A30BB3159FD39833144 /* icon-48-squircle.png */; };
-		47BD7B6F47ACA5BF9FE729A1 /* icon-64-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = B54F9633503DA5E91D56B64B /* icon-64-squircle.png */; };
-		50BF03E894C5969A6F08E132 /* toolbar-icon.svg in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = D6203CC1D9785A0CBBA12A73 /* toolbar-icon.svg */; };
-		5D8C66AF11A3F06D2F2C5660 /* background.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 22382767AABCBE1612DD09DD /* background.js */; };
-		627EB801E2A3CEB2C527CD0D /* manifest.json in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 27B46B5EEEA8D9E0D6BC2CBB /* manifest.json */; };
-		7183D1D57333A064AA2BCA06 /* messages.json in Copy WebRes (_locales/en) */ = {isa = PBXBuildFile; fileRef = 12CF64E7A5EE2507A360F1C2 /* messages.json */; };
-		72EB6FA57A7A0EB8D77C2065 /* popup.css in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 4850C4D1E4389A74DF98755D /* popup.css */; };
-		7B235985B1C81DFC3296853C /* icon-48-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 311C6449CD3FA10EA82872B3 /* icon-48-squircle.png */; };
-		8721116D5596E3E3FD279B5F /* icon-512-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 30DEE29FD135CE852C35ABC9 /* icon-512-squircle.png */; };
-		99A90A8683237CAFC4C57020 /* popup.html in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 00BADB303322077E2C1C2212 /* popup.html */; };
-		AF3AE6700FA1770A01705EED /* popup.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = B447B5986E99EF482BD095D8 /* popup.js */; };
-		B3E2232E6F648C6A0EB6EF8C /* popup.html in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = FF751243AF47EF039B73FC77 /* popup.html */; };
-		B4923DB03790D6D98883148C /* icon-256-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 0048721710D73E924F7E4D6C /* icon-256-squircle.png */; };
-		B88CA08CD715F0112BA9998F /* popup.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 605F721C44E75E88FA45A710 /* popup.js */; };
-		B97FDFFA036F8C70F05B84D0 /* toolbar-icon.svg in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 15F4BFD50771AA2977CD9E85 /* toolbar-icon.svg */; };
-		BD29589F5574C3655DA72304 /* icon-96-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 1CF1A6E99E96CDAB53D01AF9 /* icon-96-squircle.png */; };
-		DA5B42D7C92121BD12820F8E /* messages.json in Copy WebRes (_locales/en) */ = {isa = PBXBuildFile; fileRef = C8F4D540DB025688AB901C44 /* messages.json */; };
-		DC9AFC7197412E1D09787CE0 /* icon-96-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = 71E4ECEA72039A18F1948B80 /* icon-96-squircle.png */; };
+		566F4BDCEAC64BC0EA0E8793 /* icon-256-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = ED6130137DCDC7DE1B2FAEA9 /* icon-256-squircle.png */; };
+		5B91A29CBBC388EBBE0539BF /* icon-96-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = A839AFBF26BA285F2475A1F3 /* icon-96-squircle.png */; };
+		8E78B15853F49071A17AA84C /* popup.js in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = E811ECC40FD71853A5978877 /* popup.js */; };
+		98CA27BC1AF8A8292ECE5FEC /* icon-64-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = 26CFD720BF5A5362525D4145 /* icon-64-squircle.png */; };
+		9CD5D7345975AB60285ED24A /* messages.json in Copy WebExtension (_locales/en) */ = {isa = PBXBuildFile; fileRef = 87DB380C47EB388B0409D97B /* messages.json */; };
+		AB579F54B51789315E458CC0 /* background.js in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = 66BDBEA5D34211E5EA5045E1 /* background.js */; };
+		B2E4D6924064E1F3B85F244E /* toolbar-icon.svg in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = 757D791A18EA9FDF81130535 /* toolbar-icon.svg */; };
+		BC2EC9E537B9E3DB2013377D /* icon-48-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = 49AA33208D1C2B3B832D9B2C /* icon-48-squircle.png */; };
+		BC4FF0D639FECB1BEBB09469 /* icon-128-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = F6F590D732427605B59A4E9C /* icon-128-squircle.png */; };
+		C69A0CA7D4605B22C1AE4C6C /* popup.html in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = 12DE7FD3486A3A7E0EF182F8 /* popup.html */; };
+		D27D78D8A902C4DB4FD82D5A /* popup.css in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = AA0E0B4F3254C478186A27B3 /* popup.css */; };
 		E115D2532E77619700C8F5EE /* EventEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2522E77619500C8F5EE /* EventEditorView.swift */; };
 		E115D2552E7761AB00C8F5EE /* ReminderEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */; };
 		E115D25A2E77632300C8F5EE /* ReceiptCSVPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */; };
@@ -53,9 +41,8 @@
 		E183E14A2E75ACF400E8D263 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E1492E75ACF400E8D263 /* WidgetKit.framework */; };
 		E183E14C2E75ACF400E8D263 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E14B2E75ACF400E8D263 /* SwiftUI.framework */; };
 		E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		EF7E1E30CEBBD5FC6DBCF473 /* icon-128-squircle.png in Copy WebRes (images) */ = {isa = PBXBuildFile; fileRef = FC581D8634EB25877E6D1120 /* icon-128-squircle.png */; };
-		F88AB9F35ADAD4E3AC4F6981 /* background.js in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 45A0972B5D5BA661DED65927 /* background.js */; };
-		FFCCE78087D95475288FD709 /* manifest.json in Copy WebRes (root) */ = {isa = PBXBuildFile; fileRef = 2DEF69924A1DC0FCDCE8376A /* manifest.json */; };
+		E3F2F0401313BFAA158C4DF8 /* manifest.json in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = FA046C0178B60EC3EA39AA18 /* manifest.json */; };
+		FC0378D5897E3853DF5E9A57 /* icon-512-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = 465F2F5DAB6CCA371381FE08 /* icon-512-squircle.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,60 +77,67 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		116D29995143106C6AAD95AD /* Copy WebRes (_locales/en) */ = {
+		0B67EAD0503AA1D3A86CE07C /* Copy WebExtension (images) */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = WebRes/_locales/en;
+			dstPath = images;
 			dstSubfolderSpec = 7;
 			files = (
-				7183D1D57333A064AA2BCA06 /* messages.json in Copy WebRes (_locales/en) */,
-				DA5B42D7C92121BD12820F8E /* messages.json in Copy WebRes (_locales/en) */,
+				BC4FF0D639FECB1BEBB09469 /* icon-128-squircle.png in Copy WebExtension (images) */,
+				566F4BDCEAC64BC0EA0E8793 /* icon-256-squircle.png in Copy WebExtension (images) */,
+				BC2EC9E537B9E3DB2013377D /* icon-48-squircle.png in Copy WebExtension (images) */,
+				FC0378D5897E3853DF5E9A57 /* icon-512-squircle.png in Copy WebExtension (images) */,
+				98CA27BC1AF8A8292ECE5FEC /* icon-64-squircle.png in Copy WebExtension (images) */,
+				5B91A29CBBC388EBBE0539BF /* icon-96-squircle.png in Copy WebExtension (images) */,
+				B2E4D6924064E1F3B85F244E /* toolbar-icon.svg in Copy WebExtension (images) */,
 			);
-			name = "Copy WebRes (_locales/en)";
+			name = "Copy WebExtension (images)";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		124B5B77FF686C044019F1F8 /* Copy WebRes (images) */ = {
+		1CFD946CA49384BF8ECCC509 /* Copy WebExtension (images) */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = WebRes/images;
+			dstPath = images;
 			dstSubfolderSpec = 7;
 			files = (
-				EF7E1E30CEBBD5FC6DBCF473 /* icon-128-squircle.png in Copy WebRes (images) */,
-				2A3DFC10F4DE538017D88A0E /* icon-256-squircle.png in Copy WebRes (images) */,
-				34267564B08F664640DA7E26 /* icon-48-squircle.png in Copy WebRes (images) */,
-				0058266809EA38219B610C75 /* icon-512-squircle.png in Copy WebRes (images) */,
-				47BD7B6F47ACA5BF9FE729A1 /* icon-64-squircle.png in Copy WebRes (images) */,
-				BD29589F5574C3655DA72304 /* icon-96-squircle.png in Copy WebRes (images) */,
-				50BF03E894C5969A6F08E132 /* toolbar-icon.svg in Copy WebRes (images) */,
-				B97FDFFA036F8C70F05B84D0 /* toolbar-icon.svg in Copy WebRes (images) */,
-				B4923DB03790D6D98883148C /* icon-256-squircle.png in Copy WebRes (images) */,
-				DC9AFC7197412E1D09787CE0 /* icon-96-squircle.png in Copy WebRes (images) */,
-				2F6E2ECB2DA7C8F12FA620DD /* icon-64-squircle.png in Copy WebRes (images) */,
-				7B235985B1C81DFC3296853C /* icon-48-squircle.png in Copy WebRes (images) */,
-				16DD4C8A64F86221CCE39700 /* icon-128-squircle.png in Copy WebRes (images) */,
-				8721116D5596E3E3FD279B5F /* icon-512-squircle.png in Copy WebRes (images) */,
 			);
-			name = "Copy WebRes (images)";
+			name = "Copy WebExtension (images)";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		9F7B382E6BB67BD71908E667 /* Copy WebRes (root) */ = {
+		2DDC7B7FBE5598E25FE85D6D /* Copy WebExtension (root) */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = WebRes;
+			dstPath = "";
 			dstSubfolderSpec = 7;
 			files = (
-				627EB801E2A3CEB2C527CD0D /* manifest.json in Copy WebRes (root) */,
-				F88AB9F35ADAD4E3AC4F6981 /* background.js in Copy WebRes (root) */,
-				99A90A8683237CAFC4C57020 /* popup.html in Copy WebRes (root) */,
-				1857C757538094E11CA6FCAF /* popup.css in Copy WebRes (root) */,
-				B88CA08CD715F0112BA9998F /* popup.js in Copy WebRes (root) */,
-				FFCCE78087D95475288FD709 /* manifest.json in Copy WebRes (root) */,
-				5D8C66AF11A3F06D2F2C5660 /* background.js in Copy WebRes (root) */,
-				B3E2232E6F648C6A0EB6EF8C /* popup.html in Copy WebRes (root) */,
-				72EB6FA57A7A0EB8D77C2065 /* popup.css in Copy WebRes (root) */,
-				AF3AE6700FA1770A01705EED /* popup.js in Copy WebRes (root) */,
+				E3F2F0401313BFAA158C4DF8 /* manifest.json in Copy WebExtension (root) */,
+				AB579F54B51789315E458CC0 /* background.js in Copy WebExtension (root) */,
+				C69A0CA7D4605B22C1AE4C6C /* popup.html in Copy WebExtension (root) */,
+				D27D78D8A902C4DB4FD82D5A /* popup.css in Copy WebExtension (root) */,
+				8E78B15853F49071A17AA84C /* popup.js in Copy WebExtension (root) */,
 			);
-			name = "Copy WebRes (root)";
+			name = "Copy WebExtension (root)";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		65E279C357E0EA2300AB5B4C /* Copy WebExtension (root) */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+			);
+			name = "Copy WebExtension (root)";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6F697E90BD963824BFEDE6A6 /* Copy WebExtension (_locales/en) */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = _locales/en;
+			dstSubfolderSpec = 7;
+			files = (
+				9CD5D7345975AB60285ED24A /* messages.json in Copy WebExtension (_locales/en) */,
+			);
+			name = "Copy WebExtension (_locales/en)";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		D35D198BBBEA71E14AFF3159 /* Copy Root (images) */ = {
@@ -170,51 +164,46 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F2A802BF9712280C901B5BF2 /* Copy WebExtension (_locales/en) */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = _locales/en;
+			dstSubfolderSpec = 7;
+			files = (
+			);
+			name = "Copy WebExtension (_locales/en)";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		0048721710D73E924F7E4D6C /* icon-256-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-256-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-256-squircle.png"; sourceTree = "<group>"; };
-		00BADB303322077E2C1C2212 /* popup.html */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.html; sourceTree = "<group>"; };
-		12CF64E7A5EE2507A360F1C2 /* messages.json */ = {isa = PBXFileReference; includeInIndex = 1; name = messages.json; path = _locales/en/messages.json; sourceTree = "<group>"; };
+		12DE7FD3486A3A7E0EF182F8 /* popup.html */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.html; sourceTree = "<group>"; };
 		1566F962EBB05B55F85EB3EF /* scripts_fix_editors.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = scripts_fix_editors.rb; sourceTree = "<group>"; };
-		15F4BFD50771AA2977CD9E85 /* toolbar-icon.svg */ = {isa = PBXFileReference; includeInIndex = 1; name = "toolbar-icon.svg"; path = "ScreenActionsWebExtension/WebRes/images/toolbar-icon.svg"; sourceTree = "<group>"; };
-		1CF1A6E99E96CDAB53D01AF9 /* icon-96-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-96-squircle.png"; path = "images/icon-96-squircle.png"; sourceTree = "<group>"; };
-		22382767AABCBE1612DD09DD /* background.js */ = {isa = PBXFileReference; includeInIndex = 1; name = background.js; path = ScreenActionsWebExtension/WebRes/background.js; sourceTree = "<group>"; };
 		24785EA68FB01033382A800E /* force_webext_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = force_webext_sources.rb; sourceTree = "<group>"; };
-		27B46B5EEEA8D9E0D6BC2CBB /* manifest.json */ = {isa = PBXFileReference; includeInIndex = 1; path = manifest.json; sourceTree = "<group>"; };
+		26CFD720BF5A5362525D4145 /* icon-64-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-64-squircle.png"; path = "images/icon-64-squircle.png"; sourceTree = "<group>"; };
 		2B653A6655AAC907E4699A1F /* remove_panel_from_webext.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = remove_panel_from_webext.rb; sourceTree = "<group>"; };
-		2DEF69924A1DC0FCDCE8376A /* manifest.json */ = {isa = PBXFileReference; includeInIndex = 1; name = manifest.json; path = ScreenActionsWebExtension/WebRes/manifest.json; sourceTree = "<group>"; };
-		30DEE29FD135CE852C35ABC9 /* icon-512-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-512-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-512-squircle.png"; sourceTree = "<group>"; };
-		311C6449CD3FA10EA82872B3 /* icon-48-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-48-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-48-squircle.png"; sourceTree = "<group>"; };
 		32FF644ED87D30DD10A7AB8A /* ensure_webext_resources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = ensure_webext_resources.rb; sourceTree = "<group>"; };
 		3402647959D843EFFADD7210 /* fix_embed_and_resources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_embed_and_resources.rb; sourceTree = "<group>"; };
 		35E9B74C82844916689270EB /* sanitize_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = sanitize_sources.rb; sourceTree = "<group>"; };
 		3738AEA85627DCFF49949031 /* pick_safari_ext_profile.py */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.python; path = pick_safari_ext_profile.py; sourceTree = "<group>"; };
 		3EAB88C747E6E285DE1D78B7 /* dedupe_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = dedupe_sources.rb; sourceTree = "<group>"; };
-		45A0972B5D5BA661DED65927 /* background.js */ = {isa = PBXFileReference; includeInIndex = 1; path = background.js; sourceTree = "<group>"; };
-		4850C4D1E4389A74DF98755D /* popup.css */ = {isa = PBXFileReference; includeInIndex = 1; name = popup.css; path = ScreenActionsWebExtension/WebRes/popup.css; sourceTree = "<group>"; };
+		465F2F5DAB6CCA371381FE08 /* icon-512-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-512-squircle.png"; path = "images/icon-512-squircle.png"; sourceTree = "<group>"; };
+		49AA33208D1C2B3B832D9B2C /* icon-48-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-48-squircle.png"; path = "images/icon-48-squircle.png"; sourceTree = "<group>"; };
 		4DE55CDB584BED372B4E2E04 /* add_root_images_copy_phase.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = add_root_images_copy_phase.rb; sourceTree = "<group>"; };
 		4E24688813CC0AD3B1D77DD4 /* purge_profiles_and_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = purge_profiles_and_sources.rb; sourceTree = "<group>"; };
-		605F721C44E75E88FA45A710 /* popup.js */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.js; sourceTree = "<group>"; };
+		66BDBEA5D34211E5EA5045E1 /* background.js */ = {isa = PBXFileReference; includeInIndex = 1; path = background.js; sourceTree = "<group>"; };
 		70685838DF59FF47AC0BA15B /* fix_core_and_editors.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_core_and_editors.rb; sourceTree = "<group>"; };
-		71E4ECEA72039A18F1948B80 /* icon-96-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-96-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-96-squircle.png"; sourceTree = "<group>"; };
+		757D791A18EA9FDF81130535 /* toolbar-icon.svg */ = {isa = PBXFileReference; includeInIndex = 1; name = "toolbar-icon.svg"; path = "images/toolbar-icon.svg"; sourceTree = "<group>"; };
 		773A90B4D1D263AEFCE63AE8 /* fix_and_verify_editors.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_and_verify_editors.rb; sourceTree = "<group>"; };
-		81E77A30BB3159FD39833144 /* icon-48-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-48-squircle.png"; path = "images/icon-48-squircle.png"; sourceTree = "<group>"; };
+		87DB380C47EB388B0409D97B /* messages.json */ = {isa = PBXFileReference; includeInIndex = 1; name = messages.json; path = _locales/en/messages.json; sourceTree = "<group>"; };
 		8D30C7D4883D02008D8A2F0D /* verify_archive_entitlements.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = verify_archive_entitlements.rb; sourceTree = "<group>"; };
-		9E0DA64ED30DABA1BEF9C3EF /* icon-128-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-128-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-128-squircle.png"; sourceTree = "<group>"; };
-		A01C7E473EA8A1673F486A02 /* popup.css */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.css; sourceTree = "<group>"; };
+		A839AFBF26BA285F2475A1F3 /* icon-96-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-96-squircle.png"; path = "images/icon-96-squircle.png"; sourceTree = "<group>"; };
+		AA0E0B4F3254C478186A27B3 /* popup.css */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.css; sourceTree = "<group>"; };
 		AB18E6CCA40E410C21B725D5 /* repair_tools_group.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = repair_tools_group.rb; sourceTree = "<group>"; };
 		AEE41F430FE884449E94D13F /* add_editors_only.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = add_editors_only.rb; sourceTree = "<group>"; };
-		B447B5986E99EF482BD095D8 /* popup.js */ = {isa = PBXFileReference; includeInIndex = 1; name = popup.js; path = ScreenActionsWebExtension/WebRes/popup.js; sourceTree = "<group>"; };
-		B54F9633503DA5E91D56B64B /* icon-64-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-64-squircle.png"; path = "images/icon-64-squircle.png"; sourceTree = "<group>"; };
 		B5ECC9F4F80BBF08BF6803E8 /* scripts_add_editors.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = scripts_add_editors.rb; sourceTree = "<group>"; };
-		BE5948C242ECD5D1C80F6E3E /* icon-512-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-512-squircle.png"; path = "images/icon-512-squircle.png"; sourceTree = "<group>"; };
-		C8F4D540DB025688AB901C44 /* messages.json */ = {isa = PBXFileReference; includeInIndex = 1; name = messages.json; path = ScreenActionsWebExtension/WebRes/_locales/en/messages.json; sourceTree = "<group>"; };
-		D2175A571DCB07FC1499AA39 /* icon-64-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-64-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-64-squircle.png"; sourceTree = "<group>"; };
 		D4FC27B02471AE76440C60C3 /* select_ext_profile.py */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.python; path = select_ext_profile.py; sourceTree = "<group>"; };
-		D6203CC1D9785A0CBBA12A73 /* toolbar-icon.svg */ = {isa = PBXFileReference; includeInIndex = 1; name = "toolbar-icon.svg"; path = "images/toolbar-icon.svg"; sourceTree = "<group>"; };
 		DDD3B9BC3555314AF2683847 /* reset_webext_packaging.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = reset_webext_packaging.rb; sourceTree = "<group>"; };
-		E050D029393017ABE53DE276 /* icon-256-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-256-squircle.png"; path = "images/icon-256-squircle.png"; sourceTree = "<group>"; };
 		E115D2522E77619500C8F5EE /* EventEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventEditorView.swift; sourceTree = "<group>"; };
 		E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderEditorView.swift; sourceTree = "<group>"; };
 		E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptCSVPreviewView.swift; sourceTree = "<group>"; };
@@ -253,11 +242,13 @@
 		E1F918682E82154C00276157 /* verify_packaged_webext.zsh */ = {isa = PBXFileReference; lastKnownFileType = text; path = verify_packaged_webext.zsh; sourceTree = "<group>"; };
 		E1F918692E82170700276157 /* fix_webres_refs_and_pack.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = fix_webres_refs_and_pack.rb; sourceTree = "<group>"; };
 		E1F91BCF2E821C7400276157 /* remove_target.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = remove_target.rb; sourceTree = "<group>"; };
+		E811ECC40FD71853A5978877 /* popup.js */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.js; sourceTree = "<group>"; };
+		ED6130137DCDC7DE1B2FAEA9 /* icon-256-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-256-squircle.png"; path = "images/icon-256-squircle.png"; sourceTree = "<group>"; };
 		F46DC675DE53F5A9DE57D69F /* fix_webext2.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_webext2.rb; sourceTree = "<group>"; };
+		F6F590D732427605B59A4E9C /* icon-128-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-128-squircle.png"; path = "images/icon-128-squircle.png"; sourceTree = "<group>"; };
 		F8CEB8DE2C0728AEB5713466 /* flatten_webext_resources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = flatten_webext_resources.rb; sourceTree = "<group>"; };
+		FA046C0178B60EC3EA39AA18 /* manifest.json */ = {isa = PBXFileReference; includeInIndex = 1; path = manifest.json; sourceTree = "<group>"; };
 		FAFF717ED1A16338ACAA62B8 /* fix_webext_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_webext_sources.rb; sourceTree = "<group>"; };
-		FC581D8634EB25877E6D1120 /* icon-128-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-128-squircle.png"; path = "images/icon-128-squircle.png"; sourceTree = "<group>"; };
-		FF751243AF47EF039B73FC77 /* popup.html */ = {isa = PBXFileReference; includeInIndex = 1; name = popup.html; path = ScreenActionsWebExtension/WebRes/popup.html; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -518,19 +509,19 @@
 		836240667132406499B0F2C8 /* WebRes (sources) */ = {
 			isa = PBXGroup;
 			children = (
-				27B46B5EEEA8D9E0D6BC2CBB /* manifest.json */,
-				45A0972B5D5BA661DED65927 /* background.js */,
-				00BADB303322077E2C1C2212 /* popup.html */,
-				A01C7E473EA8A1673F486A02 /* popup.css */,
-				605F721C44E75E88FA45A710 /* popup.js */,
-				12CF64E7A5EE2507A360F1C2 /* messages.json */,
-				FC581D8634EB25877E6D1120 /* icon-128-squircle.png */,
-				E050D029393017ABE53DE276 /* icon-256-squircle.png */,
-				81E77A30BB3159FD39833144 /* icon-48-squircle.png */,
-				BE5948C242ECD5D1C80F6E3E /* icon-512-squircle.png */,
-				B54F9633503DA5E91D56B64B /* icon-64-squircle.png */,
-				1CF1A6E99E96CDAB53D01AF9 /* icon-96-squircle.png */,
-				D6203CC1D9785A0CBBA12A73 /* toolbar-icon.svg */,
+				FA046C0178B60EC3EA39AA18 /* manifest.json */,
+				66BDBEA5D34211E5EA5045E1 /* background.js */,
+				12DE7FD3486A3A7E0EF182F8 /* popup.html */,
+				AA0E0B4F3254C478186A27B3 /* popup.css */,
+				E811ECC40FD71853A5978877 /* popup.js */,
+				87DB380C47EB388B0409D97B /* messages.json */,
+				F6F590D732427605B59A4E9C /* icon-128-squircle.png */,
+				ED6130137DCDC7DE1B2FAEA9 /* icon-256-squircle.png */,
+				49AA33208D1C2B3B832D9B2C /* icon-48-squircle.png */,
+				465F2F5DAB6CCA371381FE08 /* icon-512-squircle.png */,
+				26CFD720BF5A5362525D4145 /* icon-64-squircle.png */,
+				A839AFBF26BA285F2475A1F3 /* icon-96-squircle.png */,
+				757D791A18EA9FDF81130535 /* toolbar-icon.svg */,
 			);
 			name = "WebRes (sources)";
 			path = ScreenActionsWebExtension/WebRes;
@@ -563,19 +554,6 @@
 				657BAACF2A7E3A6CB393A51B /* Scripts */,
 				43B2B920EB7254CCE80831E0 /* tools */,
 				836240667132406499B0F2C8 /* WebRes (sources) */,
-				2DEF69924A1DC0FCDCE8376A /* manifest.json */,
-				22382767AABCBE1612DD09DD /* background.js */,
-				FF751243AF47EF039B73FC77 /* popup.html */,
-				4850C4D1E4389A74DF98755D /* popup.css */,
-				B447B5986E99EF482BD095D8 /* popup.js */,
-				C8F4D540DB025688AB901C44 /* messages.json */,
-				15F4BFD50771AA2977CD9E85 /* toolbar-icon.svg */,
-				0048721710D73E924F7E4D6C /* icon-256-squircle.png */,
-				71E4ECEA72039A18F1948B80 /* icon-96-squircle.png */,
-				D2175A571DCB07FC1499AA39 /* icon-64-squircle.png */,
-				311C6449CD3FA10EA82872B3 /* icon-48-squircle.png */,
-				9E0DA64ED30DABA1BEF9C3EF /* icon-128-squircle.png */,
-				30DEE29FD135CE852C35ABC9 /* icon-512-squircle.png */,
 			);
 			sourceTree = "<group>";
 		};
@@ -658,9 +636,12 @@
 				E12A855B2E760EBD00E07869 /* Frameworks */,
 				E12A855C2E760EBD00E07869 /* Resources */,
 				D35D198BBBEA71E14AFF3159 /* Copy Root (images) */,
-				9F7B382E6BB67BD71908E667 /* Copy WebRes (root) */,
-				116D29995143106C6AAD95AD /* Copy WebRes (_locales/en) */,
-				124B5B77FF686C044019F1F8 /* Copy WebRes (images) */,
+				65E279C357E0EA2300AB5B4C /* Copy WebExtension (root) */,
+				F2A802BF9712280C901B5BF2 /* Copy WebExtension (_locales/en) */,
+				1CFD946CA49384BF8ECCC509 /* Copy WebExtension (images) */,
+				2DDC7B7FBE5598E25FE85D6D /* Copy WebExtension (root) */,
+				6F697E90BD963824BFEDE6A6 /* Copy WebExtension (_locales/en) */,
+				0B67EAD0503AA1D3A86CE07C /* Copy WebExtension (images) */,
 			);
 			buildRules = (
 			);
