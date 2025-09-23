@@ -1,4 +1,4 @@
-// popup.js — always proxy native calls via the background service worker
+// popup.js — MV3 popover; always proxy to background via runtime.sendMessage
 (() => {
   const RT = (typeof browser !== "undefined" ? browser.runtime
            : (typeof chrome  !== "undefined" ? chrome.runtime  : null));
@@ -10,13 +10,14 @@
   function q(id){ return document.getElementById(id); }
   function setStatus(t, ok){
     const s = q("status"); if(!s) return;
-    s.textContent = t; s.className = ok ? "status ok" : "status err";
+    s.textContent = t;
+    s.className = "status " + (ok ? "ok" : "err");
   }
 
   async function pageCtx(){
     try{
       const [tab] = TABS ? await TABS.query({ active:true, currentWindow:true }) : [{ title:document.title, url:"" }];
-      if (SCRIPTING && SCRIPTING.executeScript){
+      if (SCRIPTING && SCRIPTING.executeScript && tab && tab.id != null){
         const res = await SCRIPTING.executeScript({
           target:{ tabId: tab.id, allFrames:true },
           func: () => String(getSelection ? getSelection() : "")
@@ -25,24 +26,20 @@
         return { selection:(first ? first.result : ""), title:tab?.title || document.title || "", url:tab?.url || "" };
       }
       return { selection:"", title:tab?.title || document.title || "", url:tab?.url || "" };
-    } catch {
-      return { selection:"", title:document.title || "", url:"" };
-    }
+    } catch { return { selection:"", title:document.title || "", url:"" }; }
   }
 
-  // Always go through background → sendNativeMessage
+  // Always message the background; support both callback/promise styles
   async function native(action, payload){
     return await new Promise((resolve, reject) => {
       if (!RT || !RT.sendMessage) return reject(new Error("runtime.sendMessage unavailable"));
       try {
-        const maybePromise = RT.sendMessage({ cmd:"native", action, payload }, (resp) => {
+        const maybe = RT.sendMessage({ cmd:"native", action, payload }, (resp) => {
           const err = (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.lastError) || null;
-          if (err) reject(new Error(err.message || String(err)));
-          else resolve(resp);
+          if (err) return reject(new Error(err.message || String(err)));
+          resolve(resp);
         });
-        if (maybePromise && typeof maybePromise.then === "function") {
-          maybePromise.then(resolve).catch(reject);
-        }
+        if (maybe && typeof maybe.then === "function") maybe.then(resolve).catch(reject);
       } catch (e) { reject(e); }
     });
   }
@@ -52,24 +49,24 @@
     if (q("sel")) q("sel").textContent = (ctx.selection?.trim() || ctx.title || "(No selection)");
     try{
       const r = await native(action, ctx);
-      setStatus(r?.ok ? (r.message || "Done.") : (r?.message || "Native bridge error."), !!r?.ok);
-      if (!r?.ok && r?.hint) setStatus(`${r.message}\n${r.hint}`, false);
+      if (r?.openURL) setStatus("Opening app…", true);
+      else setStatus(r?.ok ? (r.message || "Done.") : (r?.message || "Native error."), !!r?.ok);
     } catch(e){
-      setStatus((e && e.message) || "Native bridge error.", false);
+      setStatus((e && e.message) || "Native error.", false);
     }
   }
 
-  document.addEventListener("DOMContentLoaded", async () => {
+  function boot(){
     q("btn-auto")?.addEventListener("click", () => run("autoDetect"));
     q("btn-rem") ?.addEventListener("click", () => run("createReminder"));
     q("btn-cal") ?.addEventListener("click", () => run("addEvent"));
     q("btn-ctc") ?.addEventListener("click", () => run("extractContact"));
     q("btn-csv") ?.addEventListener("click", () => run("receiptCSV"));
-    try {
-      const ping = await native("ping", {});
-      setStatus(ping?.ok ? "Ready." : "Native bridge error.", !!ping?.ok);
-    } catch {
-      setStatus("Native bridge error.", false);
-    }
-  });
+    // ping → Ready
+    native("ping", {}).then(r => setStatus(r?.ok ? "Ready." : "Native bridge error.", !!r?.ok))
+                      .catch(() => setStatus("Native bridge error.", false));
+  }
+
+  if (document.readyState !== "loading") boot();
+  else document.addEventListener("DOMContentLoaded", boot);
 })();
