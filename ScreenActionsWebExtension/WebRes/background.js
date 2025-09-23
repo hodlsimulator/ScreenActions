@@ -20,7 +20,7 @@
         try { sendResponse(await sendNative({ action: msg.action, payload: msg.payload })); }
         catch (e) { sendResponse({ ok:false, message:(e && e.message) || String(e) }); }
       })();
-      return true;
+      return true; // keep channel open
     });
   }
 
