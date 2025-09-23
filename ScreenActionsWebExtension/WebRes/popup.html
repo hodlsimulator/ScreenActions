@@ -1,39 +1,33 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Screen Actions</title>
   <link rel="stylesheet" href="popup.css">
+  <style>
+    body { margin: 0; font: -apple-system-body; color: #e7e7e7; background:#1a1a1a; }
+    .wrap { padding: 14px; width: 320px; }
+    .h { font-weight: 600; margin-bottom: 10px; }
+    .sel { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:#111; border-radius:8px; padding:10px; color:#bfbfbf; min-height:36px; }
+    .btn { width:100%; padding:12px; margin-top:10px; border-radius:12px; border:0; background:#0a84ff; color:white; font-weight:600; }
+    .btn.gray { background:#2a2a2a; color:#ddd; }
+    .status { margin-top:12px; font-size:13px; color:#aaa; white-space:pre-wrap; }
+    .status.ok { color:#7dff9a; }
+    .status.err { color:#ff5c5c; }
+  </style>
 </head>
 <body>
-  <header class="card">
-    <img src="images/icon-48-squircle.png" alt="" width="20" height="20">
-    <h1>Screen Actions</h1>
-  </header>
-
-  <section class="card">
-    <label>Selected Text</label>
-    <pre id="sel" class="selection">(Loading…)</pre>
-  </section>
-
-  <section class="card buttons">
-    <button id="btn-auto" class="primary">Auto Detect</button>
-    <button id="btn-rem">Create Reminder</button>
-    <button id="btn-cal">Add Calendar Event</button>
-    <button id="btn-ctc">Extract Contact</button>
-    <button id="btn-csv">Receipt → CSV</button>
-  </section>
-
-  <section id="remember-wrap" class="card" style="display:none">
-    <div id="last-row" style="display:none; gap:8px; align-items:center; margin-bottom:8px;">
-      <button id="btn-last">Run Last</button>
-    </div>
-    <label><input type="checkbox" id="remember-toggle"> Remember last action (Pro)</label>
-  </section>
-
-  <p id="status" class="status">(Idle)</p>
-
+  <div class="wrap">
+    <div class="h">Screen Actions</div>
+    <div id="sel" class="sel">(Loading…)</div>
+    <button id="btn-auto" class="btn">Auto Detect</button>
+    <button id="btn-rem"  class="btn gray">Create Reminder</button>
+    <button id="btn-cal"  class="btn gray">Add Calendar Event</button>
+    <button id="btn-ctc"  class="btn gray">Extract Contact</button>
+    <button id="btn-csv"  class="btn gray">Receipt → CSV</button>
+    <div id="status" class="status">Initialising…</div>
+  </div>
   <script src="popup.js"></script>
 </body>
 </html>
