@@ -30,7 +30,8 @@
 		<dict>
 			<key>SFExtensionDisplayName</key>
 			<string>Screen Actions</string>
-			<key>SFSafariWebExtensionManifestPath</key><string>manifest.json</string>
+			<key>SFSafariWebExtensionManifestPath</key>
+			<string>WebRes/manifest.json</string>
 		</dict>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.Safari.web-extension</string>

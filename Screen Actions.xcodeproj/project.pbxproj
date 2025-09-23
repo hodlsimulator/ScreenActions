@@ -7,17 +7,19 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		566F4BDCEAC64BC0EA0E8793 /* icon-256-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = ED6130137DCDC7DE1B2FAEA9 /* icon-256-squircle.png */; };
-		5B91A29CBBC388EBBE0539BF /* icon-96-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = A839AFBF26BA285F2475A1F3 /* icon-96-squircle.png */; };
-		8E78B15853F49071A17AA84C /* popup.js in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = E811ECC40FD71853A5978877 /* popup.js */; };
-		98CA27BC1AF8A8292ECE5FEC /* icon-64-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = 26CFD720BF5A5362525D4145 /* icon-64-squircle.png */; };
-		9CD5D7345975AB60285ED24A /* messages.json in Copy WebExtension (_locales/en) */ = {isa = PBXBuildFile; fileRef = 87DB380C47EB388B0409D97B /* messages.json */; };
-		AB579F54B51789315E458CC0 /* background.js in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = 66BDBEA5D34211E5EA5045E1 /* background.js */; };
-		B2E4D6924064E1F3B85F244E /* toolbar-icon.svg in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = 757D791A18EA9FDF81130535 /* toolbar-icon.svg */; };
-		BC2EC9E537B9E3DB2013377D /* icon-48-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = 49AA33208D1C2B3B832D9B2C /* icon-48-squircle.png */; };
-		BC4FF0D639FECB1BEBB09469 /* icon-128-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = F6F590D732427605B59A4E9C /* icon-128-squircle.png */; };
-		C69A0CA7D4605B22C1AE4C6C /* popup.html in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = 12DE7FD3486A3A7E0EF182F8 /* popup.html */; };
-		D27D78D8A902C4DB4FD82D5A /* popup.css in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = AA0E0B4F3254C478186A27B3 /* popup.css */; };
+		0807E7E5A412DF37727569E3 /* popup.html in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 12DE7FD3486A3A7E0EF182F8 /* popup.html */; };
+		445E8B8EE1CE38F1333A8225 /* toolbar-icon.svg in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 757D791A18EA9FDF81130535 /* toolbar-icon.svg */; };
+		622F7C1CEAF94D4E132ABB37 /* icon-128-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = F6F590D732427605B59A4E9C /* icon-128-squircle.png */; };
+		6C484E1DE626285F2DBD0D44 /* icon-512-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 465F2F5DAB6CCA371381FE08 /* icon-512-squircle.png */; };
+		6EC66DAC06E6FBA4C0D972D2 /* icon-96-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = A839AFBF26BA285F2475A1F3 /* icon-96-squircle.png */; };
+		75B2A2CDEC34747EBBB61EF5 /* popup.css in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = AA0E0B4F3254C478186A27B3 /* popup.css */; };
+		77CF86134D601F1BF09CDB7F /* background.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 66BDBEA5D34211E5EA5045E1 /* background.js */; };
+		895D3AB695735B9CD05742F5 /* icon-256-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = ED6130137DCDC7DE1B2FAEA9 /* icon-256-squircle.png */; };
+		8C7ADA567FFA3A9AB65D5EE2 /* popup.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = E811ECC40FD71853A5978877 /* popup.js */; };
+		8F92FB000437847B6D489C73 /* messages.json in Pack WebRes – locales */ = {isa = PBXBuildFile; fileRef = 87DB380C47EB388B0409D97B /* messages.json */; };
+		A908DB6295FAA130D9DD48BC /* icon-48-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 49AA33208D1C2B3B832D9B2C /* icon-48-squircle.png */; };
+		B20CC41B3B02AF846ED9E895 /* manifest.json in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = FA046C0178B60EC3EA39AA18 /* manifest.json */; };
+		C0405F654BD36E19BA59B74D /* icon-64-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 26CFD720BF5A5362525D4145 /* icon-64-squircle.png */; };
 		E115D2532E77619700C8F5EE /* EventEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2522E77619500C8F5EE /* EventEditorView.swift */; };
 		E115D2552E7761AB00C8F5EE /* ReminderEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */; };
 		E115D25A2E77632300C8F5EE /* ReceiptCSVPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */; };
@@ -41,8 +43,6 @@
 		E183E14A2E75ACF400E8D263 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E1492E75ACF400E8D263 /* WidgetKit.framework */; };
 		E183E14C2E75ACF400E8D263 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E14B2E75ACF400E8D263 /* SwiftUI.framework */; };
 		E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		E3F2F0401313BFAA158C4DF8 /* manifest.json in Copy WebExtension (root) */ = {isa = PBXBuildFile; fileRef = FA046C0178B60EC3EA39AA18 /* manifest.json */; };
-		FC0378D5897E3853DF5E9A57 /* icon-512-squircle.png in Copy WebExtension (images) */ = {isa = PBXBuildFile; fileRef = 465F2F5DAB6CCA371381FE08 /* icon-512-squircle.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -77,77 +77,30 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		0B67EAD0503AA1D3A86CE07C /* Copy WebExtension (images) */ = {
+		238FA01BD0B520479DFC674A /* Pack WebRes – locales */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = images;
+			dstPath = WebRes/_locales/en;
 			dstSubfolderSpec = 7;
 			files = (
-				BC4FF0D639FECB1BEBB09469 /* icon-128-squircle.png in Copy WebExtension (images) */,
-				566F4BDCEAC64BC0EA0E8793 /* icon-256-squircle.png in Copy WebExtension (images) */,
-				BC2EC9E537B9E3DB2013377D /* icon-48-squircle.png in Copy WebExtension (images) */,
-				FC0378D5897E3853DF5E9A57 /* icon-512-squircle.png in Copy WebExtension (images) */,
-				98CA27BC1AF8A8292ECE5FEC /* icon-64-squircle.png in Copy WebExtension (images) */,
-				5B91A29CBBC388EBBE0539BF /* icon-96-squircle.png in Copy WebExtension (images) */,
-				B2E4D6924064E1F3B85F244E /* toolbar-icon.svg in Copy WebExtension (images) */,
+				8F92FB000437847B6D489C73 /* messages.json in Pack WebRes – locales */,
 			);
-			name = "Copy WebExtension (images)";
+			name = "Pack WebRes – locales";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1CFD946CA49384BF8ECCC509 /* Copy WebExtension (images) */ = {
+		A7829CB460D7B3061DE5B970 /* Pack WebRes – root */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = images;
+			dstPath = WebRes;
 			dstSubfolderSpec = 7;
 			files = (
+				B20CC41B3B02AF846ED9E895 /* manifest.json in Pack WebRes – root */,
+				77CF86134D601F1BF09CDB7F /* background.js in Pack WebRes – root */,
+				0807E7E5A412DF37727569E3 /* popup.html in Pack WebRes – root */,
+				75B2A2CDEC34747EBBB61EF5 /* popup.css in Pack WebRes – root */,
+				8C7ADA567FFA3A9AB65D5EE2 /* popup.js in Pack WebRes – root */,
 			);
-			name = "Copy WebExtension (images)";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		2DDC7B7FBE5598E25FE85D6D /* Copy WebExtension (root) */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 7;
-			files = (
-				E3F2F0401313BFAA158C4DF8 /* manifest.json in Copy WebExtension (root) */,
-				AB579F54B51789315E458CC0 /* background.js in Copy WebExtension (root) */,
-				C69A0CA7D4605B22C1AE4C6C /* popup.html in Copy WebExtension (root) */,
-				D27D78D8A902C4DB4FD82D5A /* popup.css in Copy WebExtension (root) */,
-				8E78B15853F49071A17AA84C /* popup.js in Copy WebExtension (root) */,
-			);
-			name = "Copy WebExtension (root)";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		65E279C357E0EA2300AB5B4C /* Copy WebExtension (root) */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 7;
-			files = (
-			);
-			name = "Copy WebExtension (root)";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		6F697E90BD963824BFEDE6A6 /* Copy WebExtension (_locales/en) */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = _locales/en;
-			dstSubfolderSpec = 7;
-			files = (
-				9CD5D7345975AB60285ED24A /* messages.json in Copy WebExtension (_locales/en) */,
-			);
-			name = "Copy WebExtension (_locales/en)";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		D35D198BBBEA71E14AFF3159 /* Copy Root (images) */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = images;
-			dstSubfolderSpec = 7;
-			files = (
-			);
-			name = "Copy Root (images)";
+			name = "Pack WebRes – root";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E183E1602E75ACFA00E8D263 /* Embed Foundation Extensions */ = {
@@ -164,20 +117,27 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F2A802BF9712280C901B5BF2 /* Copy WebExtension (_locales/en) */ = {
+		F0389AEDF3B296EA09E7BFD2 /* Pack WebRes – images */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = _locales/en;
+			dstPath = WebRes/images;
 			dstSubfolderSpec = 7;
 			files = (
+				622F7C1CEAF94D4E132ABB37 /* icon-128-squircle.png in Pack WebRes – images */,
+				895D3AB695735B9CD05742F5 /* icon-256-squircle.png in Pack WebRes – images */,
+				A908DB6295FAA130D9DD48BC /* icon-48-squircle.png in Pack WebRes – images */,
+				6C484E1DE626285F2DBD0D44 /* icon-512-squircle.png in Pack WebRes – images */,
+				C0405F654BD36E19BA59B74D /* icon-64-squircle.png in Pack WebRes – images */,
+				6EC66DAC06E6FBA4C0D972D2 /* icon-96-squircle.png in Pack WebRes – images */,
+				445E8B8EE1CE38F1333A8225 /* toolbar-icon.svg in Pack WebRes – images */,
 			);
-			name = "Copy WebExtension (_locales/en)";
+			name = "Pack WebRes – images";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		12DE7FD3486A3A7E0EF182F8 /* popup.html */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.html; sourceTree = "<group>"; };
+		12DE7FD3486A3A7E0EF182F8 /* popup.html */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.html; path = popup.html; sourceTree = "<group>"; };
 		1566F962EBB05B55F85EB3EF /* scripts_fix_editors.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = scripts_fix_editors.rb; sourceTree = "<group>"; };
 		24785EA68FB01033382A800E /* force_webext_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = force_webext_sources.rb; sourceTree = "<group>"; };
 		26CFD720BF5A5362525D4145 /* icon-64-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-64-squircle.png"; path = "images/icon-64-squircle.png"; sourceTree = "<group>"; };
@@ -191,14 +151,14 @@
 		49AA33208D1C2B3B832D9B2C /* icon-48-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-48-squircle.png"; path = "images/icon-48-squircle.png"; sourceTree = "<group>"; };
 		4DE55CDB584BED372B4E2E04 /* add_root_images_copy_phase.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = add_root_images_copy_phase.rb; sourceTree = "<group>"; };
 		4E24688813CC0AD3B1D77DD4 /* purge_profiles_and_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = purge_profiles_and_sources.rb; sourceTree = "<group>"; };
-		66BDBEA5D34211E5EA5045E1 /* background.js */ = {isa = PBXFileReference; includeInIndex = 1; path = background.js; sourceTree = "<group>"; };
+		66BDBEA5D34211E5EA5045E1 /* background.js */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.javascript; path = background.js; sourceTree = "<group>"; };
 		70685838DF59FF47AC0BA15B /* fix_core_and_editors.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_core_and_editors.rb; sourceTree = "<group>"; };
-		757D791A18EA9FDF81130535 /* toolbar-icon.svg */ = {isa = PBXFileReference; includeInIndex = 1; name = "toolbar-icon.svg"; path = "images/toolbar-icon.svg"; sourceTree = "<group>"; };
+		757D791A18EA9FDF81130535 /* toolbar-icon.svg */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = "toolbar-icon.svg"; path = "images/toolbar-icon.svg"; sourceTree = "<group>"; };
 		773A90B4D1D263AEFCE63AE8 /* fix_and_verify_editors.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_and_verify_editors.rb; sourceTree = "<group>"; };
-		87DB380C47EB388B0409D97B /* messages.json */ = {isa = PBXFileReference; includeInIndex = 1; name = messages.json; path = _locales/en/messages.json; sourceTree = "<group>"; };
+		87DB380C47EB388B0409D97B /* messages.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = messages.json; path = _locales/en/messages.json; sourceTree = "<group>"; };
 		8D30C7D4883D02008D8A2F0D /* verify_archive_entitlements.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = verify_archive_entitlements.rb; sourceTree = "<group>"; };
 		A839AFBF26BA285F2475A1F3 /* icon-96-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-96-squircle.png"; path = "images/icon-96-squircle.png"; sourceTree = "<group>"; };
-		AA0E0B4F3254C478186A27B3 /* popup.css */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.css; sourceTree = "<group>"; };
+		AA0E0B4F3254C478186A27B3 /* popup.css */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.css; path = popup.css; sourceTree = "<group>"; };
 		AB18E6CCA40E410C21B725D5 /* repair_tools_group.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = repair_tools_group.rb; sourceTree = "<group>"; };
 		AEE41F430FE884449E94D13F /* add_editors_only.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = add_editors_only.rb; sourceTree = "<group>"; };
 		B5ECC9F4F80BBF08BF6803E8 /* scripts_add_editors.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = scripts_add_editors.rb; sourceTree = "<group>"; };
@@ -242,12 +202,17 @@
 		E1F918682E82154C00276157 /* verify_packaged_webext.zsh */ = {isa = PBXFileReference; lastKnownFileType = text; path = verify_packaged_webext.zsh; sourceTree = "<group>"; };
 		E1F918692E82170700276157 /* fix_webres_refs_and_pack.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = fix_webres_refs_and_pack.rb; sourceTree = "<group>"; };
 		E1F91BCF2E821C7400276157 /* remove_target.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = remove_target.rb; sourceTree = "<group>"; };
-		E811ECC40FD71853A5978877 /* popup.js */ = {isa = PBXFileReference; includeInIndex = 1; path = popup.js; sourceTree = "<group>"; };
+		E1F921BF2E82303A00276157 /* purge_webext_dupes_v2.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = purge_webext_dupes_v2.rb; sourceTree = "<group>"; };
+		E1F921C12E8231AF00276157 /* purge_webext_dupes_v3.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = purge_webext_dupes_v3.rb; sourceTree = "<group>"; };
+		E1F921C22E8231D700276157 /* print_webext_packaging.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = print_webext_packaging.rb; sourceTree = "<group>"; };
+		E1F921C32E82338E00276157 /* retarget_webext_copy_phases.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = retarget_webext_copy_phases.rb; sourceTree = "<group>"; };
+		E1F9229E2E82355700276157 /* scan_all_webext_copies.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = scan_all_webext_copies.rb; sourceTree = "<group>"; };
+		E811ECC40FD71853A5978877 /* popup.js */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.javascript; path = popup.js; sourceTree = "<group>"; };
 		ED6130137DCDC7DE1B2FAEA9 /* icon-256-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-256-squircle.png"; path = "images/icon-256-squircle.png"; sourceTree = "<group>"; };
 		F46DC675DE53F5A9DE57D69F /* fix_webext2.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_webext2.rb; sourceTree = "<group>"; };
 		F6F590D732427605B59A4E9C /* icon-128-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-128-squircle.png"; path = "images/icon-128-squircle.png"; sourceTree = "<group>"; };
 		F8CEB8DE2C0728AEB5713466 /* flatten_webext_resources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = flatten_webext_resources.rb; sourceTree = "<group>"; };
-		FA046C0178B60EC3EA39AA18 /* manifest.json */ = {isa = PBXFileReference; includeInIndex = 1; path = manifest.json; sourceTree = "<group>"; };
+		FA046C0178B60EC3EA39AA18 /* manifest.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
 		FAFF717ED1A16338ACAA62B8 /* fix_webext_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_webext_sources.rb; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -469,12 +434,17 @@
 				E1F9134E2E81F48D00276157 /* list_profiles_for_targets_pb.rb */,
 				4E24688813CC0AD3B1D77DD4 /* purge_profiles_and_sources.rb */,
 				E1F918692E82170700276157 /* fix_webres_refs_and_pack.rb */,
+				E1F9229E2E82355700276157 /* scan_all_webext_copies.rb */,
 				E1F912732E81EE3000276157 /* profile_type.rb */,
 				E1F912742E81F3DF00276157 /* pin_release_to_installed_appstore_uuids.rb */,
 				AB18E6CCA40E410C21B725D5 /* repair_tools_group.rb */,
 				E1F918682E82154C00276157 /* verify_packaged_webext.zsh */,
 				E1F912722E81ED5100276157 /* install_appstore_profiles_from_dir.zsh */,
 				DDD3B9BC3555314AF2683847 /* reset_webext_packaging.rb */,
+				E1F921BF2E82303A00276157 /* purge_webext_dupes_v2.rb */,
+				E1F921C12E8231AF00276157 /* purge_webext_dupes_v3.rb */,
+				E1F921C22E8231D700276157 /* print_webext_packaging.rb */,
+				E1F921C32E82338E00276157 /* retarget_webext_copy_phases.rb */,
 				E1F91BCF2E821C7400276157 /* remove_target.rb */,
 				E1F90E2E2E81BDF400276157 /* set_release_distribution_signing.rb */,
 				E1F90F082E81C00700276157 /* reset_signing_overrides.rb */,
@@ -635,13 +605,9 @@
 				E12A855A2E760EBD00E07869 /* Sources */,
 				E12A855B2E760EBD00E07869 /* Frameworks */,
 				E12A855C2E760EBD00E07869 /* Resources */,
-				D35D198BBBEA71E14AFF3159 /* Copy Root (images) */,
-				65E279C357E0EA2300AB5B4C /* Copy WebExtension (root) */,
-				F2A802BF9712280C901B5BF2 /* Copy WebExtension (_locales/en) */,
-				1CFD946CA49384BF8ECCC509 /* Copy WebExtension (images) */,
-				2DDC7B7FBE5598E25FE85D6D /* Copy WebExtension (root) */,
-				6F697E90BD963824BFEDE6A6 /* Copy WebExtension (_locales/en) */,
-				0B67EAD0503AA1D3A86CE07C /* Copy WebExtension (images) */,
+				A7829CB460D7B3061DE5B970 /* Pack WebRes – root */,
+				238FA01BD0B520479DFC674A /* Pack WebRes – locales */,
+				F0389AEDF3B296EA09E7BFD2 /* Pack WebRes – images */,
 			);
 			buildRules = (
 			);

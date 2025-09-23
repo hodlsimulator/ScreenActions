@@ -1,51 +1,74 @@
 #!/usr/bin/env ruby
+# Rebuilds the ScreenActionsWebExtension packaging so resources land under WebRes/,
+# eliminating duplicate "Multiple commands produce ..." errors.
+
 require 'xcodeproj'
 
-PROJECT = 'Screen Actions.xcodeproj'
-TARGETS = ['ScreenActionsWebExtension', 'ScreenActionsWebExtension2']
-WEBRES  = 'ScreenActionsWebExtension/WebRes'
+PROJECT_PATH = 'Screen Actions.xcodeproj'
+TARGET_NAME  = 'ScreenActionsWebExtension'
+WEBRES_DIR   = 'ScreenActionsWebExtension/WebRes'
 
-ROOT_FILES   = %w[manifest.json background.js popup.html popup.css popup.js].map { |n| File.join(WEBRES, n) }
-LOCALE_FILES = [File.join(WEBRES, '_locales/en/messages.json')]
-IMAGE_FILES  = Dir[File.join(WEBRES, 'images/*')]
-ALL_FILES    = ROOT_FILES + LOCALE_FILES + IMAGE_FILES
+ROOT_FILES   = %w[background.js manifest.json popup.css popup.html popup.js]
+LOCALE_FILES = %w[_locales/en/messages.json]
+IMAGE_GLOB   = File.join(WEBRES_DIR, 'images', '*')
 
-proj = Xcodeproj::Project.open(PROJECT)
-ext  = proj.targets.find { |t| TARGETS.include?(t.name) } or abort('✗ Web extension target not found')
-
-# 1) Remove references to our web files from the Resources build phase
-res = ext.resources_build_phase
-res.files.dup.each do |bf|
-  p = bf.file_ref && bf.file_ref.path
-  res.remove_build_file(bf) if p && ALL_FILES.include?(p)
+def ensure_file_ref(proj, path)
+  grp = proj.main_group
+  ref = grp.find_file_by_path(path)
+  return ref if ref
+  grp = grp.find_subpath(File.dirname(path), true)
+  grp.set_source_tree('<group>')
+  proj.new_file(path, grp)
 end
 
-# 2) Remove any existing Copy Files phases we previously added
-ext.copy_files_build_phases.dup.each do |ph|
-  if ph.name =~ /Copy (WebRes|ExtRes)/i
-    ext.build_phases.delete(ph)
+def add_copy_phase_with_files(proj, target, name, dst_path, paths)
+  phase = target.new_copy_files_build_phase(name)
+  begin
+    phase.symbol_dst_subfolder_spec = :resources
+  rescue
+    phase.dst_subfolder_spec = '7' # Resources
+  end
+  phase.dst_path = dst_path
+  paths.each do |p|
+    ref = ensure_file_ref(proj, p)
+    phase.add_file_reference(ref, true)
+  end
+  phase
+end
+
+proj = Xcodeproj::Project.open(PROJECT_PATH)
+target = proj.targets.find { |t| t.name == TARGET_NAME } or abort "Target #{TARGET_NAME.inspect} not found"
+
+# 1) Remove any existing WebRes-related Copy Files phases.
+target.copy_files_build_phases.dup.each do |ph|
+  if ph.name.to_s =~ /WebRes/i || ph.display_name.to_s =~ /WebRes/i || ph.dst_path.to_s =~ /WebRes/i
+    ph.remove_from_project
   end
 end
 
-# 3) Helper to add a copy phase
-def add_copy_phase(proj, target, name, subpath, files)
-  ph = target.new_copy_files_build_phase(name)
-  if ph.respond_to?(:symbol_dst_subfolder_spec=)
-    ph.symbol_dst_subfolder_spec = :resources
-  else
-    ph.dst_subfolder_spec = Xcodeproj::Constants::COPY_FILES_BUILD_PHASE_DESTINATIONS[:resources]
-  end
-  ph.dst_path = subpath
-  files.each do |path|
-    ref = proj.files.find { |f| f.path == path } || proj.new_file(path)
-    ph.add_file_reference(ref)
+# 2) Scrub stray entries from the Resources phase (root files, locales, images or anything already under WebRes).
+paths_to_prune = ROOT_FILES + LOCALE_FILES + Dir.glob(IMAGE_GLOB).map { |p| File.basename(p) }
+res_phase = target.resources_build_phase
+res_phase.files.to_a.each do |bf|
+  ref = bf.file_ref
+  next unless ref
+  fname = File.basename(ref.path.to_s)
+  if ref.path.to_s.include?('/WebRes/') || paths_to_prune.include?(fname)
+    bf.remove_from_project
   end
 end
 
-# 4) Create the canonical three phases
-add_copy_phase(proj, ext, 'Copy WebRes (root)',        'WebRes',             ROOT_FILES)
-add_copy_phase(proj, ext, 'Copy WebRes (_locales/en)', 'WebRes/_locales/en', LOCALE_FILES)
-add_copy_phase(proj, ext, 'Copy WebRes (images)',      'WebRes/images',      IMAGE_FILES)
+# 3) Recreate the three packing phases.
+root_paths   = ROOT_FILES.map   { |f| File.join(WEBRES_DIR, f) }
+locale_paths = LOCALE_FILES.map { |f| File.join(WEBRES_DIR, f) }
+image_paths  = Dir.glob(IMAGE_GLOB).sort
+
+add_copy_phase_with_files(proj, target, 'Pack WebRes – root',    'WebRes',             root_paths)
+add_copy_phase_with_files(proj, target, 'Pack WebRes – locales', 'WebRes/_locales/en', locale_paths)
+add_copy_phase_with_files(proj, target, 'Pack WebRes – images',  'WebRes/images',      image_paths)
 
 proj.save
-puts "✓ Reset packaging for #{ext.name}"
+puts "✅ Repacked WebRes for target '#{TARGET_NAME}'."
+puts "   – Root:    #{root_paths.size} files"
+puts "   – Locales: #{locale_paths.size} files"
+puts "   – Images:  #{image_paths.size} files"
