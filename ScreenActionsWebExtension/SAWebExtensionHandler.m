@@ -34,7 +34,8 @@ static os_log_t SAWebLog(void) {
 }
 
 - (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
-    os_log(SAWebLog(), "[SA] beginRequest");
+    os_log(SAWebLog(), "[SA] beginRequest items=%{public}lu", (unsigned long)context.inputItems.count);
+
     NSExtensionItem *item = (NSExtensionItem *)context.inputItems.firstObject;
     NSDictionary *userInfo = item.userInfo ?: @{};
     id body = userInfo[SFExtensionMessageKey];
@@ -49,15 +50,24 @@ static os_log_t SAWebLog(void) {
     NSString *action = [dict[@"action"] isKindOfClass:[NSString class]] ? dict[@"action"] : @"";
     NSDictionary *payload = [dict[@"payload"] isKindOfClass:[NSDictionary class]] ? dict[@"payload"] : @{};
 
-    os_log(SAWebLog(), "[SA] action=%{public}@", action);
+    os_log(SAWebLog(), "[SA] action=%{public}@ keys=%{public}@",
+          action, [[payload allKeys] componentsJoinedByString:@","]);
+
+    if (![SAWebBridge respondsToSelector:@selector(handle:payload:completion:)]) {
+        os_log(SAWebLog(), "[SA] SAWebBridge missing");
+        [self reply:context payload:@{@"ok": @NO, @"message": @"Bridge unavailable."}];
+        return;
+    }
 
     [SAWebBridge handle:action payload:payload completion:^(NSDictionary *response) {
-        [self reply:context payload:response ?: @{@"ok": @NO, @"message": @"No response"}];
+        NSDictionary *out = [response isKindOfClass:[NSDictionary class]] ? response
+                            : @{@"ok": @NO, @"message": @"No response"};
+        [self reply:context payload:out];
     }];
 }
 
 - (void)reply:(NSExtensionContext *)context payload:(NSDictionary *)payload {
-    NSExtensionItem *response = [[NSExtensionItem alloc] init];
+    NSExtensionItem *response = [NSExtensionItem new];
     response.userInfo = @{ SFExtensionMessageKey: payload ?: @{} };
     [context completeRequestReturningItems:@[response] completionHandler:nil];
 }
