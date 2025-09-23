@@ -1,15 +1,16 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Screen Actions</title>
   <link rel="stylesheet" href="popup.css">
   <style>
-    body { margin: 0; font: -apple-system-body; color: #e7e7e7; background:#1a1a1a; }
-    .wrap { padding: 14px; width: 320px; }
-    .h { font-weight: 600; margin-bottom: 10px; }
-    .sel { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:#111; border-radius:8px; padding:10px; color:#bfbfbf; min-height:36px; }
+    /* safe defaults if CSS fails to load */
+    body { margin:0; font: -apple-system-body; background:#1a1a1a; color:#e7e7e7; }
+    .wrap { padding:14px; width:320px; }
+    .h { font-weight:600; margin-bottom:10px; }
+    .sel { white-space:pre-wrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:#111; border-radius:8px; padding:10px; color:#bfbfbf; min-height:36px; }
     .btn { width:100%; padding:12px; margin-top:10px; border-radius:12px; border:0; background:#0a84ff; color:white; font-weight:600; }
     .btn.gray { background:#2a2a2a; color:#ddd; }
     .status { margin-top:12px; font-size:13px; color:#aaa; white-space:pre-wrap; }
@@ -21,13 +22,17 @@
   <div class="wrap">
     <div class="h">Screen Actions</div>
     <div id="sel" class="sel">(Loading…)</div>
+
     <button id="btn-auto" class="btn">Auto Detect</button>
     <button id="btn-rem"  class="btn gray">Create Reminder</button>
     <button id="btn-cal"  class="btn gray">Add Calendar Event</button>
     <button id="btn-ctc"  class="btn gray">Extract Contact</button>
     <button id="btn-csv"  class="btn gray">Receipt → CSV</button>
+
     <div id="status" class="status">Initialising…</div>
   </div>
+
+  <!-- IMPORTANT: relative path so this resolves to WebRes/popup.js -->
   <script src="popup.js"></script>
 </body>
 </html>

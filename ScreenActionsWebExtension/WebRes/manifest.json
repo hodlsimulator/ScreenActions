@@ -20,16 +20,7 @@
       "128": "WebRes/images/icon-128-squircle.png"
     }
   },
-  "background": {
-    "service_worker": "WebRes/background.js"
-  },
-  "permissions": [
-    "activeTab",
-    "tabs",
-    "scripting",
-    "clipboardWrite",
-    "nativeMessaging",
-    "storage"
-  ],
+  "background": { "service_worker": "WebRes/background.js" },
+  "permissions": ["activeTab","tabs","scripting","clipboardWrite","nativeMessaging","storage"],
   "host_permissions": ["<all_urls>"]
 }
