@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
-  "version": "1.0.6",
+  "version": "1.0.7",
   "name": "Screen Actions",
   "description": "One-tap actions: reminder, calendar, contact, and receipt → CSV.",
   "icons": {
-    "48":  "WebRes/images/icon-48-squircle.png",
-    "64":  "WebRes/images/icon-64-squircle.png",
-    "96":  "WebRes/images/icon-96-squircle.png",
+    "48": "WebRes/images/icon-48-squircle.png",
+    "64": "WebRes/images/icon-64-squircle.png",
+    "96": "WebRes/images/icon-96-squircle.png",
     "128": "WebRes/images/icon-128-squircle.png",
     "256": "WebRes/images/icon-256-squircle.png",
     "512": "WebRes/images/icon-512-squircle.png"
@@ -15,12 +15,20 @@
     "default_title": "Screen Actions",
     "default_popup": "WebRes/popup.html",
     "default_icon": {
-      "48":  "WebRes/images/icon-48-squircle.png",
-      "96":  "WebRes/images/icon-96-squircle.png",
+      "48": "WebRes/images/icon-48-squircle.png",
+      "96": "WebRes/images/icon-96-squircle.png",
       "128": "WebRes/images/icon-128-squircle.png"
     }
   },
-  "background": { "service_worker": "WebRes/background.js" },
-  "permissions": ["activeTab","tabs","scripting","clipboardWrite","nativeMessaging","storage"],
-  "host_permissions": ["<all_urls>"]
+  "background": {
+    "service_worker": "WebRes/background.js"
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "clipboardWrite",
+    "nativeMessaging",
+    "storage"
+  ]
 }
