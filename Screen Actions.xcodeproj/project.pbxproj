@@ -221,6 +221,7 @@
 		E1F9229E2E82355700276157 /* scan_all_webext_copies.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = scan_all_webext_copies.rb; sourceTree = "<group>"; };
 		E1F922A02E823E7100276157 /* zap_webext_root_copies.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = zap_webext_root_copies.rb; sourceTree = "<group>"; };
 		E1F9237A2E82430000276157 /* ensure_pack_webres.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = ensure_pack_webres.rb; sourceTree = "<group>"; };
+		E1F941972E838EBE00276157 /* Screen Actions.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "Screen Actions.xcodeproj"; sourceTree = "<group>"; };
 		E811ECC40FD71853A5978877 /* popup.js */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.javascript; path = popup.js; sourceTree = "<group>"; };
 		E9BFAA3B257DE3BE205C2490 /* manifest.json */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.json; name = manifest.json; path = ScreenActionsWebExtension/WebRes/manifest.json; sourceTree = "<group>"; };
 		ED6130137DCDC7DE1B2FAEA9 /* icon-256-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-256-squircle.png"; path = "images/icon-256-squircle.png"; sourceTree = "<group>"; };
@@ -382,6 +383,11 @@
 			path = ScreenActionsControls;
 			sourceTree = "<group>";
 		};
+		E1F941812E8389E400276157 /* Screen Actions (macOS) */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "Screen Actions (macOS)";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -536,6 +542,7 @@
 				E12A85142E75DBAE00E07869 /* ScreenActionsActionExtension */,
 				E12A853F2E76045100E07869 /* ScreenActionsShareExtension */,
 				E12A855F2E760EBD00E07869 /* ScreenActionsWebExtension */,
+				E1F941812E8389E400276157 /* Screen Actions (macOS) */,
 				E183E1482E75ACF400E8D263 /* Frameworks */,
 				E183E1362E75ABC700E8D263 /* Products */,
 				657BAACF2A7E3A6CB393A51B /* Scripts */,
@@ -583,6 +590,13 @@
 				E12A85122E75DBAD00E07869 /* UniformTypeIdentifiers.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E1F941992E838EBE00276157 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -737,6 +751,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E183E1362E75ABC700E8D263 /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = E1F941992E838EBE00276157 /* Products */;
+					ProjectRef = E1F941972E838EBE00276157 /* Screen Actions.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				E183E1342E75ABC700E8D263 /* Screen Actions */,
