@@ -1,65 +1,61 @@
-// background.js — MV3 worker; robust popup ↔ background ↔ native bridge.
-// Supports BOTH runtime.onMessage (sendMessage) and runtime.onConnect (Port).
-
+// background.js — MV3 worker (Safari-friendly). Uses Promise-return for onMessage.
 (() => {
   const RT =
     (typeof chrome !== "undefined" && chrome.runtime) ||
     (typeof browser !== "undefined" && browser.runtime);
   if (!RT) return;
 
-  function sendNativeCB(action, payload, cb) {
-    try {
-      // Always use callback form (safest on Safari iOS)
-      RT.sendNativeMessage({ action, payload }, (resp) => {
-        const lastErr =
-          typeof chrome !== "undefined" &&
-          chrome.runtime &&
-          chrome.runtime.lastError
-            ? chrome.runtime.lastError.message ||
-              String(chrome.runtime.lastError)
-            : null;
-        if (!resp && lastErr) cb({ ok: false, message: lastErr });
-        else cb(resp || { ok: false, message: "No response" });
-      });
-    } catch (e) {
-      cb({ ok: false, message: (e && e.message) || String(e) });
-    }
+  // Native bridge wrapped as a Promise
+  function sendNative(action, payload) {
+    return new Promise((resolve) => {
+      try {
+        RT.sendNativeMessage({ action, payload }, (resp) => {
+          const err =
+            (typeof chrome !== "undefined" &&
+              chrome.runtime &&
+              chrome.runtime.lastError) ||
+            null;
+          if (!resp && err) {
+            resolve({ ok: false, message: err.message || String(err) });
+          } else {
+            resolve(resp || { ok: false, message: "No response" });
+          }
+        });
+      } catch (e) {
+        resolve({ ok: false, message: (e && e.message) || String(e) });
+      }
+    });
   }
 
-  // Path 1: one-shot messages
-  RT.onMessage.addListener((msg, _sender, sendResponse) => {
+  // Path 1: one-shot messages — return a Promise (no sendResponse/return true)
+  RT.onMessage.addListener((msg /*, sender */) => {
     try {
       if (!msg || !msg.cmd) return;
-
       if (msg.cmd === "echo") {
-        try { sendResponse({ ok: true, echo: msg.data ?? true }); } catch {}
-        return;
+        return Promise.resolve({ ok: true, echo: msg.data ?? true });
       }
-
       if (msg.cmd === "native") {
-        sendNativeCB(msg.action, msg.payload, (r) => {
-          try { sendResponse(r); } catch {}
-        });
-        return true; // keep channel open
+        return sendNative(msg.action, msg.payload);
       }
     } catch (e) {
-      try { sendResponse({ ok: false, message: (e && e.message) || String(e) }); } catch {}
+      return Promise.resolve({
+        ok: false,
+        message: (e && e.message) || String(e),
+      });
     }
   });
 
-  // Path 2: persistent Port
+  // Path 2: persistent Port (unchanged behaviour, but uses the same Promise helper)
   RT.onConnect?.addListener((port) => {
-    port.onMessage.addListener((msg) => {
+    port.onMessage.addListener(async (msg) => {
       try {
         if (!msg || !msg.cmd) return;
-
         if (msg.cmd === "echo") {
           port.postMessage({ ok: true, echo: msg.data ?? true });
           return;
         }
-
         if (msg.cmd === "native") {
-          sendNativeCB(msg.action, msg.payload, (r) => port.postMessage(r));
+          port.postMessage(await sendNative(msg.action, msg.payload));
           return;
         }
       } catch (e) {
