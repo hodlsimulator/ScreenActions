@@ -1,11 +1,11 @@
-// background.js — MV3 worker (Safari + Chrome). Promise-safe native bridge.
+// WebRes/background.v108.js — MV3 worker (Safari + Chrome). Promise‑safe native bridge; longer timeout.
 (() => {
   const RT =
     (typeof chrome !== "undefined" && chrome.runtime) ||
     (typeof browser !== "undefined" && browser.runtime);
   if (!RT) return;
 
-  const HOST_HINT = ""; // Safari ignores; used only on Chrome's 3‑arg API.
+  const HOST_HINT = ""; // Safari ignores; only used if a Chrome-style callback API is detected.
 
   function withTimeout(promise, ms) {
     let settled = false;
@@ -25,15 +25,15 @@
     });
   }
 
-  // sendNativeMessage wrapper: handles Chrome callback form and Safari Promise form.
-  function sendNative(action, payload, timeoutMs = 2500) {
+  // Default timeout increased to reduce popup fallbacks during app launch/openURL.
+  function sendNative(action, payload, timeoutMs = 7000) {
     const msg = { action, payload };
 
     if (!RT.sendNativeMessage) {
       return Promise.resolve({ ok: false, message: "sendNativeMessage unavailable" });
     }
 
-    // Chrome: (host, message, callback)
+    // Chrome callback API: (host, message, callback)
     if (
       typeof chrome !== "undefined" &&
       typeof chrome.runtime?.sendNativeMessage === "function" &&
@@ -56,23 +56,23 @@
       });
     }
 
-    // Safari / Firefox: Promise API. Prefer the 1‑arg form used by iOS Safari.
+    // Safari / Firefox: Promise API. Prefer the one-argument form used by iOS Safari.
     try {
       const p1 = RT.sendNativeMessage(msg);
       if (p1 && typeof p1.then === "function") return withTimeout(p1, timeoutMs);
     } catch {
-      // fallthrough
+      // ignore; try (host, msg) below
     }
     try {
       const p2 = RT.sendNativeMessage(HOST_HINT, msg);
       if (p2 && typeof p2.then === "function") return withTimeout(p2, timeoutMs);
     } catch {
-      // fallthrough
+      // ignore
     }
     return Promise.resolve({ ok: false, message: "Unsupported sendNativeMessage form" });
   }
 
-  // MV3 one‑shot messages: return a Promise
+  // One‑shot messages (MV3 requires a Promise)
   RT.onMessage.addListener((msg /*, sender */) => {
     try {
       if (!msg || !msg.cmd) return;

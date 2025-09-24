@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "version": "1.0.7",
+  "version": "1.0.8",
   "name": "Screen Actions",
   "description": "One-tap actions: reminder, calendar, contact, and receipt → CSV.",
   "icons": {
@@ -21,7 +21,7 @@
     }
   },
   "background": {
-    "service_worker": "WebRes/background.js"
+    "service_worker": "WebRes/background.v108.js"
   },
   "permissions": [
     "activeTab",
