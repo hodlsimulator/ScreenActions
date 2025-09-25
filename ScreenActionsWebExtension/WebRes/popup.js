@@ -1,6 +1,4 @@
-// popup.js — editors in the popover with DIRECT native bridge first.
-// If direct native isn't available, we fall back to background {cmd:"native"}.
-// Also shows selection immediately and includes a tiny diagnostics ping.
+// popup.js — FAT editors; always route native via background {cmd:"native"}.
 
 (() => {
   const RT        = (typeof chrome !== "undefined" && chrome.runtime) || (typeof browser !== "undefined" && browser.runtime);
@@ -8,82 +6,11 @@
   const SCRIPTING = (typeof chrome !== "undefined" && chrome.scripting)|| (typeof browser !== "undefined" && browser.scripting);
 
   const q = (id) => document.getElementById(id);
-  const show = (id) => {
-    for (const el of document.querySelectorAll(".view")) { el.classList.remove("active"); el.hidden = true; }
-    const el = q(id); if (el) { el.classList.add("active"); el.hidden = false; }
-  };
+  const show = (id) => { for (const el of document.querySelectorAll(".view")) { el.classList.remove("active"); el.hidden = true; } const el = q(id); if (el) { el.classList.add("active"); el.hidden = false; } };
   const setStatus = (el, t, ok) => { el.textContent = t || ""; el.className = "status " + (ok ? "ok" : (t ? "err" : "")); };
-  const combineMsg = (r, okText, errText) => {
-    if (!r) return errText || "Error.";
-    const p = [];
-    if (r.message) p.push(r.message);
-    if (r.hint)    p.push(r.hint);
-    if (!p.length) p.push(r.ok ? (okText || "Done.") : (errText || "Error."));
-    return p.join(" ");
-  };
-
-  // ---------- Robust native (DIRECT first) ----------
-  function tryDirectNative(action, payload, timeoutMs = 8000) {
-    const fn = RT && RT.sendNativeMessage;
-    if (!fn) return null;
-
-    const msg = { action, payload };
-    return new Promise((resolve) => {
-      let settled = false;
-      const done = (value) => { if (!settled) { settled = true; resolve(value); } };
-      const onErr = (e) => done({ ok: false, message: (e && e.message) || "Native error." });
-
-      // Helper to attempt a form
-      const attempt = (invoker) => {
-        try {
-          const ret = invoker();
-          // Promise form?
-          if (ret && typeof ret.then === "function") {
-            ret.then((v) => done(v)).catch(onErr);
-            return true;
-          }
-          return false;
-        } catch (e) { /* fall through */ return false; }
-      };
-
-      // 1) Promise: (msg)
-      if (attempt(() => fn(msg))) return;
-
-      // 2) Promise: ('', msg)
-      if (attempt(() => fn("", msg))) return;
-
-      // 3) Callback: (msg, cb)
-      try {
-        if (fn.length >= 2) {
-          fn(msg, (res) => {
-            const le = (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.lastError) || null;
-            if (le) done({ ok: false, message: le.message || "Native callback error." });
-            else    done(res);
-          });
-          return;
-        }
-      } catch {}
-
-      // 4) Callback: ('', msg, cb)
-      try {
-        if (fn.length >= 3) {
-          fn("", msg, (res) => {
-            const le = (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.lastError) || null;
-            if (le) done({ ok: false, message: le.message || "Native callback error." });
-            else    done(res);
-          });
-          return;
-        }
-      } catch {}
-
-      // If none worked, treat as unavailable.
-      onErr(new Error("sendNativeMessage unavailable"));
-      setTimeout(() => { if (!settled) onErr(new Error("timeout")); }, timeoutMs);
-    });
-  }
+  const combineMsg = (r, okText, errText) => { if (!r) return errText || "Error."; const p = []; if (r.message) p.push(r.message); if (r.hint) p.push(r.hint); if (!p.length) p.push(r.ok ? (okText || "Done.") : (errText || "Error.")); return p.join(" "); };
 
   function sendMessage(payload, timeoutMs = 8000) {
-    // Wakes the worker and handles {cmd:"native"} fallback.
     return new Promise((resolve, reject) => {
       try {
         let settled = false;
@@ -102,37 +29,23 @@
   }
 
   async function askNative(action, payload) {
-    // DIRECT first (reliable on iOS), then worker fallback.
-    const direct = tryDirectNative(action, payload);
-    if (direct) {
-      const r = await direct;
-      if (r && typeof r === "object" && ("ok" in r)) return r;
-      // fall through only if direct path is clearly unavailable
-    }
     try { return await sendMessage({ cmd: "native", action, payload }, 8000); }
     catch (e) { return { ok: false, message: e?.message || "Native bridge error." }; }
   }
 
-  // ---------- Page context ----------
+  // ---- Page context (cache-first; script fallback)
   async function pageCtx() {
     try {
       const [tab] = TABS ? await TABS.query({ active: true, currentWindow: true }) : [null];
-      // 1) Background cache (fed by content_selection.js)
       const res = await sendMessage({ cmd: "getPageCtx", tabId: tab?.id }, 5000);
       if (res?.ok && res?.ctx) {
         const c = res.ctx;
         if ((c.selection?.trim()?.length || 0) > 0 || c.title || c.url || c.structured) return c;
       }
-      // 2) Live fallback (may return empty on iOS after focus change)
       if (SCRIPTING && SCRIPTING.executeScript && tab && tab.id != null) {
         const exec = await SCRIPTING.executeScript({
           target: { tabId: tab.id, allFrames: true },
-          func: () => {
-            try {
-              const s = String(getSelection ? getSelection() : "");
-              return s.trim();
-            } catch { return ""; }
-          }
+          func: () => String(getSelection ? getSelection() : "").trim()
         });
         const first = exec && exec.find(r => r?.result?.trim()?.length > 0);
         return { selection: (first ? first.result : ""), title: tab?.title || document.title || "", url: tab?.url || "" };
@@ -143,19 +56,14 @@
     }
   }
 
-  // ---------- Global state ----------
+  // ---- Global ctx
   let ctx = { selection: "", title: "", url: "", structured: undefined };
 
-  // ---------- Date helpers ----------
-  const toInputDT = (iso) => {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  };
+  // ---- Date helpers
+  const toInputDT = (iso) => { if (!iso) return ""; const d = new Date(iso); const pad = (n) => String(n).padStart(2, "0"); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
   const fromInputDT = (v) => { const d = new Date(v); return isNaN(d.getTime()) ? null : d.toISOString(); };
 
-  // ---------- Event editor ----------
+  // ---- Event editor
   async function openEventEditor() {
     show("editor-event");
     setStatus(q("event-status"), "", true);
@@ -187,7 +95,7 @@
     if (r?.ok) show("home");
   }
 
-  // ---------- Reminder editor ----------
+  // ---- Reminder editor
   function onRemHasDue() { q("rem-due-wrap").style.display = q("rem-hasDue").checked ? "" : "none"; }
 
   async function openReminderEditor() {
@@ -216,7 +124,7 @@
     if (r?.ok) show("home");
   }
 
-  // ---------- Contact editor ----------
+  // ---- Contact editor
   let emails = [], phones = [];
   function refreshContactLists() {
     const emailsEl = q("ctc-emails"); emailsEl.innerHTML = "";
@@ -278,7 +186,7 @@
     if (r?.ok) show("home");
   }
 
-  // ---------- CSV ----------
+  // ---- CSV
   function setCSV(text) { q("csv-preview").textContent = text || ""; }
   async function openCSVView() {
     show("editor-csv");
@@ -302,7 +210,7 @@
     setStatus(q("csv-status"), combineMsg(r, "Exported.", "Export failed."), !!r?.ok);
   }
 
-  // ---------- Auto Detect → open an editor (no auto-save) ----------
+  // ---- Auto Detect → open an editor (no auto-save)
   async function autoDetect() {
     setStatus(q("status"), "Detecting…", true);
     const r = await askNative("prepareAutoDetect", ctx);
@@ -315,51 +223,38 @@
     setStatus(q("status"), "Ready.", true);
   }
 
-  // ---------- Wire up ----------
+  // ---- Wire
   function wire() {
-    // Home
     q("btn-auto")?.addEventListener("click", autoDetect);
     q("btn-rem") ?.addEventListener("click", openReminderEditor);
     q("btn-cal") ?.addEventListener("click", openEventEditor);
     q("btn-ctc") ?.addEventListener("click", openContactEditor);
     q("btn-csv") ?.addEventListener("click", openCSVView);
 
-    // Event
     q("btn-event-back")?.addEventListener("click", () => show("home"));
     q("event-save")?.addEventListener("click", saveEvent);
 
-    // Reminder
     q("btn-rem-back")?.addEventListener("click", () => show("home"));
     q("rem-save")  ?.addEventListener("click", saveReminder);
     q("rem-hasDue")?.addEventListener("change", onRemHasDue);
 
-    // Contact
     q("btn-ctc-back")?.addEventListener("click", () => show("home"));
     q("ctc-save")  ?.addEventListener("click", saveContact);
     q("ctc-add-email")?.addEventListener("click", () => { emails.push(""); refreshContactLists(); });
     q("ctc-add-phone")?.addEventListener("click", () => { phones.push(""); refreshContactLists(); });
 
-    // CSV
     q("btn-csv-back")?.addEventListener("click", () => show("home"));
     q("csv-reparse")?.addEventListener("click", reparseCSV);
     q("csv-export") ?.addEventListener("click", exportCSV);
   }
 
-  // ---------- Boot with diagnostics ----------
+  // ---- Boot
   document.addEventListener("DOMContentLoaded", async () => {
     wire();
     show("home");
-
-    // Wake worker (doesn't use the worker for native unless needed)
     try { await sendMessage({ cmd: "echo", payload: true }, 5000); setStatus(q("status"), "Ready.", true); }
-    catch { setStatus(q("status"), "Ready (worker sleepy).", true); }
-
-    // Context
+    catch { setStatus(q("status"), "Ready.", true); }
     ctx = await pageCtx();
     q("sel").textContent = (ctx.selection?.trim() || ctx.title || "No selection");
-
-    // Quick native ping so you immediately see if direct native works
-    const ping = await askNative("ping", { t: Date.now() });
-    if (!ping?.ok) setStatus(q("status"), combineMsg(ping, "", "Native bridge error."), false);
   });
 })();

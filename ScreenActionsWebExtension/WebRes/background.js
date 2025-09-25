@@ -1,4 +1,4 @@
-// background.js — cache page context; queue native calls; NEVER auto-OK empty replies.
+// background.js — cache page context; queue native calls; robust native messaging.
 
 (() => {
   'use strict';
@@ -27,7 +27,7 @@
     const url        = String(payload?.url || '');
     const structured = (payload && typeof payload.structured === 'object') ? payload.structured : undefined;
     selStore.set(tabId, { selection, title, url, structured, ts: Date.now() });
-    try { console.info('[BG] selUpdate', { tabId, len: selection.length, title, url }); } catch {}
+    try { console.info('[BG] selUpdate', { tabId, selLen: selection.length }); } catch {}
     return { ok: true };
   }
 
@@ -59,31 +59,50 @@
   let inFlight = false;
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const deepClone = (v) => { try { return JSON.parse(JSON.stringify(v ?? null)); } catch { return null; } };
 
   function withTimeout(promise, ms, tag = 'native') {
     let t; const killer = new Promise((_, rej) => { t = setTimeout(() => rej(new Error(`${tag} timeout`)), ms); });
     return Promise.race([promise, killer]).finally(() => clearTimeout(t));
   }
 
-  function deepClone(v) { try { return JSON.parse(JSON.stringify(v ?? null)); } catch { return null; } }
-
   async function sendNativeRaw(message) {
     const msg = deepClone(message) || {};
     const fn = RT.sendNativeMessage;
     if (typeof fn !== 'function') throw new Error('sendNativeMessage not available.');
-    try { return await fn(msg); }
+
+    // Promise forms
+    try { return await fn(msg); }                           // (msg)
     catch (e1) {
-      try { return await fn(HOST_HINT, msg); }
+      try { return await fn(HOST_HINT, msg); }              // ('', msg)
       catch (e2) {
+        // 2-arg callback: (msg, cb)
+        if (fn.length >= 2) {
+          try {
+            const r2 = await new Promise((resolve, reject) => {
+              try {
+                fn(msg, (res) => {
+                  const le = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) ? chrome.runtime.lastError : null;
+                  if (le) reject(new Error(le.message || 'Native callback error.'));
+                  else resolve(res);
+                });
+              } catch (e) { reject(e); }
+            });
+            return r2;
+          } catch {}
+        }
+        // 3-arg callback: ('', msg, cb)
         if (fn.length >= 3) {
-          return await new Promise((resolve, reject) => {
+          const r3 = await new Promise((resolve, reject) => {
             try {
               fn(HOST_HINT, msg, (res) => {
                 const le = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) ? chrome.runtime.lastError : null;
-                if (le) reject(new Error(le.message || 'Native callback error.')); else resolve(res);
+                if (le) reject(new Error(le.message || 'Native callback error.'));
+                else resolve(res);
               });
-            } catch (e3) { reject(e3); }
+            } catch (e) { reject(e); }
           });
+          return r3;
         }
         throw (e2 || e1);
       }
@@ -112,12 +131,9 @@
       const wrapped = {
         message,
         resolve: (value) => {
-          // IMPORTANT: do NOT auto-OK empty/undefined replies.
-          if (value && typeof value === 'object' && ('ok' in value)) {
-            resolve(value);
-          } else {
-            resolve({ ok: false, message: 'Empty native reply.' });
-          }
+          // Never auto-OK empties.
+          if (value && typeof value === 'object' && ('ok' in value)) resolve(value);
+          else resolve({ ok: false, message: 'Empty native reply.' });
         },
         reject:  (error) => {
           const msg = (error && typeof error.message === 'string' && error.message) || 'Native bridge error.';
