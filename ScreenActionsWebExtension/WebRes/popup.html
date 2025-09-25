@@ -1,38 +1,150 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Screen Actions</title>
-  <link rel="stylesheet" href="popup.css">
-  <style>
-    /* safe defaults if CSS fails to load */
-    body { margin:0; font: -apple-system-body; background:#1a1a1a; color:#e7e7e7; }
-    .wrap { padding:14px; width:320px; }
-    .h { font-weight:600; margin-bottom:10px; }
-    .sel { white-space:pre-wrap; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:#111; border-radius:8px; padding:10px; color:#bfbfbf; min-height:36px; }
-    .btn { width:100%; padding:12px; margin-top:10px; border-radius:12px; border:0; background:#0a84ff; color:white; font-weight:600; }
-    .btn.gray { background:#2a2a2a; color:#ddd; }
-    .status { margin-top:12px; font-size:13px; color:#aaa; white-space:pre-wrap; }
-    .status.ok { color:#7dff9a; }
-    .status.err { color:#ff5c5c; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="h">Screen Actions</div>
-    <div id="sel" class="sel">(Loading…)</div>
+<meta charset="utf-8">
+<title>Screen Actions</title>
+<link rel="stylesheet" href="popup.css">
+<header class="hdr">
+  <img src="images/toolbar-icon.svg" alt="" class="hdr-icon">
+  <h1 class="hdr-title">Screen Actions</h1>
+</header>
 
-    <button id="btn-auto" class="btn">Auto Detect</button>
-    <button id="btn-rem"  class="btn gray">Create Reminder</button>
-    <button id="btn-cal"  class="btn gray">Add Calendar Event</button>
-    <button id="btn-ctc"  class="btn gray">Extract Contact</button>
-    <button id="btn-csv"  class="btn gray">Receipt → CSV</button>
-
-    <div id="status" class="status">Initialising…</div>
+<!-- HOME -->
+<section id="home" class="view active">
+  <div class="card">
+    <label>Selected Text</label>
+    <pre id="sel" class="selection">(Loading…)</pre>
   </div>
 
-  <!-- IMPORTANT: relative path so this resolves to WebRes/popup.js -->
-  <script src="popup.js"></script>
-</body>
-</html>
+  <div class="buttons">
+    <button id="btn-auto" class="btn primary">Auto Detect</button>
+    <button id="btn-rem" class="btn">Create Reminder</button>
+    <button id="btn-cal" class="btn">Add Calendar Event</button>
+    <button id="btn-ctc" class="btn">Extract Contact</button>
+    <button id="btn-csv" class="btn">Receipt → CSV</button>
+  </div>
+
+  <p id="status" class="status"></p>
+</section>
+
+<!-- EVENT EDITOR -->
+<section id="editor-event" class="view" hidden>
+  <div class="nav">
+    <button class="nav-back" data-back="home" aria-label="Cancel">Cancel</button>
+    <div class="nav-title">New Event</div>
+    <button class="nav-save" id="event-save">Save</button>
+  </div>
+  <form id="event-form" class="form" autocomplete="on">
+    <div class="section">
+      <div class="section-title">Details</div>
+      <label class="field"><span>Title</span><input id="event-title" type="text" maxlength="64" required></label>
+      <label class="field"><span>Starts</span><input id="event-start" type="datetime-local" required></label>
+      <label class="field"><span>Ends</span><input id="event-end" type="datetime-local" required></label>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Location</div>
+      <label class="field"><span>Place or address (optional)</span><input id="event-location" type="text"></label>
+      <label class="switch"><input id="event-inferTZ" type="checkbox"><span>Infer time zone from location</span></label>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Alert</div>
+      <label class="field">
+        <span>Alert</span>
+        <select id="event-alert">
+          <option value="0">None</option>
+          <option value="5">5 minutes before</option>
+          <option value="10">10 minutes before</option>
+          <option value="15">15 minutes before</option>
+          <option value="30">30 minutes before</option>
+          <option value="60">1 hour before</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Notes</div>
+      <textarea id="event-notes" rows="7"></textarea>
+    </div>
+  </form>
+  <p id="event-status" class="status"></p>
+</section>
+
+<!-- REMINDER EDITOR -->
+<section id="editor-rem" class="view" hidden>
+  <div class="nav">
+    <button class="nav-back" data-back="home">Cancel</button>
+    <div class="nav-title">New Reminder</div>
+    <button class="nav-save" id="rem-save">Save</button>
+  </div>
+  <form id="rem-form" class="form">
+    <div class="section">
+      <div class="section-title">Details</div>
+      <label class="field"><span>Title</span><input id="rem-title" type="text" maxlength="64" required></label>
+      <label class="switch"><input id="rem-hasDue" type="checkbox"><span>Due date</span></label>
+      <label class="field" id="rem-due-wrap"><span>Due</span><input id="rem-due" type="datetime-local"></label>
+    </div>
+    <div class="section">
+      <div class="section-title">Notes</div>
+      <textarea id="rem-notes" rows="6"></textarea>
+    </div>
+  </form>
+  <p id="rem-status" class="status"></p>
+</section>
+
+<!-- CONTACT EDITOR -->
+<section id="editor-ctc" class="view" hidden>
+  <div class="nav">
+    <button class="nav-back" data-back="home">Cancel</button>
+    <div class="nav-title">New Contact</div>
+    <button class="nav-save" id="ctc-save">Save</button>
+  </div>
+  <form id="ctc-form" class="form">
+    <div class="section">
+      <div class="section-title">Name</div>
+      <label class="field"><span>Given name</span><input id="ctc-given" type="text"></label>
+      <label class="field"><span>Family name</span><input id="ctc-family" type="text"></label>
+    </div>
+    <div class="section">
+      <div class="section-title">Emails</div>
+      <div id="ctc-emails"></div>
+      <button type="button" class="row-button" id="ctc-add-email">Add email</button>
+    </div>
+    <div class="section">
+      <div class="section-title">Phones</div>
+      <div id="ctc-phones"></div>
+      <button type="button" class="row-button" id="ctc-add-phone">Add phone</button>
+    </div>
+    <div class="section">
+      <div class="section-title">Address</div>
+      <label class="field"><span>Street</span><input id="ctc-street" type="text"></label>
+      <label class="field"><span>City</span><input id="ctc-city" type="text"></label>
+      <label class="field"><span>County/State</span><input id="ctc-state" type="text"></label>
+      <label class="field"><span>Postcode</span><input id="ctc-postal" type="text"></label>
+      <label class="field"><span>Country</span><input id="ctc-country" type="text"></label>
+    </div>
+  </form>
+  <p id="ctc-status" class="status"></p>
+</section>
+
+<!-- RECEIPT CSV -->
+<section id="editor-csv" class="view" hidden>
+  <div class="nav">
+    <button class="nav-back" data-back="home">Cancel</button>
+    <div class="nav-title">Receipt → CSV</div>
+    <button class="nav-save" id="csv-export">Export</button>
+  </div>
+  <form class="form">
+    <div class="section">
+      <div class="section-title">Input</div>
+      <textarea id="csv-input" rows="9"></textarea>
+      <button type="button" class="row-button" id="csv-reparse">Re-parse</button>
+    </div>
+    <div class="section">
+      <div class="section-title">CSV Preview</div>
+      <pre id="csv-preview" class="mono"></pre>
+    </div>
+  </form>
+  <p id="csv-status" class="status"></p>
+</section>
+
+<script src="popup.js"></script>

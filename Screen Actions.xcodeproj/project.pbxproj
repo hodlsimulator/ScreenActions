@@ -310,7 +310,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				SafariWebExtensionHandler.swift,
 			);
 			target = E12A855D2E760EBD00E07869 /* ScreenActionsWebExtension */;
 		};
