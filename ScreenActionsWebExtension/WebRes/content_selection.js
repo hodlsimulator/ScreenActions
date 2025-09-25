@@ -1,7 +1,4 @@
-// content_selection.js — capture selection/title/url + lightweight JSON-LD (Event/Person)
-// Sent to background as { selection, title, url, structured? } so the popup can
-// prefill editors even after focus shifts (iOS quirk) and use page-only signals.
-
+// Capture selection/title/url + lightweight JSON-LD (Event/Person) and stream to background.
 (() => {
   const RT = (typeof chrome !== 'undefined' && chrome.runtime) ||
              (typeof browser !== 'undefined' && browser.runtime);
@@ -16,9 +13,7 @@
           const v = el.value || '';
           if (typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number') {
             s = v.substring(el.selectionStart, el.selectionEnd);
-          } else {
-            s = v;
-          }
+          } else { s = v; }
         }
         if (el.isContentEditable) s = el.innerText || el.textContent || '';
       }
@@ -49,13 +44,11 @@
   }
 
   function parseJSONLD() {
-    // Returns { event?: {...}, person?: {...} }
     const out = {};
     try {
       const nodes = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
       for (const n of nodes) {
-        let json;
-        try { json = JSON.parse(n.textContent || ''); } catch { continue; }
+        let json; try { json = JSON.parse(n.textContent || ''); } catch { continue; }
         const items = Array.isArray(json) ? json : [json];
         for (const item of items) {
           const t = item && item['@type'];
@@ -112,7 +105,7 @@
     }, 50);
   }
 
-  // Initial + updates
+  // First sample + updates
   push();
   document.addEventListener('selectionchange', push, { passive: true });
   document.addEventListener('pointerup',        push, { passive: true });
