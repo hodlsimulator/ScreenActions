@@ -1044,7 +1044,7 @@
 				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = 92HEPEJ42Z;
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ScreenActionsWebExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ScreenActionsWebExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -1088,7 +1088,7 @@
 				CURRENT_PROJECT_VERSION = 5;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 92HEPEJ42Z;
-				GENERATE_INFOPLIST_FILE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = ScreenActionsWebExtension/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = ScreenActionsWebExtension;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
