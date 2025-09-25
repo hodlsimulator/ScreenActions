@@ -11,13 +11,11 @@ import os
 @objc(SAWebBridge)
 @MainActor
 final class SAWebBridge: NSObject {
-
     static let log = Logger(subsystem: "com.conornolan.Screen-Actions.WebExtension", category: "native")
 
-    /// Entry point called by the Obj-C principal (SAWebExtensionHandler)
-    @objc class func handle(_ action: String,
-                            payload: [String: Any],
-                            completion: @escaping ([String: Any]) -> Void) {
+    /// Entry point called by the Obj‑C principal
+    @objc
+    class func handle(_ action: String, payload: [String: Any], completion: @escaping ([String: Any]) -> Void) {
         Task { @MainActor in
             do {
                 log.info("[SA] handle action=\(action, privacy: .public)")
@@ -33,7 +31,7 @@ final class SAWebBridge: NSObject {
     private class func route(action: String, payload: [String: Any]) async throws -> [String: Any] {
         if action == "ping" { return ["ok": true, "message": "pong"] }
 
-        // Build a single text blob from selection / title / url
+        // Build one blob from selection/title/url
         let selection = (payload["selection"] as? String) ?? ""
         let title = (payload["title"] as? String) ?? ""
         let url = (payload["url"] as? String) ?? ""
@@ -62,8 +60,7 @@ final class SAWebBridge: NSObject {
         case "autoDetect":
             let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !t.isEmpty else { return ["ok": false, "message": "No text selected."] }
-            // Default to event; the app will still show the right editor based on its router.
-            Handoff.save(text: t, kind: .event)
+            Handoff.save(text: t, kind: .event) // app will still choose the right editor
             return ["ok": true, "openURL": "screenactions://handoff?kind=auto"]
 
         default:

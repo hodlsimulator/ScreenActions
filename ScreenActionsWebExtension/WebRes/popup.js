@@ -1,72 +1,44 @@
 // popup.js — MV3 popover; robust path: Port → sendMessage → direct Promise native.
 (() => {
-  const RT        = (typeof chrome !== "undefined" && chrome.runtime) ||
-                    (typeof browser !== "undefined" && browser.runtime);
-  const TABS      = (typeof chrome !== "undefined" && chrome.tabs) ||
-                    (typeof browser !== "undefined" && browser.tabs);
-  const SCRIPTING = (typeof chrome !== "undefined" && chrome.scripting) ||
-                    (typeof browser !== "undefined" && browser.scripting);
+  const RT        = (typeof chrome !== "undefined" && chrome.runtime) || (typeof browser !== "undefined" && browser.runtime);
+  const TABS      = (typeof chrome !== "undefined" && chrome.tabs)    || (typeof browser !== "undefined" && browser.tabs);
+  const SCRIPTING = (typeof chrome !== "undefined" && chrome.scripting) || (typeof browser !== "undefined" && browser.scripting);
 
-  let   port      = null;
+  let port = null;
   const HOST_HINT = ""; // ignored by Safari
 
   function q(id) { return document.getElementById(id); }
-
   function setStatus(t, ok) {
     const s = q("status");
-    if (!s) return;
-    s.textContent = t;
-    s.className   = "status " + (ok ? "ok" : "err");
+    if (!s) return; s.textContent = t; s.className = "status " + (ok ? "ok" : "err");
   }
 
   async function pageCtx() {
     try {
-      const [tab] = TABS
-        ? await TABS.query({ active: true, currentWindow: true })
-        : [{ title: document.title, url: "" }];
-
+      const [tab] = TABS ? await TABS.query({ active: true, currentWindow: true }) : [{ title: document.title, url: "" }];
       if (SCRIPTING && SCRIPTING.executeScript && tab && tab.id != null) {
         const res = await SCRIPTING.executeScript({
           target: { tabId: tab.id, allFrames: true },
-          func:   () => String(getSelection ? getSelection() : "")
+          func: () => String(getSelection ? getSelection() : "")
         });
         const first = res && res.find(r => r?.result?.trim()?.length > 0);
-        return {
-          selection: (first ? first.result : ""),
-          title:     tab?.title || document.title || "",
-          url:       tab?.url   || ""
-        };
+        return { selection: (first ? first.result : ""), title: tab?.title || document.title || "", url: tab?.url || "" };
       }
-
-      return {
-        selection: "",
-        title:     tab?.title || document.title || "",
-        url:       tab?.url   || ""
-      };
+      return { selection: "", title: tab?.title || document.title || "", url: tab?.url || "" };
     } catch {
       return { selection: "", title: document.title || "", url: "" };
     }
   }
 
-  function ensurePort() {
-    if (port) return port;
-    port = RT.connect();
-    return port;
-  }
+  function ensurePort() { if (port) return port; port = RT.connect(); return port; }
 
   function viaPortOnce(payload, timeoutMs = 1500) {
     const p = ensurePort();
     return new Promise((resolve, reject) => {
-      const handler = (resp) => {
-        p.onMessage.removeListener(handler);
-        resolve(resp);
-      };
+      const handler = (resp) => { p.onMessage.removeListener(handler); resolve(resp); };
       p.onMessage.addListener(handler);
       p.postMessage(payload);
-      setTimeout(() => {
-        try { p.onMessage.removeListener(handler); } catch {}
-        reject(new Error("port timeout"));
-      }, timeoutMs);
+      setTimeout(() => { try { p.onMessage.removeListener(handler); } catch {} reject(new Error("port timeout")); }, timeoutMs);
     });
   }
 
@@ -77,21 +49,14 @@
         const ret = RT.sendMessage(payload, (resp) => {
           settled = true;
           const err = (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.lastError) || null;
-          if (err) reject(new Error(err.message || String(err)));
-          else     resolve(resp);
+          if (err) reject(new Error(err.message || String(err))); else resolve(resp);
         });
-
         if (ret && typeof ret.then === "function") {
           ret.then((resp) => { if (!settled) resolve(resp); })
-             .catch((e)   => { if (!settled) reject(e); });
+             .catch((e)   => { if (!settled) reject(e);   });
         }
-
-        setTimeout(() => {
-          if (!settled) reject(new Error("sendMessage timeout"));
-        }, timeoutMs);
-      } catch (e) {
-        reject(e);
-      }
+        setTimeout(() => { if (!settled) reject(new Error("sendMessage timeout")); }, timeoutMs);
+      } catch (e) { reject(e); }
     });
   }
 
@@ -99,52 +64,33 @@
   function viaDirectNative(action, payload, timeoutMs = 2500) {
     return new Promise((resolve, reject) => {
       try {
-        if (!RT.sendNativeMessage) {
-          reject(new Error("sendNativeMessage unavailable"));
-          return;
-        }
+        if (!RT.sendNativeMessage) { reject(new Error("sendNativeMessage unavailable")); return; }
 
         // Chrome 3‑arg callback if present
-        if (
-          typeof chrome !== "undefined" &&
-          typeof chrome.runtime?.sendNativeMessage === "function" &&
-          chrome.runtime.sendNativeMessage.length === 3
-        ) {
+        if (typeof chrome !== "undefined" && typeof chrome.runtime?.sendNativeMessage === "function" && chrome.runtime.sendNativeMessage.length === 3) {
           let done = false;
           chrome.runtime.sendNativeMessage(HOST_HINT, { action, payload }, (r) => {
             done = true;
             const err = chrome.runtime.lastError || null;
-            if (err) reject(new Error(err.message || String(err)));
-            else     resolve(r);
+            if (err) reject(new Error(err.message || String(err))); else resolve(r);
           });
-          setTimeout(() => {
-            if (!done) reject(new Error("direct native timeout"));
-          }, timeoutMs);
+          setTimeout(() => { if (!done) reject(new Error("direct native timeout")); }, timeoutMs);
           return;
         }
 
         // Safari Promise API — prefer 1‑arg (message) form
-        let settled = false;
-        let p;
-        try {
-          p = RT.sendNativeMessage({ action, payload });
-        } catch {
-          p = RT.sendNativeMessage(HOST_HINT, { action, payload });
-        }
+        let settled = false; let p;
+        try { p = RT.sendNativeMessage({ action, payload }); }
+        catch { p = RT.sendNativeMessage(HOST_HINT, { action, payload }); }
 
         if (p && typeof p.then === "function") {
           p.then((r) => { settled = true; resolve(r); })
-           .catch((e) => { settled = true; reject(e); });
-
-          setTimeout(() => {
-            if (!settled) reject(new Error("direct native timeout"));
-          }, timeoutMs);
+           .catch((e) => { settled = true; reject(e);   });
+          setTimeout(() => { if (!settled) reject(new Error("direct native timeout")); }, timeoutMs);
         } else {
           reject(new Error("Unsupported sendNativeMessage form"));
         }
-      } catch (e) {
-        reject(e);
-      }
+      } catch (e) { reject(e); }
     });
   }
 
@@ -160,16 +106,18 @@
 
     try {
       const r = await askNative(action, ctx);
-
-      // TEMP DIAGNOSTIC: log what the native bridge returned for this action
       console.log("[POPUP] action result:", action, r);
 
       if (r?.openURL) {
         setStatus("Opening app…", true);
+        // JS fallback: attempt to open the custom scheme as well (harmless if native already did).
+        setTimeout(() => {
+          try { window.location.href = r.openURL; } catch {}
+        }, 60);
+      } else if (r?.ok) {
+        setStatus(r.message || "Done.", true);
       } else {
-        setStatus(r?.ok ? (r.message || "Done.")
-                        : (r?.message || "Native error."),
-                  !!r?.ok);
+        setStatus(r?.message || "Native error.", false);
       }
     } catch (e) {
       setStatus((e && e.message) || "Native error.", false);
@@ -185,9 +133,7 @@
 
     // Health‑check: echo → ping
     try {
-      await viaPortOnce({ cmd: "echo", data: true })
-        .catch(() => viaSendMessage({ cmd: "echo", data: true }));
-
+      await viaPortOnce({ cmd: "echo", data: true }).catch(() => viaSendMessage({ cmd: "echo", data: true }));
       const r = await askNative("ping", {});
       setStatus(r?.ok ? "Ready." : "Native bridge error.", !!r?.ok);
     } catch {

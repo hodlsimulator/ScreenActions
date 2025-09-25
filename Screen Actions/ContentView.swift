@@ -382,6 +382,10 @@ struct ContentView: View {
                     onCheckHandoff()          // ✅ consume handoff when active
                 }
             }
+            .onOpenURL { _ in
+                canPaste = UIPasteboard.general.hasStrings
+                onCheckHandoff()              // ✅ consume handoff when opened via URL even if app is already frontmost
+            }
             .onReceive(NotificationCenter.default.publisher(for: UIPasteboard.changedNotification)) { _ in
                 canPaste = UIPasteboard.general.hasStrings
             }
