@@ -1,8 +1,6 @@
-// popup.js — thin flow that wakes the MV3 worker reliably on iOS.
-// Changes:
-//  • No runtime.connect Port. Uses runtime.sendMessage only (wakes worker).
-//  • Longer timeouts (5s) to tolerate cold-starts.
-//  • Still calls your thin native actions (autoDetect/createReminder/addEvent/extractContact/receiptCSV).
+// popup.js — "fat" editors in the popover, with prepare*/save* native calls.
+// Also supports Auto Detect via prepareAutoDetect and JSON-LD hints from the page.
+
 (() => {
   const RT        = (typeof chrome !== "undefined" && chrome.runtime) || (typeof browser !== "undefined" && browser.runtime);
   const TABS      = (typeof chrome !== "undefined" && chrome.tabs)    || (typeof browser !== "undefined" && browser.tabs);
@@ -14,8 +12,15 @@
     const el = q(id); if (el) { el.classList.add("active"); el.hidden = false; }
   };
   const setStatus = (el, t, ok) => { el.textContent = t || ""; el.className = "status " + (ok ? "ok" : (t ? "err" : "")); };
+  const combineMsg = (r, okFallback, errFallback) => {
+    if (!r) return errFallback || "Error.";
+    const parts = [];
+    if (typeof r.message === "string" && r.message) parts.push(r.message);
+    if (typeof r.hint === "string" && r.hint) parts.push(r.hint);
+    if (!parts.length) parts.push(r.ok ? (okFallback || "Done.") : (errFallback || "Error."));
+    return parts.join(" ");
+  };
 
-  // ---- Messaging helpers (sendMessage-only)
   function sendMessage(payload, timeoutMs = 5000) {
     return new Promise((resolve, reject) => {
       try {
@@ -39,7 +44,7 @@
     catch (e) { return { ok: false, message: e?.message || "Native bridge error." }; }
   }
 
-  // ---- Page context (cache-first via background)
+  // ---- Page context (uses background cache; falls back to executing in tab)
   async function pageCtx() {
     try {
       const [tab] = TABS ? await TABS.query({ active: true, currentWindow: true }) : [null];
@@ -48,7 +53,6 @@
         const c = res.ctx;
         if ((c.selection?.trim()?.length || 0) > 0 || c.title || c.url) return c;
       }
-      // Runtime fallback: may be empty after focus change on iOS
       if (SCRIPTING && SCRIPTING.executeScript && tab && tab.id != null) {
         const exec = await SCRIPTING.executeScript({
           target: { tabId: tab.id, allFrames: true },
@@ -63,63 +67,267 @@
     }
   }
 
-  // ---- Thin actions that bounce to app if native returns openURL/url
-  async function runThin(action, ctx) {
-    setStatus(q("status"), "Working…", true);
-    const r = await askNative(action, ctx);
-    const open = r?.openURL || r?.url;
-    if (open) {
-      try {
-        if (TABS?.create) await TABS.create({ url: open });
-        else window.open(open, "_blank");
-        setStatus(q("status"), "Opening app…", true);
-      } catch {
-        setStatus(q("status"), r?.message || "Couldn’t open app.", false);
-      }
+  // ---- Global ctx shared with native prepare*/save*
+  let ctx = { selection: "", title: "", url: "", structured: undefined };
+
+  // ---- Event editor
+  async function openEventEditor() {
+    show("editor-event");
+    setStatus(q("event-status"), "", true);
+    const r = await askNative("prepareEvent", ctx);
+    if (!r?.ok) { setStatus(q("event-status"), combineMsg(r, "", "Failed to prepare."), false); return; }
+    const f = r.fields || {};
+    q("event-title").value = f.title || "";
+    q("event-start").value = toInputDT(f.startISO);
+    q("event-end").value   = toInputDT(f.endISO);
+    q("event-notes").value = f.notes || "";
+    q("event-location").value = f.location || "";
+    q("event-inferTZ").checked = !!f.inferTZ;
+    q("event-alert").value = String(f.alertMinutes ?? 0);
+  }
+
+  async function saveEvent() {
+    setStatus(q("event-status"), "Saving…", true);
+    const fields = {
+      title: q("event-title").value || "",
+      startISO: fromInputDT(q("event-start").value),
+      endISO:   fromInputDT(q("event-end").value),
+      notes:    q("event-notes").value || "",
+      location: q("event-location").value || "",
+      inferTZ:  q("event-inferTZ").checked,
+      alertMinutes: parseInt(q("event-alert").value || "0", 10) || 0
+    };
+    const r = await askNative("saveEvent", { fields });
+    setStatus(q("event-status"), combineMsg(r, "Event created.", "Error."), !!r?.ok);
+    if (r?.ok) show("home");
+  }
+
+  // ---- Reminder editor
+  function onRemHasDue() { q("rem-due-wrap").style.display = q("rem-hasDue").checked ? "" : "none"; }
+
+  async function openReminderEditor() {
+    show("editor-rem");
+    setStatus(q("rem-status"), "", true);
+    const r = await askNative("prepareReminder", ctx);
+    if (!r?.ok) { setStatus(q("rem-status"), combineMsg(r, "", "Failed to prepare."), false); return; }
+    const f = r.fields || {};
+    q("rem-title").value = f.title || "";
+    q("rem-hasDue").checked = !!f.hasDue;
+    onRemHasDue();
+    q("rem-due").value   = toInputDT(f.dueISO);
+    q("rem-notes").value = f.notes || "";
+  }
+
+  async function saveReminder() {
+    setStatus(q("rem-status"), "Saving…", true);
+    const fields = {
+      title:  q("rem-title").value || "",
+      hasDue: q("rem-hasDue").checked,
+      dueISO: q("rem-hasDue").checked ? fromInputDT(q("rem-due").value) : null,
+      notes:  q("rem-notes").value || ""
+    };
+    const r = await askNative("saveReminder", { fields });
+    setStatus(q("rem-status"), combineMsg(r, "Reminder created.", "Error."), !!r?.ok);
+    if (r?.ok) show("home");
+  }
+
+  // ---- Contact editor
+  let emails = [], phones = [];
+  function refreshContactLists() {
+    const emailsEl = q("ctc-emails"); emailsEl.innerHTML = "";
+    emails.forEach((val, i) => {
+      const row = document.createElement("div"); row.className = "row";
+      const input = document.createElement("input"); input.type = "text"; input.value = val; input.placeholder = "email@example.com";
+      input.addEventListener("input", () => { emails[i] = input.value; });
+      const del = document.createElement("button"); del.type = "button"; del.className = "btn"; del.textContent = "Delete";
+      del.addEventListener("click", () => { emails.splice(i, 1); refreshContactLists(); });
+      row.appendChild(input); row.appendChild(del);
+      emailsEl.appendChild(row);
+    });
+
+    const phonesEl = q("ctc-phones"); phonesEl.innerHTML = "";
+    phones.forEach((val, i) => {
+      const row = document.createElement("div"); row.className = "row";
+      const input = document.createElement("input"); input.type = "text"; input.value = val; input.placeholder = "+353 85 123 4567";
+      input.addEventListener("input", () => { phones[i] = input.value; });
+      const del = document.createElement("button"); del.type = "button"; del.className = "btn"; del.textContent = "Delete";
+      del.addEventListener("click", () => { phones.splice(i, 1); refreshContactLists(); });
+      row.appendChild(input); row.appendChild(del);
+      phonesEl.appendChild(row);
+    });
+  }
+
+  async function openContactEditor() {
+    show("editor-ctc");
+    setStatus(q("ctc-status"), "", true);
+    const r = await askNative("prepareContact", ctx);
+    if (!r?.ok) { setStatus(q("ctc-status"), combineMsg(r, "", "Failed to prepare."), false); return; }
+    const f = r.fields || {};
+    q("ctc-given").value  = f.givenName || f.given || "";
+    q("ctc-family").value = f.familyName || f.family || "";
+    emails = Array.isArray(f.emails) ? f.emails.slice(0, 8) : [];
+    phones = Array.isArray(f.phones) ? f.phones.slice(0, 8) : [];
+    q("ctc-street").value   = f.street   || (f.address && f.address.street)   || "";
+    q("ctc-city").value     = f.city     || (f.address && f.address.city)     || "";
+    q("ctc-state").value    = f.state    || (f.address && f.address.state)    || "";
+    q("ctc-postal").value   = f.postalCode || (f.address && f.address.postcode) || "";
+    q("ctc-country").value  = f.country  || (f.address && f.address.country)  || "";
+    refreshContactLists();
+  }
+
+  async function saveContact() {
+    setStatus(q("ctc-status"), "Saving…", true);
+    const fields = {
+      givenName:  q("ctc-given").value || "",
+      familyName: q("ctc-family").value || "",
+      emails: emails.filter(x => (x || "").trim().length > 0).slice(0, 8),
+      phones: phones.filter(x => (x || "").trim().length > 0).slice(0, 8),
+      street:   q("ctc-street").value || "",
+      city:     q("ctc-city").value || "",
+      state:    q("ctc-state").value || "",
+      postalCode: q("ctc-postal").value || "",
+      country:  q("ctc-country").value || ""
+    };
+    const r = await askNative("saveContact", { fields });
+    setStatus(q("ctc-status"), combineMsg(r, "Contact saved.", "Error."), !!r?.ok);
+    if (r?.ok) show("home");
+  }
+
+  // ---- CSV view
+  function setCSV(text) { q("csv-preview").textContent = text || ""; }
+
+  async function openCSVView() {
+    show("editor-csv");
+    q("csv-status").textContent = "";
+    q("csv-input").value = (ctx.selection || "").trim();
+    setCSV("");
+    const r = await askNative("prepareReceiptCSV", { text: q("csv-input").value || "" });
+    if (r?.ok && typeof r.csv === "string") setCSV(r.csv);
+  }
+
+  async function reparseCSV() {
+    setCSV("");
+    setStatus(q("csv-status"), "Parsing…", true);
+    const text = q("csv-input").value || "";
+    const r = await askNative("prepareReceiptCSV", { text });
+    if (r?.ok && typeof r.csv === "string") {
+      setCSV(r.csv); setStatus(q("csv-status"), "Preview ready.", true);
+    } else {
+      setStatus(q("csv-status"), combineMsg(r, "", "Couldn’t parse."), false);
+    }
+  }
+
+  async function exportCSV() {
+    const csv = q("csv-preview").textContent || "";
+    if (!csv) { setStatus(q("csv-status"), "Nothing to export.", false); return; }
+    const r = await askNative("exportReceiptCSV", { csv });
+    setStatus(q("csv-status"), combineMsg(r, "Exported.", "Export failed."), !!r?.ok);
+  }
+
+  // ---- Auto detect: ask native to choose and prefill the *editor*, not save.
+  async function autoDetect() {
+    setStatus(q("status"), "Detecting…", true);
+    const r = await askNative("prepareAutoDetect", ctx);
+    if (!r?.ok) {
+      setStatus(q("status"), combineMsg(r, "", "Couldn’t detect."), false);
       return;
     }
-    setStatus(q("status"), r?.message || (r?.ok ? "Done." : "Native bridge error."), !!r?.ok);
+    const route = String(r.route || "");
+    if (route === "event") {
+      show("editor-event");
+      const f = r.fields || {};
+      q("event-title").value = f.title || "";
+      q("event-start").value = toInputDT(f.startISO);
+      q("event-end").value   = toInputDT(f.endISO);
+      q("event-notes").value = f.notes || "";
+      q("event-location").value = f.location || "";
+      q("event-inferTZ").checked = !!f.inferTZ;
+      q("event-alert").value = String(f.alertMinutes ?? 0);
+      setStatus(q("event-status"), "", true);
+      return;
+    }
+    if (route === "reminder") {
+      show("editor-rem");
+      const f = r.fields || {};
+      q("rem-title").value = f.title || "";
+      q("rem-hasDue").checked = !!f.hasDue;
+      onRemHasDue();
+      q("rem-due").value   = toInputDT(f.dueISO);
+      q("rem-notes").value = f.notes || "";
+      setStatus(q("rem-status"), "", true);
+      return;
+    }
+    if (route === "contact") {
+      show("editor-ctc");
+      const f = r.fields || {};
+      q("ctc-given").value  = f.givenName || f.given || "";
+      q("ctc-family").value = f.familyName || f.family || "";
+      emails = Array.isArray(f.emails) ? f.emails.slice(0, 8) : [];
+      phones = Array.isArray(f.phones) ? f.phones.slice(0, 8) : [];
+      q("ctc-street").value   = f.street   || (f.address && f.address.street)   || "";
+      q("ctc-city").value     = f.city     || (f.address && f.address.city)     || "";
+      q("ctc-state").value    = f.state    || (f.address && f.address.state)    || "";
+      q("ctc-postal").value   = f.postalCode || (f.address && f.address.postcode) || "";
+      q("ctc-country").value  = f.country  || (f.address && f.address.country)  || "";
+      refreshContactLists();
+      setStatus(q("ctc-status"), "", true);
+      return;
+    }
+    if (route === "csv") {
+      await openCSVView();
+      setStatus(q("csv-status"), "Detected receipt.", true);
+      return;
+    }
+    setStatus(q("status"), "Ready.", true);
   }
 
-  // ---- (Optional) “fat” editor toggles
-  function wireEditors() {
-    for (const btn of document.querySelectorAll(".nav-back")) btn.addEventListener("click", () => show("home"));
-    q("event-save")?.addEventListener("click", () => runThin("addEvent", ctx));
-    q("rem-save")  ?.addEventListener("click", () => runThin("createReminder", ctx));
-    q("ctc-save")  ?.addEventListener("click", () => runThin("extractContact", ctx));
+  // ---- Date helpers
+  const toInputDT = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const fromInputDT = (v) => { const d = new Date(v); return isNaN(d.getTime()) ? null : d.toISOString(); };
 
-    q("csv-reparse")?.addEventListener("click", async () => {
-      const t = q("csv-input").value || "";
-      const r = await askNative("receiptCSV", { selection: t, title: "", url: "" });
-      q("csv-preview").textContent = (typeof r?.csv === "string") ? r.csv : "—";
-    });
-    q("csv-export") ?.addEventListener("click", async () => {
-      const csv = q("csv-preview").textContent || "";
-      const r = await askNative("receiptCSV", { csv });
-      setStatus(q("csv-status"), r?.message || (r?.ok ? "Exported." : "Error."), !!r?.ok);
-    });
-  }
+  // ---- Wire up
+  function wire() {
+    // Home
+    q("btn-auto")?.addEventListener("click", autoDetect);
+    q("btn-rem") ?.addEventListener("click", openReminderEditor);
+    q("btn-cal") ?.addEventListener("click", openEventEditor);
+    q("btn-ctc") ?.addEventListener("click", openContactEditor);
+    q("btn-csv") ?.addEventListener("click", openCSVView);
 
-  function wireHome() {
-    q("btn-auto")?.addEventListener("click", () => runThin("autoDetect", ctx));
-    q("btn-rem") ?.addEventListener("click", () => runThin("createReminder", ctx));
-    q("btn-cal") ?.addEventListener("click", () => runThin("addEvent", ctx));
-    q("btn-ctc") ?.addEventListener("click", () => runThin("extractContact", ctx));
-    q("btn-csv") ?.addEventListener("click", () => runThin("receiptCSV", ctx));
+    // Event
+    q("btn-event-back")?.addEventListener("click", () => show("home"));
+    q("event-save")?.addEventListener("click", saveEvent);
+
+    // Reminder
+    q("btn-rem-back")?.addEventListener("click", () => show("home"));
+    q("rem-save")  ?.addEventListener("click", saveReminder);
+    q("rem-hasDue")?.addEventListener("change", onRemHasDue);
+
+    // Contact
+    q("btn-ctc-back")?.addEventListener("click", () => show("home"));
+    q("ctc-save")  ?.addEventListener("click", saveContact);
+    q("ctc-add-email")?.addEventListener("click", () => { emails.push(""); refreshContactLists(); });
+    q("ctc-add-phone")?.addEventListener("click", () => { phones.push(""); refreshContactLists(); });
+
+    // CSV
+    q("btn-csv-back")?.addEventListener("click", () => show("home"));
+    q("csv-reparse")?.addEventListener("click", reparseCSV);
+    q("csv-export") ?.addEventListener("click", exportCSV);
   }
 
   // ---- Boot
-  let ctx = { selection: "", title: "", url: "" };
   document.addEventListener("DOMContentLoaded", async () => {
-    wireHome();
-    wireEditors();
+    wire();
     show("home");
 
-    // Ready check (sendMessage wakes worker; allow 5s)
     try { await sendMessage({ cmd: "echo", payload: true }, 5000); setStatus(q("status"), "Ready.", true); }
     catch { setStatus(q("status"), "Native bridge error.", false); }
 
-    // Populate selection/title/url
     ctx = await pageCtx();
     q("sel").textContent = (ctx.selection?.trim() || ctx.title || "No selection");
   });

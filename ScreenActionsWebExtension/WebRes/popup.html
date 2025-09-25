@@ -10,7 +10,6 @@
 </head>
 <body>
   <header class="hdr">
-    <!-- FIX: no "WebRes/" prefix here -->
     <img class="hdr-icon" src="images/toolbar-icon.svg" alt="">
     <h1 class="hdr-title">Screen Actions</h1>
   </header>
@@ -31,10 +30,10 @@
     </div>
   </div>
 
-  <!-- Event editor (visible only if you keep “fat” UI later) -->
+  <!-- Event editor -->
   <div id="editor-event" class="view" hidden>
     <div class="nav">
-      <button class="btn nav-back">Cancel</button>
+      <button id="btn-event-back" class="btn nav-back">Cancel</button>
       <div class="nav-title">New Event</div>
       <button id="event-save" class="nav-save">Save</button>
     </div>
@@ -60,7 +59,7 @@
         </div>
       </div>
       <div class="section">
-        <div class="field"><label>Notes</label><textarea id="event-notes" rows="4"></textarea></div>
+        <div class="field"><label>Notes</label><textarea id="event-notes" rows="4" placeholder=""></textarea></div>
       </div>
       <div id="event-status" class="status"></div>
     </div>
@@ -69,7 +68,7 @@
   <!-- Reminder editor -->
   <div id="editor-rem" class="view" hidden>
     <div class="nav">
-      <button class="btn nav-back">Cancel</button>
+      <button id="btn-rem-back" class="btn nav-back">Cancel</button>
       <div class="nav-title">New Reminder</div>
       <button id="rem-save" class="nav-save">Save</button>
     </div>
@@ -89,7 +88,7 @@
   <!-- Contact editor -->
   <div id="editor-ctc" class="view" hidden>
     <div class="nav">
-      <button class="btn nav-back">Cancel</button>
+      <button id="btn-ctc-back" class="btn nav-back">Cancel</button>
       <div class="nav-title">New Contact</div>
       <button id="ctc-save" class="nav-save">Save</button>
     </div>
@@ -131,7 +130,7 @@
   <!-- CSV -->
   <div id="editor-csv" class="view" hidden>
     <div class="nav">
-      <button class="btn nav-back">Cancel</button>
+      <button id="btn-csv-back" class="btn nav-back">Cancel</button>
       <div class="nav-title">Receipt → CSV</div>
       <button id="csv-export" class="nav-save">Export</button>
     </div>

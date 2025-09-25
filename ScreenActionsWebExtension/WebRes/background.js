@@ -1,7 +1,4 @@
-// ScreenActions WebExtension — background.js (FULL FILE, thin bridge)
-// - Queued native bridge with longer timeout (8s).
-// - Per-tab cache of {selection,title,url} fed by a content script.
-// - Public commands: selUpdate, getPageCtx, echo, native.
+// background.js — queues native calls; caches {selection,title,url,structured}
 
 (() => {
   'use strict';
@@ -19,7 +16,8 @@
   if (!RT) return;
 
   // ---- Selection store (per-tab)
-  const selStore = new Map(); // tabId -> { selection, title, url, ts }
+  // tabId -> { selection, title, url, structured?, ts }
+  const selStore = new Map();
 
   function setCtxFromSender(sender, payload) {
     const tabId = sender?.tab?.id;
@@ -27,7 +25,8 @@
     const selection = String(payload?.selection || '').trim();
     const title = String(payload?.title || '');
     const url = String(payload?.url || '');
-    selStore.set(tabId, { selection, title, url, ts: Date.now() });
+    const structured = (payload && typeof payload.structured === 'object') ? payload.structured : undefined;
+    selStore.set(tabId, { selection, title, url, structured, ts: Date.now() });
     return { ok: true };
   }
 
@@ -46,9 +45,10 @@
     return {
       ok: true,
       ctx: {
-        selection: ctx?.selection || '',
-        title: ctx?.title || '',
-        url: ctx?.url || ''
+        selection:  ctx?.selection  || '',
+        title:      ctx?.title      || '',
+        url:        ctx?.url        || '',
+        structured: ctx?.structured || undefined
       }
     };
   }

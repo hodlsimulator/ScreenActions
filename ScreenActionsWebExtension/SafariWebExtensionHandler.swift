@@ -4,6 +4,10 @@
 //
 //  Created by . . on 9/13/25.
 //
+//  SafariWebExtensionHandler.swift — full "fat" bridge with prepare*/save*,
+//  plus prepareAutoDetect that chooses an editor (no immediate save).
+//  Also ingests lightweight JSON-LD hints (Event/Person) passed from JS payload.
+//
 
 import Foundation
 import SafariServices
@@ -28,52 +32,68 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
         let action  = (body["action"]  as? String) ?? ""
         let payload = (body["payload"] as? [String: Any]) ?? [:]
+
         let selection = (payload["selection"] as? String) ?? ""
         let title     = (payload["title"]     as? String) ?? ""
         let url       = (payload["url"]       as? String) ?? ""
-        let text = composeInput(selection: selection, title: title, url: url)
+        let text      = Self.composeInput(selection: selection, title: title, url: url)
+        let structured = payload["structured"] as? [String: Any] // JSON-LD hints
 
         Task { @MainActor in
             do {
                 let result: [String: Any]
                 switch action {
+
                 case "ping":
                     result = ["ok": true, "message": "pong"]
 
                 case "getProStatus":
                     result = ["ok": true, "pro": Self.isProActive()]
 
-                // -------- Editors: prepare (prefill) ----------
+                // ---- Editors: PREPARE (prefill) ----
                 case "prepareEvent":
-                    result = Self.prepareEvent(text: text)
+                    result = Self.prepareEvent(text: text, structured: structured)
+
                 case "prepareReminder":
                     result = Self.prepareReminder(text: text)
+
                 case "prepareContact":
-                    result = Self.prepareContact(text: text)
+                    result = Self.prepareContact(text: text, structured: structured)
+
                 case "prepareReceiptCSV":
                     result = Self.prepareReceiptCSV(text: text)
 
-                // -------- Editors: save ----------
+                case "prepareAutoDetect":
+                    result = Self.prepareAutoDetect(text: text, structured: structured)
+
+                // ---- Editors: SAVE ----
                 case "saveEvent":
                     result = try await Self.saveEvent(payload: payload)
+
                 case "saveReminder":
                     result = try await Self.saveReminder(payload: payload)
+
                 case "saveContact":
                     result = try await Self.saveContact(payload: payload)
+
                 case "exportReceiptCSV":
                     result = try Self.exportReceiptCSV(payload: payload)
 
-                // -------- Legacy one-taps (keep working) ----------
+                // ---- Legacy one-taps (kept for thin flows / fallback) ----
                 case "autoDetect":
-                    result = try await handleAutoDetect(text: text, title: title, selection: selection)
+                    result = try await Self.handleAutoDetect(text: text, title: title, selection: selection)
+
                 case "createReminder":
-                    result = try await handleCreateReminder(text: text, title: title, selection: selection)
+                    result = try await Self.handleCreateReminder(text: text, title: title, selection: selection)
+
                 case "addEvent":
-                    result = try await handleAddEvent(text: text, title: title, selection: selection)
+                    result = try await Self.handleAddEvent(text: text, title: title, selection: selection)
+
                 case "extractContact":
-                    result = try await handleExtractContact(text: text)
+                    result = try await Self.handleExtractContact(text: text)
+
                 case "receiptCSV":
-                    result = try handleReceiptCSV(text: text)
+                    result = try Self.handleReceiptCSV(text: text)
 
                 default:
                     result = ["ok": false, "message": "Unknown action."]
@@ -99,7 +119,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     }
 
     // MARK: - Compose helper
-    private func composeInput(selection: String, title: String, url: String) -> String {
+    private static func composeInput(selection: String, title: String, url: String) -> String {
         var t = selection.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty, !title.isEmpty { t = title }
         if !url.isEmpty { t += (t.isEmpty ? "" : "\n") + url }
@@ -123,52 +143,104 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         return nil
     }
 
-    // MARK: - Pro status / quotas
+    // MARK: - Pro / Quotas
     private static let groupID = AppStorageService.appGroupID
     private static func isProActive() -> Bool {
         let d = UserDefaults(suiteName: groupID) ?? .standard
         return d.bool(forKey: "iap.pro.active")
     }
 
-    // MARK: - Prepare payloads (mirror share-sheet defaults)
-    private static func prepareEvent(text: String) -> [String: Any] {
+    // MARK: - PREPARE (prefill editors)
+
+    private static func prepareEvent(text: String, structured: [String: Any]?) -> [String: Any] {
+        // Defaults from free text
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let now = Date()
-        let range = DateParser.firstDateRange(in: trimmed) ?? DetectedDateRange(
-            start: now, end: now.addingTimeInterval(60 * 60)
+        let base = DateParser.firstDateRange(in: trimmed) ?? DetectedDateRange(
+            start: now,
+            end: now.addingTimeInterval(60 * 60)
         )
-        let firstLine = trimmed.components(separatedBy: .newlines)
-            .first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let initialTitle = firstLine.isEmpty ? "Event" : String(firstLine.prefix(64))
-        let hint = CalendarService.firstLocationHint(in: trimmed) ?? ""
-        let alertDefault = AppStorageService.getDefaultAlertMinutes()
+        // IMPORTANT: don't mutate DetectedDateRange (its properties are let). Work on locals.
+        var start = base.start
+        var end   = base.end
 
-        return ["ok": true, "fields": [
-            "title": initialTitle,
-            "startISO": iso(range.start),
-            "endISO": iso(range.end),
-            "notes": trimmed,
-            "location": hint,
-            "inferTZ": !hint.isEmpty,
-            "alertMinutes": alertDefault
-        ]]
+        var title = trimmed.components(separatedBy: .newlines).first?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? "Event"
+        var locationHint = CalendarService.firstLocationHint(in: trimmed) ?? ""
+        var inferTZ = !locationHint.isEmpty
+
+        // JSON-LD Event (page-only advantage)
+        if let ev = structured?["event"] as? [String: Any] {
+            if let n = ev["name"] as? String, !n.trimmingCharacters(in: .whitespaces).isEmpty {
+                title = String(n.prefix(64))
+            }
+            if let s = ev["startDate"] as? String, let d = parseISO(s) { start = d }
+            if let e = ev["endDate"]   as? String, let d = parseISO(e) { end   = d }
+            if let ln = ev["locationName"] as? String, !ln.isEmpty {
+                locationHint = ln
+                inferTZ = true
+            } else if let addr = ev["address"] as? [String: String] {
+                let pieces: [String] = [
+                    addr["street"] ?? "",
+                    addr["city"] ?? "",
+                    addr["state"] ?? "",
+                    addr["postalCode"] ?? "",
+                    addr["country"] ?? ""
+                ].filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+                if !pieces.isEmpty {
+                    locationHint = pieces.joined(separator: ", ")
+                    inferTZ = true
+                }
+            }
+        }
+
+        let alertDefault = AppStorageService.getDefaultAlertMinutes()
+        return [
+            "ok": true,
+            "fields": [
+                "title": title,
+                "startISO": iso(start),
+                "endISO": iso(end),
+                "notes": trimmed,
+                "location": locationHint,
+                "inferTZ": inferTZ,
+                "alertMinutes": alertDefault
+            ]
+        ]
     }
 
     private static func prepareReminder(text: String) -> [String: Any] {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        let firstLine = trimmed.components(separatedBy: .newlines)
-            .first?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let firstLine = trimmed.components(separatedBy: .newlines).first?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let r = DateParser.firstDateRange(in: trimmed)
-        return ["ok": true, "fields": [
-            "title": firstLine.isEmpty ? "Todo" : String(firstLine.prefix(64)),
-            "hasDue": (r != nil),
-            "dueISO": iso(r?.start ?? Date().addingTimeInterval(60 * 60)),
-            "notes": trimmed
-        ]]
+        return [
+            "ok": true,
+            "fields": [
+                "title": firstLine.isEmpty ? "Todo" : String(firstLine.prefix(64)),
+                "hasDue": (r != nil),
+                "dueISO": iso(r?.start ?? Date().addingTimeInterval(60*60)),
+                "notes": trimmed
+            ]
+        ]
     }
 
-    private static func prepareContact(text: String) -> [String: Any] {
-        let d = ContactParser.detect(in: text)
+    private static func prepareContact(text: String, structured: [String: Any]?) -> [String: Any] {
+        // Start from detectors
+        var d = ContactParser.detect(in: text)
+
+        // JSON-LD Person / Organization (page-only advantage)
+        if let person = structured?["person"] as? [String: Any] {
+            if d.givenName == nil, let name = person["name"] as? String {
+                // Split very simply into given/family
+                let parts = name.split(separator: " ", maxSplits: 1, omittingEmptySubsequences: true)
+                if parts.count == 2 { d.givenName = String(parts[0]); d.familyName = String(parts[1]) }
+                else { d.givenName = name }
+            }
+            if let em = person["email"] as? String, !em.isEmpty { d.emails.append(em) }
+            if let tel = person["telephone"] as? String, !tel.isEmpty { d.phones.append(tel) }
+        }
+
         var fields: [String: Any] = [
             "givenName": d.givenName ?? "",
             "familyName": d.familyName ?? "",
@@ -195,16 +267,35 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         return ["ok": true, "csv": csv]
     }
 
-    // MARK: - Save handlers
+    private static func prepareAutoDetect(text: String, structured: [String: Any]?) -> [String: Any] {
+        let decision = ActionRouter.route(text: text)
+        switch decision.kind {
+        case .receipt:
+            return ["ok": true, "route": "csv", "csv": CSVExporter.makeReceiptCSV(from: text)]
+        case .contact:
+            let c = prepareContact(text: text, structured: structured)
+            return ["ok": true, "route": "contact", "fields": c["fields"] ?? [:]]
+        case .event:
+            let e = prepareEvent(text: text, structured: structured)
+            return ["ok": true, "route": "event", "fields": e["fields"] ?? [:]]
+        case .reminder:
+            let r = prepareReminder(text: text)
+            return ["ok": true, "route": "reminder", "fields": r["fields"] ?? [:]]
+        }
+    }
+
+    // MARK: - SAVE
+
     private static func saveEvent(payload: [String: Any]) async throws -> [String: Any] {
         guard let f = payload["fields"] as? [String: Any] else {
             return ["ok": false, "message": "Missing fields."]
         }
         let title = (f["title"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard let start = parseISO(f["startISO"] as? String),
-              let end   = parseISO(f["endISO"] as? String) else {
-            return ["ok": false, "message": "Invalid date."]
-        }
+        guard
+            let start = parseISO(f["startISO"] as? String),
+            let end   = parseISO(f["endISO"]   as? String)
+        else { return ["ok": false, "message": "Invalid date."] }
+
         let notes = (f["notes"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
         let location = (f["location"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
         let inferTZ = (f["inferTZ"] as? Bool) ?? true
@@ -212,7 +303,8 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
 
         let id = try await CalendarService.shared.addEvent(
             title: title.isEmpty ? "Event" : title,
-            start: start, end: end,
+            start: start,
+            end: end,
             notes: (notes?.isEmpty == true) ? nil : notes,
             locationHint: (location?.isEmpty == true) ? nil : location,
             inferTimeZoneFromLocation: inferTZ,
@@ -241,6 +333,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             due: due,
             notes: (notes?.isEmpty == true) ? nil : notes
         )
+
         return ["ok": true, "message": "Reminder created (\(id)).", "id": id]
     }
 
@@ -267,7 +360,8 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             dc.postalAddress = a.copy() as? CNPostalAddress
         }
 
-        let hasAny = (dc.givenName?.isEmpty == false) || (dc.familyName?.isEmpty == false) || !dc.emails.isEmpty || !dc.phones.isEmpty || (dc.postalAddress != nil)
+        let hasAny = (dc.givenName?.isEmpty == false) || (dc.familyName?.isEmpty == false) ||
+                     !dc.emails.isEmpty || !dc.phones.isEmpty || (dc.postalAddress != nil)
         guard hasAny else { return ["ok": false, "message": "Enter at least one contact field."] }
 
         let id = try await ContactsService.save(contact: dc)
@@ -279,14 +373,13 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         guard !csv.isEmpty else { return ["ok": false, "message": "Nothing to export."] }
         let gate = QuotaManager.consume(feature: .receiptCSVExport, isPro: Self.isProActive())
         guard gate.allowed else { return ["ok": false, "message": gate.message] }
-
         let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
         let url = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
         return ["ok": true, "message": "CSV exported.", "fileURL": url.absoluteString]
     }
 
     // MARK: - Legacy direct actions
-    private func handleAutoDetect(text: String, title: String, selection: String) async throws -> [String: Any] {
+    private static func handleAutoDetect(text: String, title: String, selection: String) async throws -> [String: Any] {
         let decision = ActionRouter.route(text: text)
         switch decision.kind {
         case .receipt:
@@ -311,7 +404,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         }
     }
 
-    private func handleCreateReminder(text: String, title: String, selection: String) async throws -> [String: Any] {
+    private static func handleCreateReminder(text: String, title: String, selection: String) async throws -> [String: Any] {
         let preferredTitle = selection.components(separatedBy: .newlines).first?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? (title.isEmpty ? "Reminder" : title)
         let due = DateParser.firstDateRange(in: text)?.start
@@ -319,7 +412,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         return ["ok": true, "message": "Reminder created (\(id))."]
     }
 
-    private func handleAddEvent(text: String, title: String, selection: String) async throws -> [String: Any] {
+    private static func handleAddEvent(text: String, title: String, selection: String) async throws -> [String: Any] {
         guard let range = DateParser.firstDateRange(in: text) else {
             throw NSError(domain: "ScreenActions", code: 2, userInfo: [NSLocalizedDescriptionKey: "No date found."])
         }
@@ -329,13 +422,13 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         return ["ok": true, "message": "Event created (\(id))."]
     }
 
-    private func handleExtractContact(text: String) async throws -> [String: Any] {
+    private static func handleExtractContact(text: String) async throws -> [String: Any] {
         let detected = ContactParser.detect(in: text)
         let id = try await ContactsService.save(contact: detected)
         return ["ok": true, "message": "Contact saved (\(id))."]
     }
 
-    private func handleReceiptCSV(text: String) throws -> [String: Any] {
+    private static func handleReceiptCSV(text: String) throws -> [String: Any] {
         let csv = CSVExporter.makeReceiptCSV(from: text)
         let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
         let fileURL = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)

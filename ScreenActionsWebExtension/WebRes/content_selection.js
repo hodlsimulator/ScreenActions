@@ -1,4 +1,7 @@
-// Keep last {selection,title,url} fresh, even when the popup steals focus.
+// content_selection.js — capture selection/title/url + lightweight JSON-LD (Event/Person)
+// Sent to background as { selection, title, url, structured? } so the popup can
+// prefill editors even after focus shifts (iOS quirk) and use page-only signals.
+
 (() => {
   const RT = (typeof chrome !== 'undefined' && chrome.runtime) ||
              (typeof browser !== 'undefined' && browser.runtime);
@@ -45,6 +48,50 @@
     } catch { return ''; }
   }
 
+  function parseJSONLD() {
+    // Returns { event?: {...}, person?: {...} }
+    const out = {};
+    try {
+      const nodes = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+      for (const n of nodes) {
+        let json;
+        try { json = JSON.parse(n.textContent || ''); } catch { continue; }
+        const items = Array.isArray(json) ? json : [json];
+        for (const item of items) {
+          const t = item && item['@type'];
+          const types = Array.isArray(t) ? t.map(String) : [String(t || '')];
+          if (types.includes('Event') && !out.event) {
+            const loc = item.location || {};
+            const addr = loc.address || {};
+            out.event = {
+              name: item.name || '',
+              startDate: item.startDate || '',
+              endDate: item.endDate || '',
+              locationName: loc.name || '',
+              address: {
+                street: addr.streetAddress || '',
+                city: addr.addressLocality || '',
+                state: addr.addressRegion || '',
+                postalCode: addr.postalCode || '',
+                country: addr.addressCountry || ''
+              }
+            };
+          }
+          if ((types.includes('Person') || types.includes('Organization')) && !out.person) {
+            out.person = {
+              name: item.name || '',
+              email: (Array.isArray(item.email) ? item.email[0] : item.email) || '',
+              telephone: (Array.isArray(item.telephone) ? item.telephone[0] : item.telephone) || ''
+            };
+          }
+          if (out.event && out.person) break;
+        }
+        if (out.event && out.person) break;
+      }
+    } catch {}
+    return (out.event || out.person) ? out : undefined;
+  }
+
   let scheduled = false;
   function push() {
     if (scheduled) return;
@@ -54,12 +101,18 @@
       try {
         RT.sendMessage({
           cmd: 'selUpdate',
-          payload: { selection: textSel(), title: pageTitle(), url: canonicalURL() }
+          payload: {
+            selection: textSel(),
+            title: pageTitle(),
+            url: canonicalURL(),
+            structured: parseJSONLD()
+          }
         });
       } catch {}
     }, 50);
   }
 
+  // Initial + updates
   push();
   document.addEventListener('selectionchange', push, { passive: true });
   document.addEventListener('pointerup',        push, { passive: true });
