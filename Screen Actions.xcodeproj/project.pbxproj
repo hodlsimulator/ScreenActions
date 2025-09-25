@@ -193,6 +193,7 @@
 		E12CA7152E7C9D67006FBB3F /* Contacts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Contacts.framework; path = System/Library/Frameworks/Contacts.framework; sourceTree = SDKROOT; };
 		E12CA7172E7C9D76006FBB3F /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		E12CA7192E7C9D86006FBB3F /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
+		E17FE3C32E85E974004E125D /* lock_manifest.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = lock_manifest.rb; sourceTree = "<group>"; };
 		E183E1352E75ABC700E8D263 /* Screen Actions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen Actions.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsControlsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1492E75ACF400E8D263 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -453,6 +454,7 @@
 				E1F9134F2E81F5CD00276157 /* pin_release_to_given_uuids.rb */,
 				E1F9134E2E81F48D00276157 /* list_profiles_for_targets_pb.rb */,
 				4E24688813CC0AD3B1D77DD4 /* purge_profiles_and_sources.rb */,
+				E17FE3C32E85E974004E125D /* lock_manifest.rb */,
 				E1F918692E82170700276157 /* fix_webres_refs_and_pack.rb */,
 				E1F9229E2E82355700276157 /* scan_all_webext_copies.rb */,
 				E1F9237A2E82430000276157 /* ensure_pack_webres.rb */,
@@ -651,6 +653,7 @@
 				A7829CB460D7B3061DE5B970 /* Pack WebRes – root */,
 				238FA01BD0B520479DFC674A /* Pack WebRes – locales */,
 				F0389AEDF3B296EA09E7BFD2 /* Pack WebRes – images */,
+				E17FE3C42E85EA64004E125D /* Lock manifest (pre-sign) */,
 			);
 			buildRules = (
 			);
@@ -826,6 +829,29 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "#!/bin/bash\nset -euo pipefail\n\nfail() { echo \"error: $1\" ; exit 1; }\nnote() { echo \"note: $1\"; }\n\nROOT=\"${SRCROOT}\"\nSHARE_PLIST=\"$ROOT/ScreenActionsShareExtension/Info.plist\"\nACTION_PLIST=\"$ROOT/ScreenActionsActionExtension/Info.plist\"\n\nplist() { /usr/libexec/PlistBuddy -c \"Print $2\" \"$1\" 2>/dev/null || true; }\n\n# 1) Share extension must NOT have a JS preprocessor (hard fail)\nSHARE_PRE=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionJavaScriptPreprocessingFile\")\n[[ -z \"$SHARE_PRE\" ]] || fail \"Share extension must NOT set NSExtensionJavaScriptPreprocessingFile (found: $SHARE_PRE).\"\n\n# 2) Share must have exactly one launch path (PrincipalClass XOR MainStoryboard) (hard fail)\nSHARE_PC=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionPrincipalClass\")\nSHARE_SB=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionMainStoryboard\")\nif [[ -n \"$SHARE_PC\" && -n \"$SHARE_SB\" ]]; then\n  fail \"Share extension must use PrincipalClass OR MainStoryboard (not both).\"\nfi\nif [[ -z \"$SHARE_PC\" && -z \"$SHARE_SB\" ]]; then\n  fail \"Share extension needs a launch path (PrincipalClass or MainStoryboard).\"\nfi\n\n# 3) Action extension SHOULD have a JS preprocessor (warn only)\nACTION_PRE=$(plist \"$ACTION_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionJavaScriptPreprocessingFile\")\n[[ -n \"$ACTION_PRE\" ]] || note \"Action extension missing JS preprocessor (GetSelection).\"\n\necho \"✅ Share/Action sanity checks passed.\"\n";
+		};
+		E17FE3C42E85EA64004E125D /* Lock manifest (pre-sign) */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/tools/lock_manifest.rb",
+				"$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/WebRes/manifest.json",
+				"$(PROJECT_DIR)/ScreenActionsWebExtension/WebRes/manifest.json",
+				"$(PROJECT_DIR)/ScreenActionsWebExtension/WebRes/content_selection.js",
+			);
+			name = "Lock manifest (pre-sign)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/locked_manifest.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\n\n# Path to the packaged manifest inside the built .appex\nAPPLEX_DIR=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\nMANIFEST=\"${APPLEX_DIR}/WebRes/manifest.json\"\n\n# Guard: ensure the manifest exists at this point\nif [ ! -f \"$MANIFEST\" ]; then\n  echo \"ERROR: Packaged manifest not found at $MANIFEST\"\n  exit 1\nfi\n\n# Pin the manifest (forces <all_urls> + content script) before signing\nruby \"${PROJECT_DIR}/tools/lock_manifest.rb\" \"$MANIFEST\"\n\n# Quick smoke print (first ~80 lines) so you can see changes in Xcode logs\necho \"----- PACKAGED manifest.json (head) -----\"\nsed -n '1,80p' \"$MANIFEST\"\necho \"----------------------------------------\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

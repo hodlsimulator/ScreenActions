@@ -51,8 +51,8 @@
         let json; try { json = JSON.parse(n.textContent || ''); } catch { continue; }
         const items = Array.isArray(json) ? json : [json];
         for (const item of items) {
-          const t = item && item['@type'];
-          const types = Array.isArray(t) ? t.map(String) : [String(t || '')];
+          const ty = item && item['@type'];
+          const types = Array.isArray(ty) ? ty.map(String) : [String(ty || '')];
           if (types.includes('Event') && !out.event) {
             const loc = item.location || {};
             const addr = loc.address || {};
@@ -101,11 +101,12 @@
             structured: parseJSONLD()
           }
         });
+        console.log('[SA] content_selection sent selUpdate');
       } catch {}
     }, 50);
   }
 
-  // First sample + updates
+  console.log('[SA] content_selection loaded on', location.href);
   push();
   document.addEventListener('selectionchange', push, { passive: true });
   document.addEventListener('pointerup',        push, { passive: true });
