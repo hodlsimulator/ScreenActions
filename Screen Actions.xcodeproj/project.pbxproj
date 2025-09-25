@@ -7,18 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1340C071108E110869730DA9 /* popup.html in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = A8859CAC29053404E341C573 /* popup.html */; };
-		3B3D1BD59669F2B27F706B3F /* background.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 43A20F56068D255D8751D93E /* background.js */; };
-		53F71439091D6E47998C6D3A /* popup.css in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 49A83CBC9CC1A81539B5696B /* popup.css */; };
-		6099779B873711BB4FC8C7C4 /* icon-64-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = DE007755656D47B38332B145 /* icon-64-squircle.png */; };
-		724470255531B7E754DA984C /* popup.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = CBC36EDA1B4FE16E3A0CA3DF /* popup.js */; };
-		7855BBC48D1B30FE0085AF2F /* icon-128-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 266C106304CB0EA4401A61AE /* icon-128-squircle.png */; };
-		88618E4857B66D5F5F55C99E /* icon-48-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 2D9CE27EE5EA19A0D7D8407A /* icon-48-squircle.png */; };
-		ABA5DDC13E21E2B37893D540 /* manifest.json in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = E9BFAA3B257DE3BE205C2490 /* manifest.json */; };
-		C2CA37A88E541FDB5AC384CE /* icon-96-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 6C763AD9BCBE85A0D9E803E0 /* icon-96-squircle.png */; };
-		C6A710E79171B36D12707377 /* toolbar-icon.svg in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 893D0C5B139D94E9690511BC /* toolbar-icon.svg */; };
-		D5A14B9F1E4054D069F2F7AE /* messages.json in Pack WebRes – locales */ = {isa = PBXBuildFile; fileRef = 26100BF29BD3A398FE14E766 /* messages.json */; };
-		E04FBF18E46C7183812D8D0B /* icon-256-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 96F052DC93909B5AA549E807 /* icon-256-squircle.png */; };
+		04178F4CF0F6896E3BDFE243 /* manifest.json in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = E9BFAA3B257DE3BE205C2490 /* manifest.json */; };
+		1D200EE6AECDC5BE1E7F91B5 /* icon-128-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 266C106304CB0EA4401A61AE /* icon-128-squircle.png */; };
+		4A221854B285F6100219B4DE /* toolbar-icon.svg in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 893D0C5B139D94E9690511BC /* toolbar-icon.svg */; };
+		6EF3F8DD61DF67B1E3ACA913 /* icon-96-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 6C763AD9BCBE85A0D9E803E0 /* icon-96-squircle.png */; };
+		922D02C68E08F4184DBE07E0 /* messages.json in Pack WebRes – locales */ = {isa = PBXBuildFile; fileRef = 26100BF29BD3A398FE14E766 /* messages.json */; };
+		9508299F775805A12EC32248 /* content_selection.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 353C473380E6178AF121D766 /* content_selection.js */; };
+		9CE046105A600F9EFDB3A79A /* icon-512-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = B557F0D3B3AD709B4BA8F987 /* icon-512-squircle.png */; };
+		B3ED71A56FE8796A99094286 /* background.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 43A20F56068D255D8751D93E /* background.js */; };
+		C7CFD36D352590A5546C045A /* icon-48-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 2D9CE27EE5EA19A0D7D8407A /* icon-48-squircle.png */; };
 		E115D2532E77619700C8F5EE /* EventEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2522E77619500C8F5EE /* EventEditorView.swift */; };
 		E115D2552E7761AB00C8F5EE /* ReminderEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2542E7761A800C8F5EE /* ReminderEditorView.swift */; };
 		E115D25A2E77632300C8F5EE /* ReceiptCSVPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E115D2592E77632100C8F5EE /* ReceiptCSVPreviewView.swift */; };
@@ -42,7 +39,11 @@
 		E183E14A2E75ACF400E8D263 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E1492E75ACF400E8D263 /* WidgetKit.framework */; };
 		E183E14C2E75ACF400E8D263 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E183E14B2E75ACF400E8D263 /* SwiftUI.framework */; };
 		E183E15B2E75ACFA00E8D263 /* ScreenActionsControlsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		F5F2E3ACB51200164C2A4092 /* icon-512-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = B557F0D3B3AD709B4BA8F987 /* icon-512-squircle.png */; };
+		E65A40F015B443E709093993 /* popup.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = CBC36EDA1B4FE16E3A0CA3DF /* popup.js */; };
+		EA181313751C7559A9F109D8 /* popup.css in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 49A83CBC9CC1A81539B5696B /* popup.css */; };
+		EAA3566E50186391E1CE5160 /* popup.html in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = A8859CAC29053404E341C573 /* popup.html */; };
+		F2FDEE55A45E20E03AF50820 /* icon-256-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 96F052DC93909B5AA549E807 /* icon-256-squircle.png */; };
+		FEC66A8FC3D20268F07C42F9 /* icon-64-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = DE007755656D47B38332B145 /* icon-64-squircle.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,7 +84,7 @@
 			dstPath = WebRes/_locales/en;
 			dstSubfolderSpec = 7;
 			files = (
-				D5A14B9F1E4054D069F2F7AE /* messages.json in Pack WebRes – locales */,
+				922D02C68E08F4184DBE07E0 /* messages.json in Pack WebRes – locales */,
 			);
 			name = "Pack WebRes – locales";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -94,11 +95,12 @@
 			dstPath = WebRes;
 			dstSubfolderSpec = 7;
 			files = (
-				3B3D1BD59669F2B27F706B3F /* background.js in Pack WebRes – root */,
-				ABA5DDC13E21E2B37893D540 /* manifest.json in Pack WebRes – root */,
-				53F71439091D6E47998C6D3A /* popup.css in Pack WebRes – root */,
-				1340C071108E110869730DA9 /* popup.html in Pack WebRes – root */,
-				724470255531B7E754DA984C /* popup.js in Pack WebRes – root */,
+				B3ED71A56FE8796A99094286 /* background.js in Pack WebRes – root */,
+				04178F4CF0F6896E3BDFE243 /* manifest.json in Pack WebRes – root */,
+				EA181313751C7559A9F109D8 /* popup.css in Pack WebRes – root */,
+				EAA3566E50186391E1CE5160 /* popup.html in Pack WebRes – root */,
+				E65A40F015B443E709093993 /* popup.js in Pack WebRes – root */,
+				9508299F775805A12EC32248 /* content_selection.js in Pack WebRes – root */,
 			);
 			name = "Pack WebRes – root";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -123,13 +125,13 @@
 			dstPath = WebRes/images;
 			dstSubfolderSpec = 7;
 			files = (
-				7855BBC48D1B30FE0085AF2F /* icon-128-squircle.png in Pack WebRes – images */,
-				E04FBF18E46C7183812D8D0B /* icon-256-squircle.png in Pack WebRes – images */,
-				88618E4857B66D5F5F55C99E /* icon-48-squircle.png in Pack WebRes – images */,
-				F5F2E3ACB51200164C2A4092 /* icon-512-squircle.png in Pack WebRes – images */,
-				6099779B873711BB4FC8C7C4 /* icon-64-squircle.png in Pack WebRes – images */,
-				C2CA37A88E541FDB5AC384CE /* icon-96-squircle.png in Pack WebRes – images */,
-				C6A710E79171B36D12707377 /* toolbar-icon.svg in Pack WebRes – images */,
+				1D200EE6AECDC5BE1E7F91B5 /* icon-128-squircle.png in Pack WebRes – images */,
+				F2FDEE55A45E20E03AF50820 /* icon-256-squircle.png in Pack WebRes – images */,
+				C7CFD36D352590A5546C045A /* icon-48-squircle.png in Pack WebRes – images */,
+				9CE046105A600F9EFDB3A79A /* icon-512-squircle.png in Pack WebRes – images */,
+				FEC66A8FC3D20268F07C42F9 /* icon-64-squircle.png in Pack WebRes – images */,
+				6EF3F8DD61DF67B1E3ACA913 /* icon-96-squircle.png in Pack WebRes – images */,
+				4A221854B285F6100219B4DE /* toolbar-icon.svg in Pack WebRes – images */,
 			);
 			name = "Pack WebRes – images";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -147,6 +149,7 @@
 		2D9CE27EE5EA19A0D7D8407A /* icon-48-squircle.png */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = image.png; name = "icon-48-squircle.png"; path = "ScreenActionsWebExtension/WebRes/images/icon-48-squircle.png"; sourceTree = "<group>"; };
 		32FF644ED87D30DD10A7AB8A /* ensure_webext_resources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = ensure_webext_resources.rb; sourceTree = "<group>"; };
 		3402647959D843EFFADD7210 /* fix_embed_and_resources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = fix_embed_and_resources.rb; sourceTree = "<group>"; };
+		353C473380E6178AF121D766 /* content_selection.js */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.javascript; name = content_selection.js; path = ScreenActionsWebExtension/WebRes/content_selection.js; sourceTree = "<group>"; };
 		35E9B74C82844916689270EB /* sanitize_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = sanitize_sources.rb; sourceTree = "<group>"; };
 		3738AEA85627DCFF49949031 /* pick_safari_ext_profile.py */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.python; path = pick_safari_ext_profile.py; sourceTree = "<group>"; };
 		3EAB88C747E6E285DE1D78B7 /* dedupe_sources.rb */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.ruby; path = dedupe_sources.rb; sourceTree = "<group>"; };
@@ -562,6 +565,7 @@
 				DE007755656D47B38332B145 /* icon-64-squircle.png */,
 				6C763AD9BCBE85A0D9E803E0 /* icon-96-squircle.png */,
 				893D0C5B139D94E9690511BC /* toolbar-icon.svg */,
+				353C473380E6178AF121D766 /* content_selection.js */,
 			);
 			sourceTree = "<group>";
 		};
@@ -653,7 +657,6 @@
 				A7829CB460D7B3061DE5B970 /* Pack WebRes – root */,
 				238FA01BD0B520479DFC674A /* Pack WebRes – locales */,
 				F0389AEDF3B296EA09E7BFD2 /* Pack WebRes – images */,
-				E17FE3C42E85EA64004E125D /* Lock manifest (pre-sign) */,
 			);
 			buildRules = (
 			);
@@ -829,29 +832,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "#!/bin/bash\nset -euo pipefail\n\nfail() { echo \"error: $1\" ; exit 1; }\nnote() { echo \"note: $1\"; }\n\nROOT=\"${SRCROOT}\"\nSHARE_PLIST=\"$ROOT/ScreenActionsShareExtension/Info.plist\"\nACTION_PLIST=\"$ROOT/ScreenActionsActionExtension/Info.plist\"\n\nplist() { /usr/libexec/PlistBuddy -c \"Print $2\" \"$1\" 2>/dev/null || true; }\n\n# 1) Share extension must NOT have a JS preprocessor (hard fail)\nSHARE_PRE=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionJavaScriptPreprocessingFile\")\n[[ -z \"$SHARE_PRE\" ]] || fail \"Share extension must NOT set NSExtensionJavaScriptPreprocessingFile (found: $SHARE_PRE).\"\n\n# 2) Share must have exactly one launch path (PrincipalClass XOR MainStoryboard) (hard fail)\nSHARE_PC=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionPrincipalClass\")\nSHARE_SB=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionMainStoryboard\")\nif [[ -n \"$SHARE_PC\" && -n \"$SHARE_SB\" ]]; then\n  fail \"Share extension must use PrincipalClass OR MainStoryboard (not both).\"\nfi\nif [[ -z \"$SHARE_PC\" && -z \"$SHARE_SB\" ]]; then\n  fail \"Share extension needs a launch path (PrincipalClass or MainStoryboard).\"\nfi\n\n# 3) Action extension SHOULD have a JS preprocessor (warn only)\nACTION_PRE=$(plist \"$ACTION_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionJavaScriptPreprocessingFile\")\n[[ -n \"$ACTION_PRE\" ]] || note \"Action extension missing JS preprocessor (GetSelection).\"\n\necho \"✅ Share/Action sanity checks passed.\"\n";
-		};
-		E17FE3C42E85EA64004E125D /* Lock manifest (pre-sign) */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(PROJECT_DIR)/tools/lock_manifest.rb",
-				"$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/WebRes/manifest.json",
-				"$(PROJECT_DIR)/ScreenActionsWebExtension/WebRes/manifest.json",
-				"$(PROJECT_DIR)/ScreenActionsWebExtension/WebRes/content_selection.js",
-			);
-			name = "Lock manifest (pre-sign)";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/locked_manifest.stamp",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -euo pipefail\n\n# Path to the packaged manifest inside the built .appex\nAPPLEX_DIR=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\"\nMANIFEST=\"${APPLEX_DIR}/WebRes/manifest.json\"\n\n# Guard: ensure the manifest exists at this point\nif [ ! -f \"$MANIFEST\" ]; then\n  echo \"ERROR: Packaged manifest not found at $MANIFEST\"\n  exit 1\nfi\n\n# Pin the manifest (forces <all_urls> + content script) before signing\nruby \"${PROJECT_DIR}/tools/lock_manifest.rb\" \"$MANIFEST\"\n\n# Quick smoke print (first ~80 lines) so you can see changes in Xcode logs\necho \"----- PACKAGED manifest.json (head) -----\"\nsed -n '1,80p' \"$MANIFEST\"\necho \"----------------------------------------\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

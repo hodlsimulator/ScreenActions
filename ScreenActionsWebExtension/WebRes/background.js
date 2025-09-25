@@ -1,40 +1,47 @@
-// background.js — cache page context; queue native calls; robust native messaging.
+// background.js — caches selection per-tab and bridges to native.
+// Fixes "Empty native reply" by supporting both Promise and callback
+// forms of runtime.sendNativeMessage used by Safari on iOS.
 
 (() => {
   'use strict';
 
-  const RT =
-    (typeof chrome !== 'undefined' && chrome.runtime) ? chrome.runtime :
-    (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime :
-    undefined;
+  const RT = (typeof chrome !== 'undefined' && chrome.runtime)
+    ? chrome.runtime
+    : (typeof browser !== 'undefined' && browser.runtime)
+      ? browser.runtime
+      : undefined;
 
-  const TABS =
-    (typeof chrome !== 'undefined' && chrome.tabs) ? chrome.tabs :
-    (typeof browser !== 'undefined' && browser.tabs) ? browser.tabs :
-    undefined;
+  const TABS = (typeof chrome !== 'undefined' && chrome.tabs)
+    ? chrome.tabs
+    : (typeof browser !== 'undefined' && browser.tabs)
+      ? browser.tabs
+      : undefined;
 
   if (!RT) return;
 
-  // ---- Per-tab context ------------------------------------------------------
+  // ---------- Per-tab page context ----------
   // tabId -> { selection, title, url, structured?, ts }
   const selStore = new Map();
 
   function setCtxFromSender(sender, payload) {
     const tabId = sender?.tab?.id;
     if (typeof tabId !== 'number') return { ok: false, message: 'No tab.' };
-    const selection  = String(payload?.selection || '').trim();
-    const title      = String(payload?.title || '');
-    const url        = String(payload?.url || '');
-    const structured = (payload && typeof payload.structured === 'object') ? payload.structured : undefined;
+    const selection = String(payload?.selection || '').trim();
+    const title = String(payload?.title || '');
+    const url = String(payload?.url || '');
+    const structured =
+      (payload && typeof payload.structured === 'object') ? payload.structured : undefined;
+
     selStore.set(tabId, { selection, title, url, structured, ts: Date.now() });
-    try { console.info('[BG] selUpdate', { tabId, selLen: selection.length }); } catch {}
     return { ok: true };
   }
 
   async function getActiveTabId() {
     if (!TABS?.query) return undefined;
-    try { const [tab] = await TABS.query({ active: true, currentWindow: true }); return tab?.id; }
-    catch { return undefined; }
+    try {
+      const [tab] = await TABS.query({ active: true, currentWindow: true });
+      return tab?.id;
+    } catch { return undefined; }
   }
 
   async function getCtx(tabIdMaybe) {
@@ -52,73 +59,84 @@
     };
   }
 
-  // ---- Native bridge (queued) ----------------------------------------------
+  // ---------- Native bridge (queued) ----------
   const TIMEOUT_MS = 8000;
-  const HOST_HINT = '';
   const queue = [];
   let inFlight = false;
 
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const deepClone = (v) => { try { return JSON.parse(JSON.stringify(v ?? null)); } catch { return null; } };
-
-  function withTimeout(promise, ms, tag = 'native') {
-    let t; const killer = new Promise((_, rej) => { t = setTimeout(() => rej(new Error(`${tag} timeout`)), ms); });
-    return Promise.race([promise, killer]).finally(() => clearTimeout(t));
-  }
+  const clone = (v) => { try { return JSON.parse(JSON.stringify(v ?? null)); } catch { return null; } };
+  const isThenable = (x) => !!x && (typeof x === 'object' || typeof x === 'function') && typeof x.then === 'function';
 
   async function sendNativeRaw(message) {
-    const msg = deepClone(message) || {};
-    const fn = RT.sendNativeMessage;
-    if (typeof fn !== 'function') throw new Error('sendNativeMessage not available.');
+    const RTN = RT && RT.sendNativeMessage;
+    if (typeof RTN !== 'function') throw new Error('sendNativeMessage not available');
 
-    // Promise forms
-    try { return await fn(msg); }                           // (msg)
-    catch (e1) {
-      try { return await fn(HOST_HINT, msg); }              // ('', msg)
-      catch (e2) {
-        // 2-arg callback: (msg, cb)
-        if (fn.length >= 2) {
-          try {
-            const r2 = await new Promise((resolve, reject) => {
-              try {
-                fn(msg, (res) => {
-                  const le = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) ? chrome.runtime.lastError : null;
-                  if (le) reject(new Error(le.message || 'Native callback error.'));
-                  else resolve(res);
-                });
-              } catch (e) { reject(e); }
-            });
-            return r2;
-          } catch {}
-        }
-        // 3-arg callback: ('', msg, cb)
-        if (fn.length >= 3) {
-          const r3 = await new Promise((resolve, reject) => {
-            try {
-              fn(HOST_HINT, msg, (res) => {
-                const le = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) ? chrome.runtime.lastError : null;
-                if (le) reject(new Error(le.message || 'Native callback error.'));
-                else resolve(res);
-              });
-            } catch (e) { reject(e); }
+    const msg = clone(message) || {};
+
+    // Attempt 1: Promise, 1-arg (Safari sometimes supports this)
+    try {
+      const r = RTN(msg);
+      if (isThenable(r)) return await r;
+    } catch (_) {}
+
+    // Attempt 2: Promise, 2-arg with host hint (some WebKit builds accept this)
+    try {
+      const r = RTN('', msg);
+      if (isThenable(r)) return await r;
+    } catch (_) {}
+
+    // Attempt 3: Callback, 2-arg (msg, cb)
+    try {
+      return await new Promise((resolve, reject) => {
+        try {
+          RTN(msg, (res) => {
+            const le = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError)
+              ? chrome.runtime.lastError : null;
+            if (le) reject(new Error(le.message || 'Native callback error'));
+            else resolve(res);
           });
-          return r3;
-        }
-        throw (e2 || e1);
-      }
-    }
+        } catch (e) { reject(e); }
+      });
+    } catch (_) {}
+
+    // Attempt 4: Callback, 3-arg ('', msg, cb)
+    try {
+      return await new Promise((resolve, reject) => {
+        try {
+          RTN('', msg, (res) => {
+            const le = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError)
+              ? chrome.runtime.lastError : null;
+            if (le) reject(new Error(le.message || 'Native callback error'));
+            else resolve(res);
+          });
+        } catch (e) { reject(e); }
+      });
+    } catch (_) {}
+
+    throw new Error('Native bridge unavailable (sendNativeMessage did not resolve)');
+  }
+
+  function withTimeout(promise, ms, tag = 'native') {
+    let t;
+    const killer = new Promise((_, rej) => { t = setTimeout(() => rej(new Error(`${tag} timeout`)), ms); });
+    return Promise.race([promise, killer]).finally(() => clearTimeout(t));
   }
 
   async function runQueue() {
     if (inFlight) return;
-    const job = queue.shift(); if (!job) return;
+    const job = queue.shift();
+    if (!job) return;
     inFlight = true;
     try {
       const res = await withTimeout(sendNativeRaw(job.message), TIMEOUT_MS, 'native');
-      try { console.info('[BG] native reply', job.message?.action, res); } catch {}
-      job.resolve(res);
+      job.resolve(
+        (res && typeof res === 'object' && ('ok' in res))
+          ? res
+          : { ok: false, message: 'Empty native reply.' }
+      );
     } catch (e) {
-      job.reject(e);
+      job.resolve({ ok: false, message: (e && e.message) || 'Native bridge error.' });
     } finally {
       inFlight = false;
       await sleep(0);
@@ -127,44 +145,36 @@
   }
 
   function enqueueNative(message) {
-    return new Promise((resolve) => {
-      const wrapped = {
-        message,
-        resolve: (value) => {
-          // Never auto-OK empties.
-          if (value && typeof value === 'object' && ('ok' in value)) resolve(value);
-          else resolve({ ok: false, message: 'Empty native reply.' });
-        },
-        reject:  (error) => {
-          const msg = (error && typeof error.message === 'string' && error.message) || 'Native bridge error.';
-          resolve({ ok: false, message: msg });
-        }
-      };
-      queue.push(wrapped);
-      void runQueue();
-    });
+    return new Promise((resolve) => { queue.push({ message, resolve }); void runQueue(); });
   }
 
-  // ---- Commands -------------------------------------------------------------
   async function handleCommand(request, sender) {
     if (!request || typeof request !== 'object') return { ok: false, message: 'Bad request.' };
     const cmd = String(request.cmd || '');
 
-    if (cmd === 'selUpdate') return setCtxFromSender(sender, request.payload || {});
+    if (cmd === 'selUpdate')  return setCtxFromSender(sender, request.payload || {});
     if (cmd === 'getPageCtx') {
       const tabId = (typeof request.tabId === 'number') ? request.tabId : sender?.tab?.id;
       return await getCtx(tabId);
     }
-    if (cmd === 'echo') return { ok: true };
-
     if (cmd === 'native') {
       const action = String(request.action || '');
-      const payload = deepClone(request.payload) || {};
+      const payload = clone(request.payload) || {};
       if (!action) return { ok: false, message: 'Missing action.' };
       return await enqueueNative({ action, payload });
     }
+    if (cmd === 'echo') return { ok: true };
+
     return { ok: false, message: 'Unknown command.' };
   }
 
-  RT.onMessage.addListener((request, sender) => handleCommand(request, sender));
+  // Safari-safe: reply via sendResponse and return true for async.
+  RT.onMessage.addListener((request, sender, sendResponse) => {
+    Promise.resolve(handleCommand(request, sender)).then((res) => {
+      // Ensure popup always gets a shaped reply
+      if (res && typeof res === 'object' && ('ok' in res)) { sendResponse(res); }
+      else { sendResponse({ ok: false, message: 'Empty native reply.' }); }
+    });
+    return true; // keep the channel open for async
+  });
 })();

@@ -1,116 +1,83 @@
-// Capture selection/title/url + lightweight JSON-LD (Event/Person) and stream to background.
-(() => {
-  const RT = (typeof chrome !== 'undefined' && chrome.runtime) ||
-             (typeof browser !== 'undefined' && browser.runtime);
+// Streams current selection/title/url (and light JSON-LD hints) to the background.
+// Runs on every page; no UI changes.
+
+(function () {
+  'use strict';
+
+  const RT = (typeof chrome !== 'undefined' && chrome.runtime)
+    ? chrome.runtime
+    : (typeof browser !== 'undefined' && browser.runtime)
+      ? browser.runtime
+      : undefined;
   if (!RT) return;
 
-  function textSel() {
-    try {
-      let s = (window.getSelection && String(window.getSelection())) || '';
-      if (!s && document.activeElement) {
-        const el = document.activeElement;
-        if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
-          const v = el.value || '';
-          if (typeof el.selectionStart === 'number' && typeof el.selectionEnd === 'number') {
-            s = v.substring(el.selectionStart, el.selectionEnd);
-          } else { s = v; }
-        }
-        if (el.isContentEditable) s = el.innerText || el.textContent || '';
-      }
-      s = s.replace(/\s+/g, ' ').trim();
-      if (!s) {
-        const meta = document.querySelector('meta[name="description"]');
-        s = (meta && meta.content) ? meta.content.trim() : '';
-      }
-      return s.slice(0, 4000);
-    } catch { return ''; }
-  }
-
-  function pageTitle() {
-    try {
-      const og = document.querySelector('meta[property="og:title"]');
-      return (og && og.content) ? og.content : (document.title || '');
-    } catch { return ''; }
-  }
-
-  function canonicalURL() {
-    try {
-      const link = document.querySelector('link[rel="canonical"]');
-      if (link && link.href) return link.href;
-      const og = document.querySelector('meta[property="og:url"]');
-      if (og && og.content) return og.content;
-      return (document.location && document.location.href) || '';
-    } catch { return ''; }
-  }
-
-  function parseJSONLD() {
+  function harvestStructured() {
     const out = {};
     try {
-      const nodes = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
-      for (const n of nodes) {
-        let json; try { json = JSON.parse(n.textContent || ''); } catch { continue; }
-        const items = Array.isArray(json) ? json : [json];
-        for (const item of items) {
-          const ty = item && item['@type'];
-          const types = Array.isArray(ty) ? ty.map(String) : [String(ty || '')];
-          if (types.includes('Event') && !out.event) {
-            const loc = item.location || {};
-            const addr = loc.address || {};
+      const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'));
+      for (const s of scripts) {
+        let data; try { data = JSON.parse(s.textContent || ''); } catch { continue; }
+        const arr = Array.isArray(data) ? data : [data];
+        for (const it of arr) {
+          const t = String(it['@type'] || it.type || '').toLowerCase();
+          if (!out.event && t.includes('event')) {
+            const loc = it.location || {};
+            let locationName = '';
+            let addr = null;
+            if (typeof loc === 'string') locationName = loc;
+            else if (loc && typeof loc === 'object') {
+              locationName = typeof loc.name === 'string' ? loc.name : '';
+              const a = loc.address || {};
+              addr = {
+                street: a.streetAddress || '',
+                city: a.addressLocality || a.locality || '',
+                state: a.addressRegion || a.region || '',
+                postalCode: a.postalCode || '',
+                country: a.addressCountry || ''
+              };
+            }
             out.event = {
-              name: item.name || '',
-              startDate: item.startDate || '',
-              endDate: item.endDate || '',
-              locationName: loc.name || '',
-              address: {
-                street: addr.streetAddress || '',
-                city: addr.addressLocality || '',
-                state: addr.addressRegion || '',
-                postalCode: addr.postalCode || '',
-                country: addr.addressCountry || ''
-              }
+              name: typeof it.name === 'string' ? it.name : '',
+              startDate: typeof it.startDate === 'string' ? it.startDate : '',
+              endDate: typeof it.endDate === 'string' ? it.endDate : '',
+              locationName,
+              address: addr
             };
           }
-          if ((types.includes('Person') || types.includes('Organization')) && !out.person) {
+          if (!out.person && (t.includes('person') || t.includes('organization'))) {
             out.person = {
-              name: item.name || '',
-              email: (Array.isArray(item.email) ? item.email[0] : item.email) || '',
-              telephone: (Array.isArray(item.telephone) ? item.telephone[0] : item.telephone) || ''
+              name: typeof it.name === 'string' ? it.name : '',
+              email: typeof it.email === 'string' ? it.email : '',
+              telephone: typeof it.telephone === 'string' ? it.telephone : ''
             };
           }
-          if (out.event && out.person) break;
         }
-        if (out.event && out.person) break;
       }
     } catch {}
-    return (out.event || out.person) ? out : undefined;
+    return out;
   }
 
-  let scheduled = false;
-  function push() {
-    if (scheduled) return;
-    scheduled = true;
-    setTimeout(() => {
-      scheduled = false;
-      try {
-        RT.sendMessage({
-          cmd: 'selUpdate',
-          payload: {
-            selection: textSel(),
-            title: pageTitle(),
-            url: canonicalURL(),
-            structured: parseJSONLD()
-          }
-        });
-        console.log('[SA] content_selection sent selUpdate');
-      } catch {}
-    }, 50);
+  function snapshot() {
+    const selection = String(window.getSelection?.().toString() || '').slice(0, 20000);
+    const title = document.title || '';
+    const url = location.href || '';
+    const structured = harvestStructured();
+    return { selection, title, url, structured };
   }
 
-  console.log('[SA] content_selection loaded on', location.href);
-  push();
-  document.addEventListener('selectionchange', push, { passive: true });
-  document.addEventListener('pointerup',        push, { passive: true });
-  document.addEventListener('keyup',            push, { passive: true });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) push(); }, { passive: true });
-  window.addEventListener('pagehide', push, { passive: true });
+  let lastSent = '';
+  function maybeSend(force = false) {
+    const snap = snapshot();
+    const key = `${snap.selection}\n${snap.title}\n${snap.url}`;
+    if (!force && key === lastSent) return;
+    lastSent = key;
+    RT.sendMessage({ cmd: 'selUpdate', payload: snap }).catch(() => {});
+  }
+
+  document.addEventListener('selectionchange', () => { maybeSend(false); }, { passive: true });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) maybeSend(true); }, { passive: true });
+  window.addEventListener('focus', () => { maybeSend(true); }, { passive: true });
+
+  // Initial push
+  maybeSend(true);
 })();
