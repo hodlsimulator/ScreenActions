@@ -1,80 +1,66 @@
-// background.js — robust Safari-native bridge; tries 1-arg, 2-arg, and callback forms.
-// Also caches per-tab selection so the popup can prefill editors.
+// background.js — Safari-safe native bridge; call from background only.
 (() => {
   'use strict';
 
-  const RT = (typeof browser !== 'undefined' && browser.runtime)
-    ? browser.runtime
-    : (typeof chrome  !== 'undefined' && chrome.runtime) ? chrome.runtime : undefined;
-
-  const TABS = (typeof browser !== 'undefined' && browser.tabs)
-    ? browser.tabs
-    : (typeof chrome  !== 'undefined' && chrome.tabs) ? chrome.tabs : undefined;
-
+  const RT = (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime
+           : (typeof chrome  !== 'undefined' && chrome.runtime ) ? chrome.runtime : undefined;
+  const TABS = (typeof browser !== 'undefined' && browser.tabs) ? browser.tabs
+           : (typeof chrome  !== 'undefined' && chrome.tabs  ) ? chrome.tabs  : undefined;
   if (!RT) return;
 
-  // ---------- Per-tab selection cache ----------
-  const selStore = new Map();
-  function setCtxFromSender(sender, payload) {
+  // -------- per-tab context cache --------
+  const sel = new Map();
+  function setCtx(sender, payload) {
     const tabId = sender?.tab?.id;
     if (typeof tabId !== 'number') return { ok:false, message:'No tab.' };
     const selection = String(payload?.selection || '').trim();
-    const title     = String(payload?.title || '');
-    const url       = String(payload?.url || '');
-    const structured= (payload && typeof payload.structured === 'object') ? payload.structured : undefined;
-    selStore.set(tabId, { selection, title, url, structured, ts: Date.now() });
+    const title = String(payload?.title || '');
+    const url = String(payload?.url || '');
+    const structured = (payload && typeof payload.structured === 'object') ? payload.structured : undefined;
+    sel.set(tabId, { selection, title, url, structured, ts: Date.now() });
     return { ok:true };
   }
-  async function getActiveTabId(){ if(!TABS?.query) return undefined; try{ const [tab]=await TABS.query({active:true,currentWindow:true}); return tab?.id; }catch{ return undefined; } }
+  async function activeTabId(){ try{ const [t]=await TABS?.query?.({active:true,currentWindow:true})||[]; return t?.id; }catch{ return undefined; } }
   async function getCtx(tabIdMaybe){
-    let tabId = tabIdMaybe; if (typeof tabId !== 'number') tabId = await getActiveTabId();
-    const ctx = (typeof tabId === 'number') ? selStore.get(tabId) : undefined;
-    return { ok:true, ctx: { selection: ctx?.selection || '', title: ctx?.title || '', url: ctx?.url || '', structured: ctx?.structured || undefined } };
+    let id = tabIdMaybe; if (typeof id !== 'number') id = await activeTabId();
+    const c = (typeof id === 'number') ? sel.get(id) : undefined;
+    return { ok:true, ctx: { selection:c?.selection||'', title:c?.title||'', url:c?.url||'', structured:c?.structured||undefined } };
   }
 
-  // ---------- Native bridge ----------
-  const TIMEOUT_MS = 15000;
-  const withTimeout = (p,ms)=>new Promise((res,rej)=>{
-    const t=setTimeout(()=>rej(new Error('native timeout')),ms);
-    Promise.resolve(p).then(v=>{clearTimeout(t);res(v)}).catch(e=>{clearTimeout(t);rej(e)});
-  });
+  // -------- native bridge (Safari one-arg first; then fallbacks) --------
+  const TIMEOUT = 15000;
+  const withTimeout = (p,ms)=>new Promise((res,rej)=>{ const t=setTimeout(()=>rej(new Error('native timeout')),ms); Promise.resolve(p).then(v=>{clearTimeout(t);res(v)}).catch(e=>{clearTimeout(t);rej(e)}); });
 
   function getNativeFn(){
     if (typeof browser !== 'undefined' && browser.runtime && typeof browser.runtime.sendNativeMessage === 'function')
       return browser.runtime.sendNativeMessage.bind(browser.runtime);
-    if (typeof chrome  !== 'undefined' && chrome.runtime  && typeof chrome.runtime.sendNativeMessage  === 'function')
+    if (typeof chrome !== 'undefined' && chrome.runtime && typeof chrome.runtime.sendNativeMessage === 'function')
       return chrome.runtime.sendNativeMessage.bind(chrome.runtime);
     return null;
   }
 
   async function sendNative(message){
-    // Deep-clone to ensure JSON-serialisable payload
-    let msg; try { msg = JSON.parse(JSON.stringify(message || {})); } catch { msg = {}; }
-    const f = getNativeFn();
-    if (!f) throw new Error('sendNativeMessage not available');
+    let msg; try { msg = JSON.parse(JSON.stringify(message||{})); } catch { msg = {}; }
+    const f = getNativeFn(); if (!f) throw new Error('sendNativeMessage not available');
 
-    // 1) Promise, 1 arg
-    try { const r=f(msg); if (r?.then) return await withTimeout(r, TIMEOUT_MS); } catch {}
-    // 2) Promise, 2 args (empty host)
-    try { const r=f('', msg); if (r?.then) return await withTimeout(r, TIMEOUT_MS); } catch {}
-    // 3) Callback, 1 arg
-    try { return await withTimeout(new Promise((res,rej)=>{ try { f(msg,(out)=>{ const le=chrome?.runtime?.lastError; if(le) rej(new Error(le.message||'Native cb error')); else res(out); }); } catch(e){ rej(e);} }), TIMEOUT_MS); } catch {}
-    // 4) Callback, 2 args (empty host)
-    try { return await withTimeout(new Promise((res,rej)=>{ try { f('',msg,(out)=>{ const le=chrome?.runtime?.lastError; if(le) rej(new Error(le.message||'Native cb error')); else res(out); }); } catch(e){ rej(e);} }), TIMEOUT_MS); } catch {}
+    // 1) Promise, one-arg (Safari path)
+    try { const r=f(msg); if (r?.then) return await withTimeout(r, TIMEOUT); } catch {}
+
+    // 2) Callback, one-arg (some iOS builds expose only callback)
+    try { return await withTimeout(new Promise((res,rej)=>{ try { f(msg,(out)=>{ const le=chrome?.runtime?.lastError; if(le) rej(new Error(le.message||'Native error')); else res(out); }); } catch(e){ rej(e);} }), TIMEOUT); } catch {}
+
+    // 3) Two-arg with empty host (Chrome-style)
+    try { const r=f('', msg); if (r?.then) return await withTimeout(r, TIMEOUT); } catch {}
+    try { return await withTimeout(new Promise((res,rej)=>{ try { f('',msg,(out)=>{ const le=chrome?.runtime?.lastError; if(le) rej(new Error(le.message||'Native error')); else res(out); }); } catch(e){ rej(e);} }), TIMEOUT); } catch {}
 
     throw new Error('Invalid call to sendNativeMessage');
   }
 
-  // ---------- Router ----------
-  async function handleCommand(request, sender) {
-    if (!request || typeof request !== 'object') return { ok:false, message:'Bad request.' };
-    const cmd = String(request.cmd || '');
-
-    if (cmd === 'selUpdate') return setCtxFromSender(sender, request.payload || {});
-    if (cmd === 'getPageCtx') {
-      const tabId = (typeof request.tabId === 'number') ? request.tabId : sender?.tab?.id;
-      return await getCtx(tabId);
-    }
+  // -------- router --------
+  async function handle(request, sender) {
+    const cmd = String(request?.cmd || '');
+    if (cmd === 'selUpdate') return setCtx(sender, request.payload || {});
+    if (cmd === 'getPageCtx') return await getCtx((typeof request.tabId==='number')?request.tabId:sender?.tab?.id);
     if (cmd === 'native') {
       const action  = String(request.action  || '');
       const payload = (request.payload && typeof request.payload === 'object') ? request.payload : {};
@@ -90,8 +76,5 @@
     return { ok:false, message:'Unknown command.' };
   }
 
-  RT.onMessage.addListener((request, sender, sendResponse) => {
-    Promise.resolve(handleCommand(request, sender)).then(sendResponse);
-    return true; // keep channel open
-  });
+  RT.onMessage.addListener((req, sender, sendResponse) => { Promise.resolve(handle(req, sender)).then(sendResponse); return true; });
 })();
