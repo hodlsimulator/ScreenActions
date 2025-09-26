@@ -1,7 +1,7 @@
 /* popup.css — iOS-like styling for the web extension sheet */
 
 :root{
-  --radius-card:12px;
+  --radius-card:16px;
   --radius-field:12px;
   --pad:16px;
   --pill-h:56px;
@@ -12,11 +12,11 @@
 
   /* Light */
   --bg:#ffffff;
-  --card:#f2f2f7;   /* secondarySystemBackground (light) */
-  --hair:#d2d2d7;   /* separator (light) */
-  --accent:#0a84ff; /* systemBlue */
-  --ok:#34c759;     /* systemGreen */
-  --err:#ff3b30;
+  --card:#f2f2f7;    /* secondarySystemBackground (light) */
+  --hair:#d2d2d7;    /* separator (light) */
+  --accent:#0a84ff;  /* systemBlue */
+  --ok:#34c759;      /* systemGreen */
+  --err:#ff3b30;     /* systemRed */
 
   font:-apple-system-body;
 }
@@ -26,9 +26,9 @@
     --text:#e9eaed;
     --sub:#a2a6ad;
 
-    --bg:#1c1c1e;   /* systemBackground (dark) */
-    --card:#2c2c2e; /* secondarySystemBackground (dark) */
-    --hair:#3a3a3c; /* separator (dark) */
+    --bg:#1c1c1e;    /* systemBackground (dark) */
+    --card:#2c2c2e;  /* secondarySystemBackground (dark) */
+    --hair:#3a3a3c;  /* separator (dark) */
   }
 }
 
@@ -47,28 +47,8 @@ html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); }
 .mono{ font-family:ui-monospace,Menlo,Consolas,monospace; white-space:pre-wrap; }
 pre{ white-space:pre-wrap; word-break:break-word; }
 
-/* ── Toolbar is hidden; Safari provides chrome. Keep elements for IDs. ── */
+/* Toolbar is hidden; Safari provides chrome */
 .toolbar, .toolbar-title{ display:none !important; }
-#navCancel{ display:none !important; } /* no top cancel */
-
-/* Floating round tick */
-.floating-confirm{
-  position:fixed;
-  top:calc(env(safe-area-inset-top) + 8px);
-  right:12px;
-  width:44px;
-  height:44px;
-  display:none; /* shown only on Reminder */
-  align-items:center;
-  justify-content:center;
-  border:none;
-  border-radius:999px;
-  background:var(--accent);
-  color:#fff;
-  font-weight:800;
-  font-size:22px;
-  z-index:999;
-}
 
 /* Views */
 .view{ display:none; padding:0 var(--pad) var(--pad) var(--pad); }
@@ -125,7 +105,7 @@ pre{ white-space:pre-wrap; word-break:break-word; }
   color:#fff; border:none;
 }
 
-/* Form rows */
+/* Generic form rows (Event/Contact use these) */
 .form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
 .form-row.split > *{ flex:1; }
 .form-row .grow{ flex:1; }
@@ -134,7 +114,7 @@ input[type="text"],
 input[type="number"],
 input[type="datetime-local"],
 textarea{
-  appearance:none;
+  appearance:none; -webkit-appearance:none;
   width:100%;
   background:var(--card);
   color:var(--text);
@@ -143,12 +123,64 @@ textarea{
   padding:12px 14px;
 }
 
-/* Make Notes comfy size */
+/* ---------------- REMINDER CARD (Share-sheet style) ---------------- */
+
+.card{
+  background:var(--card);
+  border:1px solid var(--hair);
+  border-radius:20px;
+  overflow:hidden;      /* clip separators */
+}
+
+/* each row inside the card */
+.card .row{
+  display:flex; align-items:center; gap:12px;
+  padding:14px 14px;
+  min-height:52px;
+  border-top:1px solid var(--hair);
+}
+.card .row:first-child{ border-top:none; }
+
+/* plain title/labels to match iOS */
+.field-plain{
+  flex:1;
+  background:transparent;
+  border:none;
+  padding:4px 2px;
+  font-size:17px;
+  line-height:22px;
+  color:var(--text);
+}
+.field-plain::placeholder{ color:var(--sub); }
+
+.label-plain{
+  font-size:17px;
+  color:var(--text);
+}
+
+/* right-side "chips" (date + time) */
+.chip-row{ display:flex; gap:10px; }
+.chip-input{
+  -webkit-appearance:none; appearance:none;
+  background:color-mix(in oklab, var(--bg) 50%, var(--card) 50%);
+  border:1px solid var(--hair);
+  border-radius:18px;
+  padding:8px 12px;
+  height:36px;
+  line-height:20px;
+  color:var(--text);
+  font-size:16px;
+}
+.chip-input::-webkit-calendar-picker-indicator{
+  filter:opacity(.7);
+}
+
+/* Notes — comfy size */
 #remNotes{
   min-height:140px;
   line-height:1.35;
   font-size:16px;
-  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "SF Pro Text", system-ui, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
   resize:vertical;
 }
 
@@ -158,16 +190,19 @@ textarea{
 .status.err{ color:var(--err); }
 
 /* Footer rows */
-.button-row{ display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+.button-row{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
 .button-row.left{ justify-content:flex-start; }
 .button-row.center{ justify-content:center; }
 
-/* Contact list rows */
-.list .row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-.list .row input{ flex:1; }
-.list .row button{
-  border:none; background:color-mix(in oklab, var(--card) 98%, transparent);
-  color:var(--text); border-radius:8px; padding:6px 10px; cursor:pointer;
+/* Bigger Cancel (capsule) */
+.btn-capsule{
+  height:44px; min-width:140px;
+  padding:0 18px;
+  border-radius:9999px;
+  border:1px solid var(--hair);
+  background:color-mix(in oklab, var(--card) 98%, transparent);
+  color:var(--text);
+  font-weight:600;
 }
 
 /* iOS-style switch */

@@ -1,5 +1,6 @@
-// popup.js — full-sheet popup; Reminder editor matches Share sheet.
-// Round tick (top-right) saves; bottom-centre Cancel returns to Home.
+// popup.js — Reminder editor matches the Share sheet.
+// Safari supplies the top-right tick; we just provide an onSave handler.
+// Bottom-centre Cancel returns to Home (acts like Back).
 
 (() => {
   'use strict';
@@ -11,12 +12,6 @@
 
   const $  = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-
-  // Close the whole popup if the (hidden) top Cancel is ever tapped.
-  const navCancel = $('#navCancel');
-  if (navCancel) {
-    navCancel.addEventListener('click', () => { try { window.close(); } catch {} });
-  }
 
   // ----- Messaging
   function send(req){
@@ -40,9 +35,6 @@
   // ----- UI helpers
   function show(id){
     $$('.view').forEach(v => v.classList.toggle('active', v.id === id));
-    // Only show floating tick on the Reminder editor.
-    const showTick = (id === 'reminder');
-    $('#navConfirm').style.display = showTick ? 'flex' : 'none';
   }
   function setStatus(sel, msg, ok){
     const el = (typeof sel === 'string') ? $(sel) : sel;
@@ -52,16 +44,21 @@
   }
 
   const pad = n => String(n).padStart(2,'0');
-  const isoToLocal = (iso) => {
-    if (!iso) return '';
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return '';
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+  // ISO <-> local helpers
+  const isoToLocalParts = (iso) => {
+    if (!iso) return { d:'', t:'' };
+    const dt = new Date(iso);
+    if (isNaN(dt.getTime())) return { d:'', t:'' };
+    const d = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
+    const t = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    return { d, t };
   };
-  const localToISO = (s) => {
-    if (!s) return null;
-    const d = new Date(s);
-    return isNaN(d.getTime()) ? null : d.toISOString();
+  const localPartsToISO = (d, t) => {
+    if (!d) return null;
+    const hhmm = (t && /^\d{2}:\d{2}$/.test(t)) ? t : '09:00';
+    const iso = new Date(`${d}T${hhmm}`);
+    return isNaN(iso.getTime()) ? null : iso.toISOString();
   };
 
   // ----- Contact list helpers
@@ -93,25 +90,32 @@
   // Present Reminder (shared by openReminder + AutoDetect route)
   function presentReminder(fields){
     $('#remTitle').value = fields.title || '';
+
     $('#remHasDue').checked = !!fields.hasDue;
-    $('#remDue').disabled = !$('#remHasDue').checked;
     $('#remDueRow').style.display = $('#remHasDue').checked ? '' : 'none';
-    $('#remDue').value = fields.dueISO ? isoToLocal(fields.dueISO) : '';
+
+    const parts = isoToLocalParts(fields.dueISO);
+    $('#remDueDate').value = parts.d;
+    $('#remDueTime').value = parts.t;
+
     $('#remNotes').value = fields.notes || '';
 
     $('#navTitle').textContent = 'New Reminder';
     show('reminder');
 
     onSave = async () => {
+      const hasDue = !!$('#remHasDue').checked;
+      const dueISO = hasDue ? localPartsToISO($('#remDueDate').value, $('#remDueTime').value) : null;
+
       const payload = {
         title:  $('#remTitle').value,
-        hasDue: $('#remHasDue').checked,
-        dueISO: $('#remHasDue').checked ? localToISO($('#remDue').value) : null,
+        hasDue,
+        dueISO,
         notes:  $('#remNotes').value
       };
+
       const res = await native('saveReminder', { fields: payload });
       if (res?.ok){
-        // show confirmation on Home, like Share sheet
         setStatus('#statusHome', res?.message || 'Reminder created.', true);
         showHome();
       } else {
@@ -131,8 +135,8 @@
 
   function fillEventFields(fields){
     $('#evTitle').value = fields.title || '';
-    $('#evStart').value = fields.startISO ? isoToLocal(fields.startISO) : '';
-    $('#evEnd').value   = fields.endISO   ? isoToLocal(fields.endISO)   : '';
+    $('#evStart').value = fields.startISO ? isoToLocalParts(fields.startISO).d + 'T' + isoToLocalParts(fields.startISO).t : '';
+    $('#evEnd').value   = fields.endISO   ? isoToLocalParts(fields.endISO).d   + 'T' + isoToLocalParts(fields.endISO).t   : '';
     $('#evLocation').value = fields.location || '';
     $('#evInferTZ').checked = !!fields.inferTZ;
     $('#evAlert').value = (fields.alertMinutes != null) ? String(fields.alertMinutes) : '';
@@ -141,8 +145,8 @@
   async function saveEventWithNotes(notes){
     const fields = {
       title: $('#evTitle').value,
-      startISO: localToISO($('#evStart').value),
-      endISO:   localToISO($('#evEnd').value),
+      startISO: $('#evStart').value ? new Date($('#evStart').value).toISOString() : null,
+      endISO:   $('#evEnd').value   ? new Date($('#evEnd').value).toISOString()   : null,
       location: $('#evLocation').value,
       inferTZ:  $('#evInferTZ').checked,
       alertMinutes: parseInt($('#evAlert').value || '0', 10) || 0,
@@ -155,10 +159,7 @@
 
   async function openEvent(){
     const out = await native('prepareEvent', {});
-    if (!out?.ok){
-      setStatus('#statusHome', out?.message || 'Failed.', false);
-      return;
-    }
+    if (!out?.ok){ setStatus('#statusHome', out?.message || 'Failed.', false); return; }
     fillEventFields(out.fields);
     $('#navTitle').textContent = 'New Event';
     show('event');
@@ -167,14 +168,14 @@
 
   async function openContact(){
     const out = await native('prepareContact', {});
-    if (!out?.ok){
-      setStatus('#statusHome', out?.message || 'Failed.', false);
-      return;
-    }
+    if (!out?.ok){ setStatus('#statusHome', out?.message || 'Failed.', false); return; }
+
     $('#ctGiven').value = out.fields.givenName || '';
     $('#ctFamily').value = out.fields.familyName || '';
+
     const emails = clearList('#emails'); (out.fields.emails || ['']).forEach(v => addListRow(emails, v));
     const phones = clearList('#phones'); (out.fields.phones || ['']).forEach(v => addListRow(phones, v));
+
     $('#ctStreet').value = out.fields.street || '';
     $('#ctCity').value = out.fields.city || '';
     $('#ctState').value = out.fields.state || '';
@@ -183,6 +184,7 @@
 
     $('#navTitle').textContent = 'New Contact';
     show('contact');
+
     onSave = async () => {
       const fields = {
         givenName: $('#ctGiven').value,
@@ -204,8 +206,10 @@
     const out = await native('prepareReceiptCSV', {});
     if (out?.ok) $('#csvOut').textContent = out.csv || '';
     else setStatus('#statusHome', out?.message || 'Failed.', false);
+
     $('#navTitle').textContent = 'Receipt → CSV';
     show('csv');
+
     onSave = async () => {
       const res = await native('exportReceiptCSV', { csv: $('#csvOut').textContent || '' });
       setStatus('#statusCSV', res?.message || (res?.ok ? 'Exported.' : ''), !!res?.ok);
@@ -216,10 +220,7 @@
   // Auto Detect
   async function openAuto(){
     const out = await native('prepareAutoDetect', {});
-    if (!out?.ok){
-      setStatus('#statusHome', out?.message || 'Failed.', false);
-      return;
-    }
+    if (!out?.ok){ setStatus('#statusHome', out?.message || 'Failed.', false); return; }
     switch (out.route) {
       case 'event':
         fillEventFields(out.fields);
@@ -273,22 +274,16 @@
 
   // Wire up
   document.addEventListener('DOMContentLoaded', () => {
-    // Reminder toggle row & due input
+    // Reminder toggle → show/hide Due row
     $('#remHasDue').addEventListener('change', (e) => {
       const on = !!e.target.checked;
-      $('#remDue').disabled = !on;
       $('#remDueRow').style.display = on ? '' : 'none';
     });
 
-    // Reminder bottom Cancel (acts like the old Back)
+    // Bottom Cancel (acts like Back)
     $('#cancelReminder').addEventListener('click', () => {
       show('home');
       setStatus('#statusReminder','');
-    });
-
-    // Top-right round tick (save current editor if Reminder is visible)
-    $('#navConfirm').addEventListener('click', () => {
-      if ($('#reminder').classList.contains('active')) onSave && onSave();
     });
 
     // Event/Contact/CSV existing buttons (unchanged)
@@ -305,6 +300,16 @@
     $('#btnEvent').addEventListener('click', openEvent);
     $('#btnContact').addEventListener('click', openContact);
     $('#btnCSV').addEventListener('click', openCSV);
+
+    // Expose onSave for Safari’s native tick if you dispatch to the page from background.
+    // Use: window.postMessage({type:'SA_TICK'}, '*') → we listen below.
+    window.__saOnSave = () => onSave && onSave();
+
+    window.addEventListener('message', (e) => {
+      try{
+        if (e && e.data && e.data.type === 'SA_TICK') { onSave && onSave(); }
+      }catch{}
+    });
 
     // Start on Home
     showHome();
