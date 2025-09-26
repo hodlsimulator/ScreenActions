@@ -200,6 +200,7 @@
 		E17FE5922E862D38004E125D /* fix_webext_cycle.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = fix_webext_cycle.rb; sourceTree = "<group>"; };
 		E17FE6772E862E72004E125D /* pbx_kill_webext_cycle.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pbx_kill_webext_cycle.rb; sourceTree = "<group>"; };
 		E17FE6782E862F07004E125D /* pbx_kill_webext_cycle_simple.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pbx_kill_webext_cycle_simple.rb; sourceTree = "<group>"; };
+		E17FEBD72E864CCB004E125D /* add_content_selection_to_root_phase.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = add_content_selection_to_root_phase.rb; sourceTree = "<group>"; };
 		E183E1352E75ABC700E8D263 /* Screen Actions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen Actions.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsControlsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1492E75ACF400E8D263 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -391,8 +392,6 @@
 		};
 		E1F941812E8389E400276157 /* Screen Actions (macOS) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = "Screen Actions (macOS)";
 			sourceTree = "<group>";
 		};
@@ -473,6 +472,7 @@
 				E17FE5922E862D38004E125D /* fix_webext_cycle.rb */,
 				E17FE6772E862E72004E125D /* pbx_kill_webext_cycle.rb */,
 				E17FE6782E862F07004E125D /* pbx_kill_webext_cycle_simple.rb */,
+				E17FEBD72E864CCB004E125D /* add_content_selection_to_root_phase.rb */,
 				E17FE5902E86291D004E125D /* verify_packaged_manifest_readonly.zsh */,
 				E1F918682E82154C00276157 /* verify_packaged_webext.zsh */,
 				E1F912722E81ED5100276157 /* install_appstore_profiles_from_dir.zsh */,
