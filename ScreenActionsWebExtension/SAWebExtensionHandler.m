@@ -16,9 +16,10 @@
 @end
 
 @implementation SAWebExtensionHandler
-- (void)beginRequestWithExtensionContext:(NSExtensionContext *)context
-{
+
+- (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
     SafariWebExtensionHandler *swiftHandler = [SafariWebExtensionHandler new];
     [swiftHandler beginRequestWithExtensionContext:context];
 }
+
 @end
