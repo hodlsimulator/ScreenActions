@@ -4,11 +4,14 @@
 //
 //  Created by . . on 9/22/25.
 //
+// SAWebBridge.swift — popup parsing + saves + haptics
+// 
 
 import Foundation
 import os
 import Contacts
 import EventKit
+import UIKit
 @preconcurrency import MapKit
 
 @objc(SAWebBridge)
@@ -16,7 +19,7 @@ import EventKit
 final class SAWebBridge: NSObject {
     static let log = Logger(subsystem: "com.conornolan.Screen-Actions.WebExtension", category: "native")
 
-    /// Entry point called by the Obj-C principal
+    // Entry called by the Obj-C principal → SafariWebExtensionHandler
     @objc
     class func handle(_ action: String, payload: [String: Any], completion: @escaping ([String: Any]) -> Void) {
         Task { @MainActor in
@@ -34,7 +37,7 @@ final class SAWebBridge: NSObject {
     // MARK: - Router
 
     private class func route(action: String, payload: [String: Any]) async throws -> [String: Any] {
-        // Normalise selection/title/url like share extension
+        // Normalise selection/title/url like the share extension
         let selection = (payload["selection"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let title     = (payload["title"] as? String) ?? ""
         let url       = (payload["url"] as? String) ?? ""
@@ -45,44 +48,46 @@ final class SAWebBridge: NSObject {
         text = text.trimmingCharacters(in: .whitespacesAndNewlines)
 
         switch action {
-
         // ---- Prefill (parse) ----
-        case "prepareEvent":
-            return try await prepareEvent(from: text)
-        case "prepareReminder":
-            return try await prepareReminder(from: text)
-        case "prepareContact":
-            return try await prepareContact(from: text)
-        case "prepareReceiptCSV":
-            return try await prepareReceiptCSV(from: text)
-        case "prepareAutoDetect":
-            return try await prepareAutoDetect(from: text)
+        case "prepareEvent":       return try await prepareEvent(from: text)
+        case "prepareReminder":    return try await prepareReminder(from: text)
+        case "prepareContact":     return try await prepareContact(from: text)
+        case "prepareReceiptCSV":  return try await prepareReceiptCSV(from: text)
+        case "prepareAutoDetect":  return try await prepareAutoDetect(from: text)
 
         // ---- Saves / export ----
-        case "saveEvent":
-            return try await saveEvent(fields: (payload["fields"] as? [String: Any]) ?? [:])
-        case "saveReminder":
-            return try await saveReminder(fields: (payload["fields"] as? [String: Any]) ?? [:])
-        case "saveContact":
-            return try await saveContact(fields: (payload["fields"] as? [String: Any]) ?? [:])
-        case "exportReceiptCSV":
-            return try await exportReceiptCSV(csv: (payload["csv"] as? String) ?? "")
+        case "saveEvent":          return try await saveEvent(fields: (payload["fields"] as? [String: Any]) ?? [:])
+        case "saveReminder":       return try await saveReminder(fields: (payload["fields"] as? [String: Any]) ?? [:])
+        case "saveContact":        return try await saveContact(fields: (payload["fields"] as? [String: Any]) ?? [:])
+        case "exportReceiptCSV":   return try await exportReceiptCSV(csv: (payload["csv"] as? String) ?? "")
 
-        // ---- Legacy handoff actions (kept for compatibility) ----
+        // ---- Haptics ----
+        case "hapticSuccess":
+            let gen = UINotificationFeedbackGenerator()
+            gen.prepare()
+            gen.notificationOccurred(.success)
+            return ["ok": true]
+
+        // ---- Ping / legacy handoff (kept for compatibility) ----
         case "ping":
             return ["ok": true, "message": "pong"]
+
         case "addEvent":
             Handoff.save(text: text, kind: .event)
             return ["ok": true, "openURL": "screenactions://handoff?kind=event"]
+
         case "createReminder":
             Handoff.save(text: text, kind: .reminder)
             return ["ok": true, "openURL": "screenactions://handoff?kind=reminder"]
+
         case "extractContact":
             Handoff.save(text: text, kind: .contact)
             return ["ok": true, "openURL": "screenactions://handoff?kind=contact"]
+
         case "receiptCSV":
             Handoff.save(text: text, kind: .csv)
             return ["ok": true, "openURL": "screenactions://handoff?kind=csv"]
+
         case "autoDetect":
             let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !t.isEmpty else { return ["ok": false, "message": "No text selected."] }
@@ -94,7 +99,7 @@ final class SAWebBridge: NSObject {
         }
     }
 
-    // MARK: - Prefill implementations
+    // MARK: - Prefill (parsing)
 
     private class func prepareEvent(from text: String) async throws -> [String: Any] {
         guard !text.isEmpty else { return ["ok": false, "message": "No text selected."] }
@@ -128,11 +133,9 @@ final class SAWebBridge: NSObject {
 
     private class func prepareReminder(from text: String) async throws -> [String: Any] {
         guard !text.isEmpty else { return ["ok": false, "message": "No text selected."] }
-
         let firstLine = firstNonEmptyLine(text) ?? ""
         let title     = firstLine.isEmpty ? "Todo" : trunc(firstLine, max: 64)
         let due       = DateParser.firstDateRange(in: text)?.start
-
         let fields: [String: Any] = [
             "title": title,
             "hasDue": due != nil,
@@ -144,10 +147,8 @@ final class SAWebBridge: NSObject {
 
     private class func prepareContact(from text: String) async throws -> [String: Any] {
         guard !text.isEmpty else { return ["ok": false, "message": "No text selected."] }
-
         let dc   = ContactParser.detect(in: text)
         let addr = dc.postalAddress
-
         let fields: [String: Any] = [
             "givenName": dc.givenName ?? "",
             "familyName": dc.familyName ?? "",
@@ -171,20 +172,13 @@ final class SAWebBridge: NSObject {
     private class func prepareAutoDetect(from text: String) async throws -> [String: Any] {
         guard !text.isEmpty else { return ["ok": false, "message": "No text selected."] }
         let decision = ActionRouter.route(text: text)
-
         switch decision.kind {
         case .event:
-            var out = try await prepareEvent(from: text)
-            out["route"] = "event"
-            return out
+            var out = try await prepareEvent(from: text);    out["route"] = "event";    return out
         case .reminder:
-            var out = try await prepareReminder(from: text)
-            out["route"] = "reminder"
-            return out
+            var out = try await prepareReminder(from: text); out["route"] = "reminder"; return out
         case .contact:
-            var out = try await prepareContact(from: text)
-            out["route"] = "contact"
-            return out
+            var out = try await prepareContact(from: text);  out["route"] = "contact";  return out
         case .receipt:
             let csv = CSVExporter.makeReceiptCSV(from: text)
             return ["ok": true, "route": "csv", "csv": csv]
@@ -231,7 +225,7 @@ final class SAWebBridge: NSObject {
     }
 
     private class func saveReminder(fields: [String: Any]) async throws -> [String: Any] {
-        let title = (fields["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Todo"
+        let title  = (fields["title"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Todo"
         let hasDue = (fields["hasDue"] as? Bool) ?? false
         let dueISO = fields["dueISO"] as? String
         let due    = hasDue ? parseISO(dueISO) : nil
@@ -273,7 +267,6 @@ final class SAWebBridge: NSObject {
     }
 
     private class func exportReceiptCSV(csv: String) async throws -> [String: Any] {
-        // Share quota with the app via App Group (extension is entitled)
         let isPro = (UserDefaults(suiteName: AppStorageService.appGroupID)?.bool(forKey: "iap.pro.active")) ?? false
         let gate  = QuotaManager.consume(feature: .receiptCSVExport, isPro: isPro)
         guard gate.allowed else { return ["ok": false, "message": gate.message] }
@@ -302,9 +295,7 @@ final class SAWebBridge: NSObject {
         return f
     }()
 
-    private class func iso(_ d: Date) -> String {
-        isoFmt.string(from: d)
-    }
+    private class func iso(_ d: Date) -> String { isoFmt.string(from: d) }
 
     private class func parseISO(_ s: String?) -> Date? {
         guard let s, !s.isEmpty else { return nil }
