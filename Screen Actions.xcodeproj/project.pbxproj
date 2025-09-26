@@ -42,6 +42,7 @@
 		F642EA0AB1E67B943CE76284 /* popup.css in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 49A83CBC9CC1A81539B5696B /* popup.css */; };
 		F8E1F3EEE80D332E341C3628 /* popup.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = CBC36EDA1B4FE16E3A0CA3DF /* popup.js */; };
 		F9831246E3554306E4555B26 /* icon-256-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = 96F052DC93909B5AA549E807 /* icon-256-squircle.png */; };
+		FF888133A4DC6481FA422882 /* content_selection.js in Pack WebRes – root */ = {isa = PBXBuildFile; fileRef = 353C473380E6178AF121D766 /* content_selection.js */; };
 		FF8F1E03D2AFA2B2431FF9D4 /* icon-512-squircle.png in Pack WebRes – images */ = {isa = PBXBuildFile; fileRef = B557F0D3B3AD709B4BA8F987 /* icon-512-squircle.png */; };
 /* End PBXBuildFile section */
 
@@ -88,6 +89,7 @@
 				F642EA0AB1E67B943CE76284 /* popup.css in Pack WebRes – root */,
 				D7241D45B2B4B2A5FF2F5A0C /* popup.html in Pack WebRes – root */,
 				F8E1F3EEE80D332E341C3628 /* popup.js in Pack WebRes – root */,
+				FF888133A4DC6481FA422882 /* content_selection.js in Pack WebRes – root */,
 			);
 			name = "Pack WebRes – root";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -201,6 +203,7 @@
 		E17FE6772E862E72004E125D /* pbx_kill_webext_cycle.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pbx_kill_webext_cycle.rb; sourceTree = "<group>"; };
 		E17FE6782E862F07004E125D /* pbx_kill_webext_cycle_simple.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = pbx_kill_webext_cycle_simple.rb; sourceTree = "<group>"; };
 		E17FEBD72E864CCB004E125D /* add_content_selection_to_root_phase.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = add_content_selection_to_root_phase.rb; sourceTree = "<group>"; };
+		E17FEBD82E864D5D004E125D /* add_content_selection_to_root_phase_simple.rb */ = {isa = PBXFileReference; lastKnownFileType = text.script.ruby; path = add_content_selection_to_root_phase_simple.rb; sourceTree = "<group>"; };
 		E183E1352E75ABC700E8D263 /* Screen Actions.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Screen Actions.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1472E75ACF400E8D263 /* ScreenActionsControlsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ScreenActionsControlsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E183E1492E75ACF400E8D263 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
@@ -392,6 +395,8 @@
 		};
 		E1F941812E8389E400276157 /* Screen Actions (macOS) */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = "Screen Actions (macOS)";
 			sourceTree = "<group>";
 		};
@@ -473,6 +478,7 @@
 				E17FE6772E862E72004E125D /* pbx_kill_webext_cycle.rb */,
 				E17FE6782E862F07004E125D /* pbx_kill_webext_cycle_simple.rb */,
 				E17FEBD72E864CCB004E125D /* add_content_selection_to_root_phase.rb */,
+				E17FEBD82E864D5D004E125D /* add_content_selection_to_root_phase_simple.rb */,
 				E17FE5902E86291D004E125D /* verify_packaged_manifest_readonly.zsh */,
 				E1F918682E82154C00276157 /* verify_packaged_webext.zsh */,
 				E1F912722E81ED5100276157 /* install_appstore_profiles_from_dir.zsh */,
