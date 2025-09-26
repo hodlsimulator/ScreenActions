@@ -4,12 +4,18 @@
 //
 //  Created by . . on 9/13/25.
 //
-//  Minimal native bridge that always replies synchronously.
-//  Expected message shape from background.js: { action: String, payload: {…} }
-//
+//  SafariWebExtensionHandler.swift — non-isolated handler; safe MainActor hop with a Sendable box
+// 
 
-import SafariServices
+@preconcurrency import SafariServices
+import Foundation
 import os.log
+
+// Wrap non-Sendable NSExtensionContext so we can move a handle across Task boundaries safely.
+// We ONLY touch `context` on the main actor.
+private struct SendableContext: @unchecked Sendable {
+    let context: NSExtensionContext
+}
 
 @objc(SafariWebExtensionHandler)
 class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
@@ -17,35 +23,50 @@ class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     private let log = OSLog(subsystem: "com.conornolan.Screen-Actions.WebExt", category: "NativeBridge")
 
     func beginRequest(with context: NSExtensionContext) {
+        let ctxBox = SendableContext(context: context)
+
         guard
             let item = context.inputItems.first as? NSExtensionItem,
             let userInfo = item.userInfo,
             let payload = userInfo[SFExtensionMessageKey] as? [String: Any]
         else {
-            os_log("Missing SFExtensionMessageKey payload", log: log, type: .error)
-            reply(context, body: ["ok": false, "message": "Missing SFExtensionMessageKey"])
+            respondOnMain(ctxBox, body: ["ok": false, "message": "Missing SFExtensionMessageKey"])
             return
         }
 
-        // Extract action + body (tolerant to shape)
-        let action = (payload["action"] as? String) ?? ""
-        let body   = (payload["payload"] as? [String: Any]) ?? [:]
+        let action   = (payload["action"] as? String) ?? ""
+        let bodyDict = (payload["payload"] as? [String: Any]) ?? [:]
 
-        os_log("Replying to action '%{public}@'", log: log, type: .info, action)
+        // JSON-copy the body so we don't cross actors with [String: Any].
+        let bodyData = (try? JSONSerialization.data(withJSONObject: bodyDict, options: [])) ?? Data()
 
-        // Known-good echo reply
-        reply(context, body: [
-            "ok": true,
-            "action": action,
-            "echo": body,
-            "platform": "iOS",
-            "bundle": Bundle.main.bundleIdentifier ?? ""
-        ])
+        // Hop to MainActor (where SAWebBridge runs) without capturing self/context.
+        Task { @MainActor in
+            let body = (try? JSONSerialization.jsonObject(with: bodyData, options: [])) as? [String: Any] ?? [:]
+
+            SAWebBridge.handle(action, payload: body) { out in
+                respondNowOnMain(ctxBox.context, body: out)
+            }
+        }
     }
+}
 
-    private func reply(_ context: NSExtensionContext, body: [String: Any]) {
-        let response = NSExtensionItem()
-        response.userInfo = [ SFExtensionMessageKey: body ]
-        context.completeRequest(returningItems: [response], completionHandler: nil)
+// MARK: - Reply helpers (no captures from non-isolated code)
+
+/// Schedule a reply on the main actor without capturing non-Sendable values into a Task.
+private func respondOnMain(_ ctxBox: SendableContext, body: [String: Any]) {
+    // JSON round-trip to avoid sending [String: Any] across actors.
+    let bodyData = (try? JSONSerialization.data(withJSONObject: body, options: [])) ?? Data()
+    Task { @MainActor in
+        let dict = (try? JSONSerialization.jsonObject(with: bodyData, options: [])) as? [String: Any] ?? [:]
+        respondNowOnMain(ctxBox.context, body: dict)
     }
+}
+
+/// Must run on the main actor.
+@MainActor
+private func respondNowOnMain(_ context: NSExtensionContext, body: [String: Any]) {
+    let response = NSExtensionItem()
+    response.userInfo = [SFExtensionMessageKey: body]
+    context.completeRequest(returningItems: [response], completionHandler: nil)
 }
