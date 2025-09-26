@@ -4,6 +4,9 @@
 //
 //  Created by . . on 9/22/25.
 //
+//  Objective-C principal that **conforms** to NSExtensionRequestHandling
+//  and forwards to the Swift handler.
+//
 
 #import <Foundation/Foundation.h>
 #import <SafariServices/SafariServices.h>
@@ -14,9 +17,10 @@
 
 @implementation SAWebExtensionHandler
 
-// NOTE: The Objective-C selector is *beginRequestWithExtensionContext:*
-// We forward to your Swift handler (class name exposed via @objc(SafariWebExtensionHandler)).
-- (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
+// Safari calls this entrypoint when JS uses runtime.sendNativeMessage(...)
+- (void)beginRequestWithExtensionContext:(NSExtensionContext *)context
+{
+    // Forward to the Swift implementation (annotated @objc(SafariWebExtensionHandler)).
     SafariWebExtensionHandler *swiftHandler = [SafariWebExtensionHandler new];
     [swiftHandler beginRequestWithExtensionContext:context];
 }

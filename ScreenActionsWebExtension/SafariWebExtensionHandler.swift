@@ -138,7 +138,7 @@ final class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
             return "Open Settings → Privacy & Security → Contacts and allow access for Screen Actions."
         }
         if lower.contains("no date found") {
-            return "Select text that includes a date/time (e.g. “Fri 3pm”), or use ‘Create Reminder’."
+            return "Select text that includes a date/time (e.g. \"Fri 3pm\"), or use ‘Create Reminder’."
         }
         return nil
     }
