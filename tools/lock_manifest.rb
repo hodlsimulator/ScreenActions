@@ -1,78 +1,69 @@
 #!/usr/bin/env ruby
-# lock_manifest.rb — keep MV3 manifest valid for Safari packaging.
-# Usage: ruby tools/lock_manifest.rb <path/to/ScreenActionsWebExtension/WebRes/manifest.json>
+# lock_manifest.rb — Sanitise MV3 manifest in SOURCE before packaging.
+# Idempotent: fixes blank strings and enforces the Screen Actions baseline.
 
 require 'json'
+
 path = ARGV[0] or abort("lock_manifest.rb: missing MANIFEST path")
 json = JSON.parse(File.read(path))
 changed = false
 
-# Normalise paths to be RELATIVE TO the manifest location (WebRes/).
-def dewebres(v)
-  return v unless v.is_a?(String)
-  v.start_with?('WebRes/') ? v.sub(/\AWebRes\//, '') : v
+def ensure_hash!(h, key); changed = false; h[key] = {} unless h[key].is_a?(Hash); changed; end
+def ensure_arr!(h, key); changed = false; h[key] = [] unless h[key].is_a?(Array); changed; end
+
+changed |= ensure_hash!(json, 'icons')
+changed |= ensure_hash!(json, 'action')
+changed |= ensure_hash!(json, 'background')
+changed |= ensure_arr!(json, 'permissions')
+changed |= ensure_arr!(json, 'host_permissions')
+changed |= ensure_arr!(json, 'content_scripts')
+
+# Icons (keep WebRes paths)
+icons = json['icons']
+%w[48 64 96 128 256 512].each do |sz|
+  want = "WebRes/images/icon-#{sz}-squircle.png"
+  if icons[sz] != want; icons[sz] = want; changed = true; end
 end
 
-# action.default_popup
-if json['action'].is_a?(Hash)
-  want = 'popup.html'
-  cur = json['action']['default_popup']
-  fixed = dewebres(cur || want)
-  if fixed != cur || fixed != want
-    json['action']['default_popup'] = want
-    changed = true
-  end
+# Action
+act = json['action']
+if act['default_title'] != 'Screen Actions'; act['default_title'] = 'Screen Actions'; changed = true; end
+if act['default_popup'] != 'WebRes/popup.html'; act['default_popup'] = 'WebRes/popup.html'; changed = true; end
+act['default_icon'] ||= {}
+{'48'=>'WebRes/images/icon-48-squircle.png',
+ '96'=>'WebRes/images/icon-96-squircle.png',
+ '128'=>'WebRes/images/icon-128-squircle.png'}.each do |k,v|
+  if act['default_icon'][k] != v; act['default_icon'][k] = v; changed = true; end
 end
 
-# background.service_worker
-if json['background'].is_a?(Hash)
-  want = 'background.js'
-  cur = json['background']['service_worker']
-  fixed = dewebres(cur || want)
-  if fixed != cur || fixed != want
-    json['background']['service_worker'] = want
-    changed = true
-  end
-end
+# Background
+bg = json['background']
+if bg['service_worker'] != 'WebRes/background.js'; bg['service_worker'] = 'WebRes/background.js'; changed = true; end
 
-# icons
-if json['icons'].is_a?(Hash)
-  json['icons'].keys.each do |k|
-    fixed = dewebres(json['icons'][k])
-    if fixed != json['icons'][k]
-      json['icons'][k] = fixed
-      changed = true
-    end
-  end
-end
-
-# permissions (order-insensitive; include what's needed)
+# Permissions
 want_perms = %w[activeTab tabs scripting clipboardWrite nativeMessaging storage]
-cur_perms  = json['permissions'].is_a?(Array) ? json['permissions'] : []
-if cur_perms.sort != want_perms.sort
-  json['permissions'] = want_perms
-  changed = true
+if (json['permissions']||[]).sort != want_perms.sort
+  json['permissions'] = want_perms; changed = true
 end
 
-# host_permissions — needed for content_scripts "<all_urls>" on Safari.
-want_hosts = ['<all_urls>']
-if json['host_permissions'] != want_hosts
-  json['host_permissions'] = want_hosts
-  changed = true
+# Host permissions (fix blanks)
+if json['host_permissions'].empty? || json['host_permissions'].include?('')
+  json['host_permissions'] = ['<all_urls>']; changed = true
 end
 
-# content_scripts — inject selection streamer everywhere.
-cs_want = [{
-  'matches' => ['<all_urls>'],
-  'js' => ['content_selection.js'],
-  'run_at' => 'document_idle',
+# Content script (fix blanks; keep WebRes path)
+cs = [{
+  'matches'    => ['<all_urls>'],
+  'js'         => ['WebRes/content_selection.js'],
+  'run_at'     => 'document_idle',
   'all_frames' => true
 }]
-cur_cs = json['content_scripts']
-if cur_cs != cs_want
-  json['content_scripts'] = cs_want
-  changed = true
+if json['content_scripts'] != cs
+  json['content_scripts'] = cs; changed = true
 end
+
+# Do NOT add default_locale (avoids Settings error)
+if json.key?('default_locale'); json.delete('default_locale'); changed = true; end
 
 if changed
   File.write(path, JSON.pretty_generate(json))

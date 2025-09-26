@@ -651,12 +651,14 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = E12A85772E760EBD00E07869 /* Build configuration list for PBXNativeTarget "ScreenActionsWebExtension" */;
 			buildPhases = (
+				E17FE4AA2E861043004E125D /* Sanitise WebRes manifest (source) */,
 				E12A855A2E760EBD00E07869 /* Sources */,
 				E12A855B2E760EBD00E07869 /* Frameworks */,
 				E12A855C2E760EBD00E07869 /* Resources */,
 				A7829CB460D7B3061DE5B970 /* Pack WebRes – root */,
 				238FA01BD0B520479DFC674A /* Pack WebRes – locales */,
 				F0389AEDF3B296EA09E7BFD2 /* Pack WebRes – images */,
+				E17FE4AB2E8613A6004E125D /* Verify packaged manifest == source */,
 			);
 			buildRules = (
 			);
@@ -832,6 +834,50 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "#!/bin/bash\nset -euo pipefail\n\nfail() { echo \"error: $1\" ; exit 1; }\nnote() { echo \"note: $1\"; }\n\nROOT=\"${SRCROOT}\"\nSHARE_PLIST=\"$ROOT/ScreenActionsShareExtension/Info.plist\"\nACTION_PLIST=\"$ROOT/ScreenActionsActionExtension/Info.plist\"\n\nplist() { /usr/libexec/PlistBuddy -c \"Print $2\" \"$1\" 2>/dev/null || true; }\n\n# 1) Share extension must NOT have a JS preprocessor (hard fail)\nSHARE_PRE=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionJavaScriptPreprocessingFile\")\n[[ -z \"$SHARE_PRE\" ]] || fail \"Share extension must NOT set NSExtensionJavaScriptPreprocessingFile (found: $SHARE_PRE).\"\n\n# 2) Share must have exactly one launch path (PrincipalClass XOR MainStoryboard) (hard fail)\nSHARE_PC=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionPrincipalClass\")\nSHARE_SB=$(plist \"$SHARE_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionMainStoryboard\")\nif [[ -n \"$SHARE_PC\" && -n \"$SHARE_SB\" ]]; then\n  fail \"Share extension must use PrincipalClass OR MainStoryboard (not both).\"\nfi\nif [[ -z \"$SHARE_PC\" && -z \"$SHARE_SB\" ]]; then\n  fail \"Share extension needs a launch path (PrincipalClass or MainStoryboard).\"\nfi\n\n# 3) Action extension SHOULD have a JS preprocessor (warn only)\nACTION_PRE=$(plist \"$ACTION_PLIST\" \":NSExtension:NSExtensionAttributes:NSExtensionJavaScriptPreprocessingFile\")\n[[ -n \"$ACTION_PRE\" ]] || note \"Action extension missing JS preprocessor (GetSelection).\"\n\necho \"✅ Share/Action sanity checks passed.\"\n";
+		};
+		E17FE4AA2E861043004E125D /* Sanitise WebRes manifest (source) */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/ScreenActionsWebExtension/WebRes/manifest.json",
+				"$(PROJECT_DIR)/tools/lock_manifest.rb",
+			);
+			name = "Sanitise WebRes manifest (source)";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/webres_manifest_sanitised.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\n\nMANIFEST_SRC=\"${PROJECT_DIR}/ScreenActionsWebExtension/WebRes/manifest.json\"\nLOCK=\"${PROJECT_DIR}/tools/lock_manifest.rb\"\n\nOUT_STAMP=\"${SCRIPT_OUTPUT_FILE_0:-$TARGET_TEMP_DIR/webres_manifest_sanitised.stamp}\"\n\n[[ -f \"$MANIFEST_SRC\" ]] || { echo \"ERROR: missing $MANIFEST_SRC\" >&2; exit 1; }\n[[ -f \"$LOCK\" ]] || { echo \"ERROR: missing $LOCK\" >&2; exit 1; }\n\nruby \"$LOCK\" \"$MANIFEST_SRC\"\n\necho \"----- SOURCE manifest.json (head) -----\"\nsed -n '1,120p' \"$MANIFEST_SRC\" || true\necho \"--------------------------------------\"\n\nmkdir -p \"$(dirname \"$OUT_STAMP\")\"\ndate > \"$OUT_STAMP\"\n";
+		};
+		E17FE4AB2E8613A6004E125D /* Verify packaged manifest == source */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/ScreenActionsWebExtension/WebRes/manifest.json",
+				"$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/WebRes/manifest.json",
+			);
+			name = "Verify packaged manifest == source";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/webres_manifest_verified.stamp",
+				"$(TARGET_TEMP_DIR)/webres_manifest_compare.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -euo pipefail\n\nSRC=\"${PROJECT_DIR}/ScreenActionsWebExtension/WebRes/manifest.json\"\nPKG=\"${TARGET_BUILD_DIR}/${WRAPPER_NAME}/WebRes/manifest.json\"\n\nOUT_STAMP=\"${SCRIPT_OUTPUT_FILE_0:-$TARGET_TEMP_DIR/webres_manifest_verified.stamp}\"\nOUT_CMP=\"${SCRIPT_OUTPUT_FILE_1:-$TARGET_TEMP_DIR/webres_manifest_compare.txt}\"\n\n[[ -f \"$SRC\" ]] || { echo \"ERROR: missing source $SRC\" >&2; exit 1; }\n[[ -f \"$PKG\" ]] || { echo \"ERROR: missing packaged $PKG\" >&2; exit 1; }\n\ncanon() {\n/usr/bin/python3 - \"$1\" <<'PY'\nimport json, sys\nwith open(sys.argv[1], 'r') as f:\n    obj = json.load(f)\ndef canon(o):\n    if isinstance(o, dict):\n        return {k: canon(o[k]) for k in sorted(o)}\n    if isinstance(o, list):\n        return [canon(x) for x in o]\n    return o\nprint(json.dumps(canon(obj), sort_keys=True, separators=(',',':')))\nPY\n}\n\nS=\"$(canon \"$SRC\")\"\nP=\"$(canon \"$PKG\")\"\n\n# Save a small compare artifact ONLY to a declared output file\n{\n  echo \"$S\"\n  echo '---'\n  echo \"$P\"\n} > \"$OUT_CMP\"\n\nif [[ \"${VERIFY_STRICT:-0}\" == \"1\" && \"$S\" != \"$P\" ]]; then\n  echo \"✗ Packaged manifest diverged from source\"\n  # Print a short diff to logs (no file writes)\n  echo \"----- diff (src vs pkg) -----\"\n  /usr/bin/python3 - <<'PY' \"$S\" \"$P\"\nimport sys, difflib\ns, p = sys.argv[1], sys.argv[2]\nfor line in difflib.unified_diff(s.splitlines(), p.splitlines(), lineterm=''):\n    print(line)\nPY\n  exit 1\nfi\n\nmkdir -p \"$(dirname \"$OUT_STAMP\")\"\ndate > \"$OUT_STAMP\"\necho \"✓ verify step complete\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
