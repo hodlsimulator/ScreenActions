@@ -12,11 +12,11 @@
 
   /* Light */
   --bg:   #ffffff;
-  --card: #f2f2f7; /* secondarySystemBackground (light) */
-  --hair: #d2d2d7; /* separator (light) */
-  --accent: #0a84ff; /* systemBlue */
-  --ok:    #34c759; /* systemGreen */
-  --err:   #ff3b30; /* systemRed */
+  --card: #f2f2f7;
+  --hair: #d2d2d7;
+  --accent: #0a84ff;
+  --ok:    #34c759;
+  --err:   #ff3b30;
 
   font: -apple-system-body;
 }
@@ -25,13 +25,14 @@
   :root{
     --text: #e9eaed;
     --sub:  #a2a6ad;
-    --bg:   #1c1c1e; /* systemBackground (dark) */
-    --card: #2c2c2e; /* secondarySystemBackground (dark) */
-    --hair: #3a3a3c; /* separator (dark) */
+    --bg:   #1c1c1e;
+    --card: #2c2c2e;
+    --hair: #3a3a3c;
   }
 }
 
 *{ box-sizing: border-box; }
+.hidden{ display:none !important; }
 
 html, body{
   margin: 0;
@@ -40,7 +41,6 @@ html, body{
   color: var(--text);
 }
 
-/* Full-sheet height */
 #app{
   width: min(440px, 100vw);
   min-height: 92dvh;
@@ -48,18 +48,12 @@ html, body{
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* monospace utility */
 .mono{ font-family: ui-monospace,Menlo,Consolas,monospace; white-space: pre-wrap; }
 pre{ white-space: pre-wrap; word-break: break-word; }
 
-/* Toolbar is hidden; Safari provides chrome */
-.toolbar, .toolbar-title{ display:none !important; }
-
-/* Views */
 .view{ display:none; padding:0 var(--pad) var(--pad) var(--pad); }
 .view.active{ display:block; }
 
-/* Titles */
 .sheet-title{
   margin: 4px 0 12px 0;
   font-weight: 800;
@@ -67,7 +61,6 @@ pre{ white-space: pre-wrap; word-break: break-word; }
   letter-spacing: -.2px;
 }
 
-/* Group labels */
 .group-label{
   color: var(--sub);
   margin: 16px 0 8px 0;
@@ -76,7 +69,6 @@ pre{ white-space: pre-wrap; word-break: break-word; }
   letter-spacing: .2px;
 }
 
-/* selection card */
 .selection{
   background: var(--card);
   border: 1px solid var(--hair);
@@ -111,54 +103,46 @@ pre{ white-space: pre-wrap; word-break: break-word; }
 }
 .home-actions .btn .icon{ width:22px; display:inline-flex; justify-content:center; font-size:18px; line-height:1; }
 
-/* Generic form rows (Event/Contact use these) */
-.form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
-.form-row.split > *{ flex:1; }
-.form-row .grow{ flex:1; }
-
-input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
-input[type="date"], input[type="time"], input[type="datetime-local"], textarea, select{
-  appearance: none; -webkit-appearance: none;
-  width: 100%;
-  background: var(--card);
-  color: var(--text);
-  border: 1px solid var(--hair);
-  border-radius: var(--radius-field);
-  padding: 12px 14px;
-}
-
-/* ---------------- SHARE-SHEET STYLE CARDS ---------------- */
+/* Cards (share-sheet look) */
 .card{
   background: var(--card);
   border: 1px solid var(--hair);
   border-radius: 20px;
-  overflow: hidden; /* clip separators */
+  overflow: hidden;
 }
-
-/* each row inside the card */
 .card .row{
   display:flex; align-items:center; gap:12px;
   padding:14px 14px; min-height:52px;
   border-top:1px solid var(--hair);
-  justify-content:space-between; /* spread: label left, controls right */
+  justify-content:space-between;
 }
 .card .row:first-child{ border-top:none; }
 
-/* plain title/labels to match iOS */
+/* Column row (for radius slider) */
+.card .row.column{
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.row-line{
+  display:flex; align-items:center; justify-content:space-between;
+}
+
+/* Plain field + labels */
 .field-plain{
   -webkit-appearance:none !important; appearance:none !important;
   background:transparent !important; border:none !important; border-radius:0 !important;
   box-shadow:none !important; outline:none !important;
-  margin:0 !important; padding:0 2px !important; /* tiny left inset */
+  margin:0 !important; padding:0 2px !important;
   height:24px; line-height:24px; font-size:17px; color:var(--text);
 }
 .field-plain::placeholder{ color:var(--sub); }
+.label-plain{ font-size:17px; line-height:24px; padding-left:2px; color:var(--text); }
 
-.label-plain{
-  font-size:17px; line-height:24px; padding-left:2px; color:var(--text);
-}
+.value-mono{ font-variant-numeric: tabular-nums; color: var(--sub); }
+.footnote{ font-size:12px; color: var(--sub); }
 
-/* right-side “chips” (date + time) anchored RIGHT */
+/* Right-aligned date/time chips */
 .chip-row{ display:flex; gap:10px; margin-left:auto; }
 .chip-input{
   -webkit-appearance:none; appearance:none;
@@ -170,25 +154,30 @@ input[type="date"], input[type="time"], input[type="datetime-local"], textarea, 
 }
 .chip-input::-webkit-calendar-picker-indicator{ filter:opacity(.7); }
 
-/* Notes — comfy size */
+/* Notes — plain, borderless blocks (no card) */
+.notes-block,
 #remNotes, #evtNotes{
+  display:block; width:100%;
   min-height:140px; line-height:1.35; font-size:16px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
   resize: vertical;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0;
+  margin: 6px 2px 0 2px;
 }
+#remNotes::placeholder, #evtNotes::placeholder{ color: var(--sub); }
 
 /* Status */
 .status{ min-height:20px; margin:10px 0 2px 0; font-weight:600; }
 .status.ok{ color: var(--ok); }
 .status.err{ color: var(--err); }
 
-/* Footer rows */
+/* Footer buttons */
 .button-row{ display:flex; gap:12px; margin-top:14px; }
-.button-row.left{ justify-content:flex-start; }
-.button-row.center{ justify-content:center; }
 .button-row.dual{ justify-content:center; }
 
-/* Cancel/Save capsules */
 .btn-capsule{
   height:44px; min-width:140px; padding:0 18px; border-radius:9999px; font-weight:700;
 }
@@ -201,7 +190,7 @@ input[type="date"], input[type="time"], input[type="datetime-local"], textarea, 
   border:none; background:var(--accent); color:#fff;
 }
 
-/* iOS-style switch */
+/* iOS-like switch */
 .switch{ position:relative; width:48px; height:28px; display:inline-block; }
 .switch input{ opacity:0; width:0; height:0; }
 .slider{
@@ -213,5 +202,9 @@ input[type="date"], input[type="time"], input[type="datetime-local"], textarea, 
   content:""; position:absolute; height:22px; width:22px; left:3px; top:3px;
   background:#fff; border-radius:50%; transition: all .2s;
 }
-.switch input:checked + .slider{ background: var(--ok); }      /* green when on */
+.switch input:checked + .slider{ background: var(--ok); }
 .switch input:checked + .slider:before{ transform: translateX(20px); }
+
+/* Range */
+.range{ width:100%; }
+    

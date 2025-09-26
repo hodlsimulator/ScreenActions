@@ -4,11 +4,7 @@
 //
 //  Created by . . on 9/22/25.
 //
-// SAWebBridge.swift — popup parsing + saves + haptics
-// 
-
-//
-// SAWebBridge.swift — popup parsing + saves + haptics
+// SAWebBridge.swift — popup parsing + saves + haptics (+ geofence permissions)
 //
 
 import Foundation
@@ -16,6 +12,8 @@ import os
 import Contacts
 import EventKit
 import UIKit
+import CoreLocation
+import UserNotifications
 @preconcurrency import MapKit
 
 @objc(SAWebBridge)
@@ -23,6 +21,9 @@ import UIKit
 final class SAWebBridge: NSObject {
 
     static let log = Logger(subsystem: "com.conornolan.Screen-Actions.WebExtension", category: "native")
+
+    // Keep a manager so we can request location permissions from the extension process
+    private static let locManager = CLLocationManager()
 
     // Entry called by the Obj-C principal → SafariWebExtensionHandler
     @objc
@@ -65,6 +66,11 @@ final class SAWebBridge: NSObject {
         case "saveReminder":       return try await saveReminder(fields: (payload["fields"] as? [String: Any]) ?? [:])
         case "saveContact":        return try await saveContact(fields: (payload["fields"] as? [String: Any]) ?? [:])
         case "exportReceiptCSV":   return try await exportReceiptCSV(csv: (payload["csv"] as? String) ?? "")
+
+        // ---- Geofencing permissions (called when toggles switch on) ----
+        case "ensureGeofencingPermissions":
+            await ensureGeofencingPermissions()
+            return ["ok": true]
 
         // ---- Haptics ----
         case "hapticSuccess":
@@ -116,8 +122,9 @@ final class SAWebBridge: NSObject {
             "endISO":   iso(end),
             "location": locHint,
             "inferTZ":  inferTZ,
-            "alertMinutes": alertDefault > 0 ? alertDefault : 0,
-            "notes": text
+            "alertMinutes": max(0, alertDefault),
+            "notes": text,
+            "geoRadius": 150 // default shown when geofencing toggles are enabled
         ]
         return ["ok": true, "fields": fields]
     }
@@ -182,9 +189,7 @@ final class SAWebBridge: NSObject {
 
         guard let start = parseISO(fields["startISO"] as? String),
               let end   = parseISO(fields["endISO"]   as? String)
-        else {
-            return ["ok": false, "message": "Invalid start/end."]
-        }
+        else { return ["ok": false, "message": "Invalid start/end."] }
 
         let notes    = (fields["notes"] as? String).flatMap { $0.isEmpty ? nil : $0 }
         let location = (fields["location"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -196,7 +201,7 @@ final class SAWebBridge: NSObject {
             return nil
         }()
 
-        // --- NEW: read geofencing toggles from the web sheet ---
+        // Geofencing options
         let geoArrive = (fields["geoArrive"] as? Bool) ?? false
         let geoDepart = (fields["geoDepart"] as? Bool) ?? false
         var geofence: GeofencingManager.GeofenceProximity? = nil
@@ -206,7 +211,22 @@ final class SAWebBridge: NSObject {
             if geoDepart { p.insert(.exit)  }
             geofence = p
         }
-        // -------------------------------------------------------
+
+        // Quota gate: geofenced event creation (match app/share-sheet)
+        if geofence != nil {
+            let isPro = (UserDefaults(suiteName: AppStorageService.appGroupID)?.bool(forKey: "iap.pro.active")) ?? false
+            let gate = QuotaManager.consume(feature: .geofencedEventCreation, isPro: isPro)
+            guard gate.allowed else { return ["ok": false, "message": gate.message] }
+        }
+
+        // Radius (default/clamped)
+        let rawRadius: Double = {
+            if let d = fields["geoRadius"] as? Double { return d }
+            if let i = fields["geoRadius"] as? Int { return Double(i) }
+            if let s = fields["geoRadius"] as? String, let d = Double(s) { return d }
+            return 150
+        }()
+        let radius = clampRadius(rawRadius)
 
         let id = try await CalendarService.shared.addEvent(
             title: title,
@@ -219,12 +239,10 @@ final class SAWebBridge: NSObject {
             travelTimeAlarm: false,
             transport: .automobile,
             geofenceProximity: geofence,
-            geofenceRadius: 150
+            geofenceRadius: radius
         )
 
-        if let m = alertMinutes, m > 0 {
-            AppStorageService.setDefaultAlertMinutes(m)
-        }
+        if let m = alertMinutes, m > 0 { AppStorageService.setDefaultAlertMinutes(m) }
 
         return ["ok": true, "message": "Event created (\(id))."]
     }
@@ -249,15 +267,19 @@ final class SAWebBridge: NSObject {
         dc.emails = (fields["emails"] as? [String])?.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? []
         dc.phones = (fields["phones"] as? [String])?.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty } ?? []
 
-        let street  = (fields["street"] as? String) ?? ""
-        let city    = (fields["city"] as? String) ?? ""
-        let state   = (fields["state"] as? String) ?? ""
-        let postal  = (fields["postalCode"] as? String) ?? ""
+        let street = (fields["street"] as? String) ?? ""
+        let city   = (fields["city"] as? String) ?? ""
+        let state  = (fields["state"] as? String) ?? ""
+        let postal = (fields["postalCode"] as? String) ?? ""
         let country = (fields["country"] as? String) ?? ""
 
         if !(street.isEmpty && city.isEmpty && state.isEmpty && postal.isEmpty && country.isEmpty) {
             let a = CNMutablePostalAddress()
-            a.street = street; a.city = city; a.state = state; a.postalCode = postal; a.country = country
+            a.street = street
+            a.city = city
+            a.state = state
+            a.postalCode = postal
+            a.country = country
             dc.postalAddress = (a.copy() as? CNPostalAddress)
         }
 
@@ -276,6 +298,40 @@ final class SAWebBridge: NSObject {
         let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
         _ = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
         return ["ok": true, "message": "CSV exported."]
+    }
+
+    // MARK: - Geofencing permissions
+
+    private class func ensureGeofencingPermissions() async {
+        // Notifications
+        let center = UNUserNotificationCenter.current()
+        let status: UNAuthorizationStatus = await withCheckedContinuation { cont in
+            center.getNotificationSettings { settings in
+                cont.resume(returning: settings.authorizationStatus)
+            }
+        }
+        if status == .notDetermined {
+            _ = try? await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
+                center.requestAuthorization(options: [.alert, .sound, .badge]) { _, err in
+                    if let err { cont.resume(throwing: err) } else { cont.resume(returning: ()) }
+                }
+            }
+        }
+
+        // Location — mirror the share sheet: whenInUse → Always
+        let m = locManager
+        let auth = m.authorizationStatus
+        switch auth {
+        case .notDetermined:
+            m.requestWhenInUseAuthorization()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                m.requestAlwaysAuthorization()
+            }
+        case .authorizedWhenInUse, .authorizedAlways, .restricted, .denied:
+            m.requestAlwaysAuthorization()
+        @unknown default:
+            m.requestAlwaysAuthorization()
+        }
     }
 
     // MARK: - Helpers
@@ -304,5 +360,9 @@ final class SAWebBridge: NSObject {
         let f2 = ISO8601DateFormatter()
         f2.formatOptions = [.withInternetDateTime]
         return f2.date(from: s)
+    }
+
+    private class func clampRadius(_ r: Double) -> Double {
+        return max(50, min(r, 2000))
     }
 }

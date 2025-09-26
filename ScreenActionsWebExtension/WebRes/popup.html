@@ -11,7 +11,7 @@
 
     <!-- ========= HOME ========= -->
     <section id="view-home" class="view active" aria-labelledby="home-title">
-      <h1 id="home-title" class="sheet-title">Screen Actions</h1>
+      <!-- Title intentionally omitted (Safari shows the app name already) -->
 
       <div class="group-label">Selected Text</div>
       <pre id="home-selection" class="selection" tabindex="0">(fetching selection…)</pre>
@@ -51,11 +51,8 @@
       </div>
 
       <div class="group-label">Notes</div>
-      <div class="card">
-        <div class="row">
-          <textarea id="remNotes" placeholder="Notes…"></textarea>
-        </div>
-      </div>
+      <!-- Plain, borderless notes (no card wrapper) -->
+      <textarea id="remNotes" class="notes-block" placeholder="Notes…"></textarea>
 
       <div id="remStatus" class="status" role="status" aria-live="polite"></div>
       <div class="button-row dual">
@@ -64,18 +61,16 @@
       </div>
     </section>
 
-    <!-- ========= EVENT (UPDATED) ========= -->
+    <!-- ========= EVENT ========= -->
     <section id="view-event" class="view" aria-labelledby="evt-title">
       <h1 id="evt-title" class="sheet-title">New Event</h1>
 
       <!-- Details -->
       <div class="group-label">Details</div>
       <div class="card" role="group" aria-label="Event details">
-        <!-- Title -->
         <div class="row">
           <input id="evtTitle" class="field-plain" type="text" placeholder="Title" autocomplete="off" />
         </div>
-        <!-- Starts -->
         <div class="row">
           <span class="label-plain">Starts</span>
           <div class="chip-row">
@@ -83,7 +78,6 @@
             <input id="evtStartTime" class="chip-input" type="time" />
           </div>
         </div>
-        <!-- Ends -->
         <div class="row">
           <span class="label-plain">Ends</span>
           <div class="chip-row">
@@ -125,6 +119,16 @@
             <span class="slider"></span>
           </label>
         </div>
+
+        <!-- Radius (hidden until a toggle turns on) -->
+        <div id="evtGeoRadiusRow" class="row column hidden">
+          <div class="row-line">
+            <span class="label-plain">Radius</span>
+            <span id="evtGeoRadiusLabel" class="value-mono">150 m</span>
+          </div>
+          <input id="evtGeoRadius" class="range" type="range" min="50" max="2000" step="50" value="150" />
+          <div id="evtGeoHint" class="footnote hidden">Add a place above to use geofencing.</div>
+        </div>
       </div>
 
       <!-- Alert -->
@@ -144,13 +148,9 @@
         </div>
       </div>
 
-      <!-- Notes -->
       <div class="group-label">Notes</div>
-      <div class="card">
-        <div class="row">
-          <textarea id="evtNotes" placeholder="Notes…"></textarea>
-        </div>
-      </div>
+      <!-- Plain, borderless notes (no card wrapper) -->
+      <textarea id="evtNotes" class="notes-block" placeholder="Notes…"></textarea>
 
       <div id="evtStatus" class="status" role="status" aria-live="polite"></div>
       <div class="button-row dual">
