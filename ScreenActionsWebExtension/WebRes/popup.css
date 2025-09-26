@@ -1,11 +1,11 @@
-/* popup.css — iOS share-sheet look, light & dark, pixel-consistent */
+/* popup.css — iOS share-sheet styling, now forces a full sheet (popup, not new tab) */
 
 :root {
   --radius-card: 18px;
   --radius-field: 12px;
   --pad: 16px;
   --pill-h: 56px;
-  --title-lg: 34px; /* Large Title size */
+  --title-lg: 34px; /* Large Title */
   --text: #111111;
   --sub: #6e6e73;
   --bg: #ffffff;
@@ -32,16 +32,17 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
 
+/* Keep popup; request Safari’s “large detent” by making content tall. */
 #app {
-  width: min(420px, 100vw);
-  min-height: 560px;                 /* keep the same “stop” feel as the share sheet */
+  width: min(440px, 100vw);
+  min-height: 92dvh;                 /* <- key change: push to full-sheet height */
   padding-bottom: env(safe-area-inset-bottom);
 }
 
 .mono { font-family: ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; }
 pre { white-space: pre-wrap; word-break: break-word; }
 
-/* Toolbar (Cancel / Save) + Large Title */
+/* Toolbar (Large Title + Cancel on the right) */
 .toolbar {
   position: sticky;
   top: 0; z-index: 10;
@@ -74,7 +75,7 @@ pre { white-space: pre-wrap; word-break: break-word; }
 /* Views */
 .view { display: none; padding: 0 var(--pad) var(--pad) var(--pad); }
 .view.active { display: block; }
-.sheet-title { display: none; } /* we use the Large Title in the toolbar */
+.sheet-title { display: none; }
 
 /* Labels */
 .group-label {
@@ -133,7 +134,7 @@ textarea { resize: vertical; }
 .status.ok { color: var(--ok); }
 .status.err { color: var(--err); }
 
-/* Footer rows */
+/* Footer rows (editor bottoms) */
 .button-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .button-row.left { justify-content: flex-start; }
 

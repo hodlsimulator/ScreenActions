@@ -9,9 +9,8 @@
 </head>
 <body>
   <nav class="toolbar">
-    <button id="navCancel" class="pill" type="button" hidden>Cancel</button>
     <div id="navTitle" class="toolbar-title">Screen Actions</div>
-    <button id="navSave" class="pill primary" type="button" hidden>Save</button>
+    <button id="navCancel" class="pill" type="button">Cancel</button>
   </nav>
 
   <div id="app">
@@ -53,6 +52,12 @@
       </div>
 
       <div id="statusReminder" class="status"></div>
+
+      <div class="button-row left">
+        <button id="backReminder" class="pill" type="button">Back</button>
+        <span style="flex:1"></span>
+        <button id="saveReminder" class="pill primary" type="button">Done</button>
+      </div>
     </section>
 
     <!-- EVENT EDITOR -->
@@ -84,6 +89,12 @@
       </div>
 
       <div id="statusEvent" class="status"></div>
+
+      <div class="button-row left">
+        <button id="backEvent" class="pill" type="button">Back</button>
+        <span style="flex:1"></span>
+        <button id="saveEvent" class="pill primary" type="button">Done</button>
+      </div>
     </section>
 
     <!-- CONTACT EDITOR -->
@@ -115,6 +126,12 @@
       </div>
 
       <div id="statusContact" class="status"></div>
+
+      <div class="button-row left">
+        <button id="backContact" class="pill" type="button">Back</button>
+        <span style="flex:1"></span>
+        <button id="saveContact" class="pill primary" type="button">Done</button>
+      </div>
     </section>
 
     <!-- RECEIPT → CSV -->
@@ -128,6 +145,12 @@
       <pre id="csvOut" class="selection mono"></pre>
 
       <div id="statusCSV" class="status"></div>
+
+      <div class="button-row left">
+        <button id="backCSV" class="pill" type="button">Back</button>
+        <span style="flex:1"></span>
+        <button id="exportCSV" class="pill primary" type="button">Export CSV</button>
+      </div>
     </section>
   </div>
 </body>
