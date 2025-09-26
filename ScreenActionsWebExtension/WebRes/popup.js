@@ -1,288 +1,297 @@
-// popup.js — share-sheet style for Reminders: header Cancel/Save, no in-form Done
+// popup.js — iOS share-sheet UI for the Web Extension popup
+
 (() => {
   'use strict';
 
-  const RT  = (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime
-           : (typeof chrome  !== 'undefined' && chrome.runtime ) ? chrome.runtime : undefined;
-  const TABS = (typeof browser !== 'undefined' && browser.tabs) ? browser.tabs
-           : (typeof chrome  !== 'undefined' && chrome.tabs ) ? chrome.tabs : undefined;
-  const SCR  = (typeof browser !== 'undefined' && browser.scripting) ? browser.scripting
-           : (typeof chrome  !== 'undefined' && chrome.scripting ) ? chrome.scripting : undefined;
+  const RT = (typeof browser !== 'undefined' && browser.runtime)
+    ? browser.runtime
+    : (typeof chrome !== 'undefined' && chrome.runtime)
+      ? chrome.runtime
+      : null;
+
   if (!RT) return;
 
-  const el = (id)=>document.getElementById(id);
-  const $  = (sel)=>document.querySelector(sel);
+  const $  = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
 
-  // Toolbar
-  const navCancel = el('navCancel');
-  const navSave   = el('navSave');
-  const navTitle  = el('navTitle');
+  // --- Runtime messaging helpers ----
+  function send(req) {
+    return new Promise((resolve, reject) => {
+      try {
+        RT.sendMessage(req, (out) => {
+          const err = (chrome && chrome.runtime && chrome.runtime.lastError)
+                   || (browser && browser.runtime && browser.runtime.lastError);
+          if (err) reject(new Error(err.message || 'runtime error'));
+          else resolve(out);
+        });
+      } catch (e) { reject(e); }
+    });
+  }
+  const native = (action, payload={}) => send({ cmd: 'native', action, payload });
+  const pageCtx = async () => {
+    const out = await send({ cmd: 'getPageCtx' });
+    return (out && out.ctx) ? out.ctx : { selection: '', title: '', url: '' };
+  };
 
-  // Views
-  let currentView = 'home';
-  function showView(name){
-    currentView = name;
-    for (const s of document.querySelectorAll('.view')) s.classList.remove('active');
-    el(name)?.classList.add('active');
-
-    // Header config
-    if (name === 'home') {
-      navTitle.textContent = 'Screen Actions';
-      navCancel.hidden = true;
-      navSave.hidden   = true;
-    } else if (name === 'reminder') {
-      navTitle.textContent = '';   // share sheet has empty centre
-      navCancel.hidden = false;
-      navSave.hidden   = false;
+  // --- UI helpers ----
+  function setHeader(mode, title) {
+    $('#navTitle').textContent = title || 'Screen Actions';
+    if (mode === 'home') {
+      $('#navCancel').hidden = true;
+      $('#navSave').hidden   = true;
     } else {
-      navTitle.textContent = '';
-      navCancel.hidden = false;
-      navSave.hidden   = true;     // only reminders use header Save for now
+      $('#navCancel').hidden = false;
+      $('#navSave').hidden   = false;
+      $('#navCancel').textContent = 'Cancel';
+      $('#navSave').textContent   = 'Save';
+    }
+  }
+  function showView(id) { $$('.view').forEach(v => v.classList.toggle('active', v.id === id)); }
+  function setStatus(sel, msg, ok) {
+    const el = (typeof sel === 'string') ? $(sel) : sel;
+    if (!el) return;
+    el.textContent = msg || '';
+    el.className = 'status ' + (ok ? 'ok' : 'err');
+  }
+  const pad = n => String(n).padStart(2, '0');
+  function isoToLocal(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+  function localToISO(localStr) {
+    if (!localStr) return null;
+    const d = new Date(localStr);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+
+  // --- Contact list row helpers ----
+  function clearList(sel) { const el = $(sel); el.innerHTML = ''; return el; }
+  function addListRow(container, value='') {
+    const el = (typeof container === 'string') ? $(container) : container;
+    const row = document.createElement('div');
+    row.className = 'row';
+    const input = document.createElement('input');
+    input.type = 'text'; input.value = value;
+    const del = document.createElement('button');
+    del.type = 'button'; del.textContent = 'Remove';
+    del.addEventListener('click', () => row.remove());
+    row.appendChild(input); row.appendChild(del);
+    el.appendChild(row);
+  }
+
+  // --- Save handlers (assigned dynamically by editors) ----
+  let saveHandler = null;
+  $('#navSave').addEventListener('click', async () => { if (typeof saveHandler === 'function') await saveHandler(); });
+
+  // --- Home view ----
+  async function showHome() {
+    setHeader('home', 'Screen Actions');
+    showView('home');
+    setStatus('#statusHome', '', true);
+
+    const ctx = await pageCtx();
+    const text = `${(ctx.selection || ctx.title || '').trim()}${ctx.url ? `\n${ctx.url}` : ''}`.trim();
+    $('#selText').textContent = text;
+
+    saveHandler = null;
+  }
+
+  // --- Editors -------------------------------------------------------------
+
+  async function openReminder() {
+    const out = await native('prepareReminder', {});
+    if (!out?.ok) { setStatus('#statusHome', out?.message || 'Failed.', false); return; }
+
+    $('#remTitle').value = out.fields.title || '';
+    $('#remHasDue').checked = !!out.fields.hasDue;
+    $('#remDue').disabled = !$('#remHasDue').checked;
+    $('#remDue').value = out.fields.dueISO ? isoToLocal(out.fields.dueISO) : '';
+    $('#remNotes').value = out.fields.notes || '';
+
+    setHeader('editor', 'New Reminder');
+    showView('reminder');
+
+    saveHandler = async () => {
+      const fields = {
+        title: $('#remTitle').value,
+        hasDue: $('#remHasDue').checked,
+        dueISO: $('#remHasDue').checked ? localToISO($('#remDue').value) : null,
+        notes: $('#remNotes').value
+      };
+      const res = await native('saveReminder', { fields });
+      setStatus('#statusReminder', res?.message || (res?.ok ? 'Saved.' : ''), !!res?.ok);
+      if (res?.ok) { await native('hapticSuccess'); setTimeout(showHome, 450); }
+    };
+  }
+
+  function fillEventFields(fields) {
+    $('#evTitle').value    = fields.title || '';
+    $('#evStart').value    = fields.startISO ? isoToLocal(fields.startISO) : '';
+    $('#evEnd').value      = fields.endISO ? isoToLocal(fields.endISO) : '';
+    $('#evLocation').value = fields.location || '';
+    $('#evInferTZ').checked = !!fields.inferTZ;
+    $('#evAlert').value     = (fields.alertMinutes != null) ? String(fields.alertMinutes) : '';
+  }
+  async function saveEventWithNotes(notes) {
+    const fields = {
+      title: $('#evTitle').value,
+      startISO: localToISO($('#evStart').value),
+      endISO:   localToISO($('#evEnd').value),
+      location: $('#evLocation').value,
+      inferTZ:  $('#evInferTZ').checked,
+      alertMinutes: parseInt($('#evAlert').value || '0', 10) || 0,
+      notes
+    };
+    const res = await native('saveEvent', { fields });
+    setStatus('#statusEvent', res?.message || (res?.ok ? 'Saved.' : ''), !!res?.ok);
+    if (res?.ok) { await native('hapticSuccess'); setTimeout(showHome, 450); }
+  }
+  async function openEvent() {
+    const out = await native('prepareEvent', {});
+    if (!out?.ok) { setStatus('#statusHome', out?.message || 'Failed.', false); return; }
+    fillEventFields(out.fields);
+    setHeader('editor', 'New Event');
+    showView('event');
+    saveHandler = async () => saveEventWithNotes(out.fields.notes || '');
+  }
+
+  async function openContact() {
+    const out = await native('prepareContact', {});
+    if (!out?.ok) { setStatus('#statusHome', out?.message || 'Failed.', false); return; }
+
+    $('#ctGiven').value  = out.fields.givenName || '';
+    $('#ctFamily').value = out.fields.familyName || '';
+    const emails = clearList('#emails'); (out.fields.emails || ['']).forEach(v => addListRow(emails, v));
+    const phones = clearList('#phones'); (out.fields.phones || ['']).forEach(v => addListRow(phones, v));
+    $('#ctStreet').value = out.fields.street || '';
+    $('#ctCity').value   = out.fields.city || '';
+    $('#ctState').value  = out.fields.state || '';
+    $('#ctPostal').value = out.fields.postalCode || '';
+    $('#ctCountry').value = out.fields.country || '';
+
+    setHeader('editor', 'New Contact');
+    showView('contact');
+
+    saveHandler = async () => {
+      const fields = {
+        givenName: $('#ctGiven').value,
+        familyName: $('#ctFamily').value,
+        emails: $$('#emails .row input').map(i => i.value).filter(Boolean),
+        phones: $$('#phones .row input').map(i => i.value).filter(Boolean),
+        street: $('#ctStreet').value,
+        city: $('#ctCity').value,
+        state: $('#ctState').value,
+        postalCode: $('#ctPostal').value,
+        country: $('#ctCountry').value
+      };
+      const res = await native('saveContact', { fields });
+      setStatus('#statusContact', res?.message || (res?.ok ? 'Saved.' : ''), !!res?.ok);
+      if (res?.ok) { await native('hapticSuccess'); setTimeout(showHome, 450); }
+    };
+  }
+
+  async function openCSV() {
+    const ctx = await pageCtx();
+    $('#csvInput').value = `${(ctx.selection || ctx.title || '').trim()}${ctx.url ? `\n${ctx.url}` : ''}`.trim();
+
+    const out = await native('prepareReceiptCSV', {});
+    if (out?.ok) $('#csvOut').textContent = out.csv || '';
+    else setStatus('#statusHome', out?.message || 'Failed.', false);
+
+    setHeader('editor', 'Receipt → CSV');
+    showView('csv');
+
+    saveHandler = async () => {
+      const res = await native('exportReceiptCSV', { csv: $('#csvOut').textContent || '' });
+      setStatus('#statusCSV', res?.message || (res?.ok ? 'Exported.' : ''), !!res?.ok);
+      if (res?.ok) { await native('hapticSuccess'); setTimeout(showHome, 450); }
+    };
+  }
+
+  // --- Auto detect routes to the right editor and pre-fills fields ----
+  async function openAuto() {
+    const out = await native('prepareAutoDetect', {});
+    if (!out?.ok) { setStatus('#statusHome', out?.message || 'Failed.', false); return; }
+    switch (out.route) {
+      case 'event':
+        fillEventFields(out.fields); setHeader('editor', 'New Event'); showView('event');
+        saveHandler = async () => saveEventWithNotes(out.fields.notes || '');
+        break;
+      case 'reminder':
+        $('#remTitle').value = out.fields.title || '';
+        $('#remHasDue').checked = !!out.fields.hasDue;
+        $('#remDue').disabled = !$('#remHasDue').checked;
+        $('#remDue').value = out.fields.dueISO ? isoToLocal(out.fields.dueISO) : '';
+        $('#remNotes').value = out.fields.notes || '';
+        setHeader('editor', 'New Reminder'); showView('reminder');
+        saveHandler = async () => {
+          const fields = {
+            title: $('#remTitle').value,
+            hasDue: $('#remHasDue').checked,
+            dueISO: $('#remHasDue').checked ? localToISO($('#remDue').value) : null,
+            notes: $('#remNotes').value
+          };
+          const res = await native('saveReminder', { fields });
+          setStatus('#statusReminder', res?.message || (res?.ok ? 'Saved.' : ''), !!res?.ok);
+          if (res?.ok) { await native('hapticSuccess'); setTimeout(showHome, 450); }
+        };
+        break;
+      case 'contact':
+        $('#ctGiven').value = out.fields.givenName || '';
+        $('#ctFamily').value = out.fields.familyName || '';
+        const emails = clearList('#emails'); (out.fields.emails || ['']).forEach(v => addListRow(emails, v));
+        const phones = clearList('#phones'); (out.fields.phones || ['']).forEach(v => addListRow(phones, v));
+        $('#ctStreet').value = out.fields.street || '';
+        $('#ctCity').value = out.fields.city || '';
+        $('#ctState').value = out.fields.state || '';
+        $('#ctPostal').value = out.fields.postalCode || '';
+        $('#ctCountry').value = out.fields.country || '';
+        setHeader('editor', 'New Contact'); showView('contact');
+        saveHandler = async () => {
+          const fields = {
+            givenName: $('#ctGiven').value,
+            familyName: $('#ctFamily').value,
+            emails: $$('#emails .row input').map(i => i.value).filter(Boolean),
+            phones: $$('#phones .row input').map(i => i.value).filter(Boolean),
+            street: $('#ctStreet').value, city: $('#ctCity').value,
+            state: $('#ctState').value, postalCode: $('#ctPostal').value, country: $('#ctCountry').value
+          };
+          const res = await native('saveContact', { fields });
+          setStatus('#statusContact', res?.message || (res?.ok ? 'Saved.' : ''), !!res?.ok);
+          if (res?.ok) { await native('hapticSuccess'); setTimeout(showHome, 450); }
+        };
+        break;
+      case 'csv':
+        setHeader('editor', 'Receipt → CSV'); showView('csv');
+        $('#csvOut').textContent = out.csv || '';
+        saveHandler = async () => {
+          const res = await native('exportReceiptCSV', { csv: $('#csvOut').textContent || '' });
+          setStatus('#statusCSV', res?.message || (res?.ok ? 'Exported.' : ''), !!res?.ok);
+          if (res?.ok) { await native('hapticSuccess'); setTimeout(showHome, 450); }
+        };
+        break;
+      default:
+        setStatus('#statusHome', 'Could not route selection.', false);
     }
   }
 
-  // Status helpers
-  function setStatus(where,msg,ok){
-    const n=el(where); if(!n) return;
-    n.textContent=msg||'';
-    n.classList.remove('ok','err');
-    if (msg) n.classList.add(ok?'ok':'err');
-  }
-  function flashStatus(where, msg, ok=true, ms=1600){
-    setStatus(where,msg,ok);
-    if (ms>0) setTimeout(()=>setStatus(where,'',true), ms);
-  }
-
-  // Date helpers
-  const pad2=(n)=>String(n).padStart(2,'0');
-  const toInputLocal=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  const fromInputLocal=(s)=>{ const d=new Date(s); return isNaN(d)?null:d.toISOString(); };
-
-  // Native bridge (always via background)
-  const nativeCall = (action, payload={}) => RT.sendMessage({ cmd:'native', action, payload });
-
-  // Context (selection/title/url)
-  let cachedCtx={selection:'',title:'',url:'',structured:undefined};
-
-  async function getCtxFromBG(){
-    try { const r=await RT.sendMessage({ cmd:'getPageCtx' }); if(r?.ok&&r.ctx) return r.ctx; } catch {}
-    return null;
-  }
-  function pageProbe(){
-    const selection=String(window.getSelection?.().toString()||'').slice(0,20000);
-    const title=document.title||''; const url=location.href||'';
-    return { selection,title,url,structured:undefined };
-  }
-  async function getCtxFallback(){
-    try{
-      const [tab]=await TABS.query({active:true,currentWindow:true});
-      if(!tab?.id) return null;
-      const [{result}]=await SCR.executeScript({target:{tabId:tab.id},func:pageProbe});
-      return result||null;
-    }catch{ return null; }
-  }
-  async function ensureCtx(){
-    const bgc=await getCtxFromBG();
-    cachedCtx=bgc||await getCtxFallback()||cachedCtx;
-    el('selText').textContent=cachedCtx.selection||cachedCtx.title||cachedCtx.url||'';
-  }
-
-  // ----- Prefill helpers -----
-  function fillReminderFields(f){
-    el('remTitle').value = f.title || 'Todo';
-    el('remHasDue').checked = !!f.hasDue;
-    el('remDue').disabled = !el('remHasDue').checked;
-    el('remDue').value = f.dueISO ? toInputLocal(new Date(f.dueISO)) : '';
-    el('remNotes').value = f.notes || '';
-  }
-
-  function fillEventFields(f){
-    el('evTitle').value = f.title || 'Event';
-    const s = f.startISO? new Date(f.startISO): new Date();
-    const e = f.endISO? new Date(f.endISO): new Date(Date.now()+3600_000);
-    el('evStart').value = toInputLocal(s);
-    el('evEnd').value   = toInputLocal(e);
-    el('evLocation').value = f.location || '';
-    el('evInferTZ').checked = !!f.inferTZ;
-    el('evAlert').value = (typeof f.alertMinutes==='number' && f.alertMinutes>0) ? String(f.alertMinutes) : '';
-    el('evNotes').value = f.notes || '';
-  }
-
-  function fillContactFields(f){
-    const rowFor=(listId,val,ph)=>{
-      const row=document.createElement('div'); row.className='row';
-      const input=document.createElement('input'); input.type='text'; input.value=val||''; input.placeholder=ph;
-      const btn=document.createElement('button'); btn.type='button'; btn.textContent='✕'; btn.addEventListener('click',()=>row.remove());
-      row.appendChild(input); row.appendChild(btn); el(listId).appendChild(row);
-    };
-    el('ctGiven').value=f.givenName||''; el('ctFamily').value=f.familyName||'';
-    el('emails').textContent=''; (Array.isArray(f.emails)&&f.emails.length?f.emails:['']).forEach(e=>rowFor('emails',e,'name@example.com'));
-    el('phones').textContent=''; (Array.isArray(f.phones)&&f.phones.length?f.phones:['']).forEach(p=>rowFor('phones',p,'+353 1 234 5678'));
-    el('ctStreet').value=f.street||''; el('ctCity').value=f.city||'';
-    el('ctState').value=f.state||''; el('ctPostal').value=f.postalCode||''; el('ctCountry').value=f.country||'';
-  }
-
-  function fillCSV(text,csv){
-    el('csvInput').value=text||''; el('csvOut').textContent=csv||'';
-  }
-
-  // ----- Gatherers -----
-  function gatherReminderFields(){
-    const title=el('remTitle').value.trim()||'Todo';
-    const hasDue=el('remHasDue').checked;
-    const dueISO=hasDue?fromInputLocal(el('remDue').value):undefined;
-    const notes=el('remNotes').value;
-    return {title,hasDue,dueISO,notes};
-  }
-
-  function gatherEventFields(){
-    const title=el('evTitle').value.trim()||'Event';
-    const startISO=fromInputLocal(el('evStart').value);
-    const endISO=fromInputLocal(el('evEnd').value);
-    const location=el('evLocation').value.trim();
-    const inferTZ=el('evInferTZ').checked;
-    const alertMinutes=el('evAlert').value?parseInt(el('evAlert').value,10):undefined;
-    const notes=el('evNotes').value;
-    return {title,startISO,endISO,location,inferTZ,alertMinutes,notes};
-  }
-
-  function gatherContactFields(){
-    const givenName=el('ctGiven').value.trim();
-    const familyName=el('ctFamily').value.trim();
-    const emails=Array.from(el('emails').querySelectorAll('input')).map(i=>i.value.trim()).filter(Boolean);
-    const phones=Array.from(el('phones').querySelectorAll('input')).map(i=>i.value.trim()).filter(Boolean);
-    return {givenName,familyName,emails,phones,
-            street:el('ctStreet').value,city:el('ctCity').value,state:el('ctState').value,
-            postalCode:el('ctPostal').value,country:el('ctCountry').value};
-  }
-
-  // ----- UX helpers -----
-  async function confirmAndReturn(kind, message){
-    showView('home');
-    flashStatus('statusHome', message || (kind==='reminder' ? 'Reminder created.' :
-                                          kind==='event'    ? 'Event created.'    :
-                                          kind==='contact'  ? 'Contact saved.'    : 'Done.'), true, 1800);
-    try { await nativeCall('hapticSuccess'); } catch { try { navigator.vibrate?.(10); } catch {} }
-  }
-
-  // ----- Prepare actions -----
-  const doPrepare = async(kind) => {
-    const action = ({ event:'prepareEvent', reminder:'prepareReminder', contact:'prepareContact', csv:'prepareReceiptCSV', auto:'prepareAutoDetect' })[kind];
-    return await nativeCall(action, cachedCtx||{});
-  };
-
-  // ----- Init & handlers -----
-  async function init(){
-    // Header actions
-    navCancel.addEventListener('click', ()=>{
-      if (currentView !== 'home') showView('home');
-    });
-
-    navSave.addEventListener('click', async ()=>{
-      if (currentView !== 'reminder') return;            // Save is only for Reminder right now
-      navSave.disabled = true;
-      setStatus('statusReminder','Saving…',true);
-      try{
-        const r = await nativeCall('saveReminder',{ fields:gatherReminderFields() });
-        if(r?.ok){
-          setStatus('statusReminder','',true);
-          await confirmAndReturn('reminder', r.message||'Reminder created.');
-        }else{
-          setStatus('statusReminder',r?.message||'Failed.',false);
-        }
-      }catch(e){
-        setStatus('statusReminder',e?.message||'Native error.',false);
-      }finally{
-        navSave.disabled = false;
-      }
-    });
-
-    // Back buttons for other editors (unchanged)
-    el('backEvent').addEventListener('click',()=>{showView('home');setStatus('statusEvent','');});
-    el('backContact').addEventListener('click',()=>{showView('home');setStatus('statusContact','');});
-    el('backCSV').addEventListener('click',()=>{showView('home');setStatus('statusCSV','');});
-
-    // Toggle Due enable/disable
-    el('remHasDue').addEventListener('change',()=>{ el('remDue').disabled = !el('remHasDue').checked; });
-
-    // Contact adders
-    el('addEmail').addEventListener('click',()=>{
-      const row=document.createElement('div'); row.className='row';
-      const input=document.createElement('input'); input.type='text'; input.placeholder='name@example.com';
-      const btn=document.createElement('button'); btn.type='button'; btn.textContent='✕'; btn.addEventListener('click',()=>row.remove());
-      row.appendChild(input); row.appendChild(btn); el('emails').appendChild(row);
-    });
-    el('addPhone').addEventListener('click',()=>{
-      const row=document.createElement('div'); row.className='row';
-      const input=document.createElement('input'); input.type='text'; input.placeholder='+353 1 234 5678';
-      const btn=document.createElement('button'); btn.type='button'; btn.textContent='✕'; btn.addEventListener('click',()=>row.remove());
-      row.appendChild(input); row.appendChild(btn); el('phones').appendChild(row);
-    });
-
+  // --- Wiring --------------------------------------------------------------
+  document.addEventListener('DOMContentLoaded', () => {
     // Home buttons
-    el('btnAuto').addEventListener('click',async()=>{
-      setStatus('statusHome','',true);
-      try{
-        const r=await doPrepare('auto');
-        if(!r?.ok) return setStatus('statusHome',r?.message||'Failed.',false);
-        const route=r.route;
-        if(route==='event'){ fillEventFields(r.fields||{}); showView('event'); }
-        else if(route==='reminder'){ fillReminderFields(r.fields||{}); showView('reminder'); }
-        else if(route==='contact'){ fillContactFields(r.fields||{}); showView('contact'); }
-        else if(route==='csv'){ fillCSV(cachedCtx?.selection||'',r.csv||''); showView('csv'); }
-      }catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
-    });
+    $('#btnAuto').addEventListener('click', openAuto);
+    $('#btnReminder').addEventListener('click', openReminder);
+    $('#btnEvent').addEventListener('click', openEvent);
+    $('#btnContact').addEventListener('click', openContact);
+    $('#btnCSV').addEventListener('click', openCSV);
 
-    el('btnReminder').addEventListener('click',async()=>{
-      setStatus('statusHome','',true);
-      try{ const r=await doPrepare('reminder'); if(!r?.ok) return setStatus('statusHome',r?.message||'Failed.',false);
-           fillReminderFields(r.fields||{}); showView('reminder'); }
-      catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
-    });
+    // Editor affordances
+    $('#navCancel').addEventListener('click', showHome);
+    $('#remHasDue').addEventListener('change', (e) => { $('#remDue').disabled = !e.target.checked; });
+    $('#addEmail').addEventListener('click', () => addListRow('#emails', ''));
+    $('#addPhone').addEventListener('click', () => addListRow('#phones', ''));
 
-    el('btnEvent').addEventListener('click',async()=>{
-      setStatus('statusHome','',true);
-      try{ const r=await doPrepare('event'); if(!r?.ok) return setStatus('statusHome',r?.message||'Failed.',false);
-           fillEventFields(r.fields||{}); showView('event'); }
-      catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
-    });
-
-    el('btnContact').addEventListener('click',async()=>{
-      setStatus('statusHome','',true);
-      try{ const r=await doPrepare('contact'); if(!r?.ok) return setStatus('statusHome',r?.message||'Failed.',false);
-           fillContactFields(r.fields||{}); showView('contact'); }
-      catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
-    });
-
-    el('btnCSV').addEventListener('click',async()=>{
-      setStatus('statusHome','',true);
-      try{ const r=await doPrepare('csv'); if(!r?.ok) return setStatus('statusHome',r?.message||'Failed.',false);
-           fillCSV(cachedCtx?.selection||'',r.csv||''); showView('csv'); }
-      catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
-    });
-
-    // Event & Contact saves stay in-form for now (unchanged)
-    el('saveEvent')?.addEventListener('click',async()=>{
-      setStatus('statusEvent','Saving…',true);
-      try{
-        const r=await nativeCall('saveEvent',{ fields:gatherEventFields() });
-        if(r?.ok){ setStatus('statusEvent','',true); await confirmAndReturn('event', r.message||'Event created.'); }
-        else setStatus('statusEvent',r?.message||'Failed.',false);
-      }catch(e){ setStatus('statusEvent',e.message||'Native error.',false); }
-    });
-
-    el('saveContact')?.addEventListener('click',async()=>{
-      setStatus('statusContact','Saving…',true);
-      try{
-        const r=await nativeCall('saveContact',{ fields:gatherContactFields() });
-        if(r?.ok){ setStatus('statusContact','',true); await confirmAndReturn('contact', r.message||'Contact saved.'); }
-        else setStatus('statusContact',r?.message||'Failed.',false);
-      }catch(e){ setStatus('statusContact',e.message||'Native error.',false); }
-    });
-
-    await ensureCtx();
-    showView('home');
-  }
-
-  document.addEventListener('DOMContentLoaded', init);
+    showHome();
+  });
 })();

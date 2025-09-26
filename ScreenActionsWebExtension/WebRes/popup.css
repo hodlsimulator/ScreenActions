@@ -1,102 +1,154 @@
-:root{
-  --bg:#0f0f10;
-  --card:#17181a;
-  --text:#e9eaed;
-  --sub:#a2a6ad;
-  --accent:#0a84ff;
-  --ok:#3ddc84;
-  --err:#ff453a;
-  --hair:#2a2c30;
-  --pill:#222427;
-  --radius:14px;
-  --radiusSmall:10px;
-  --pad:16px;
+/* popup.css — iOS share-sheet look, light & dark, pixel-consistent */
+
+:root {
+  --radius-card: 18px;
+  --radius-field: 12px;
+  --pad: 16px;
+  --pill-h: 56px;
+  --title-lg: 34px; /* Large Title size */
+  --text: #111111;
+  --sub: #6e6e73;
+  --bg: #ffffff;
+  --card: #f2f2f7;        /* secondarySystemBackground */
+  --hair: #d2d2d7;        /* separator */
+  --accent: #0a84ff;      /* systemBlue */
+  --pill-secondary: #edf0f5;
+  --ok: #3ddc84;
+  --err: #ff453a;
   font: -apple-system-body;
 }
 
-*{ box-sizing:border-box; }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #e9eaed;
+    --sub: #a2a6ad;
+    --bg: #0b0c0d;
+    --card: #17181a;
+    --hair: #2a2c30;
+    --pill-secondary: #222427;
+  }
+}
 
-html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); }
-#app{ width: min(420px, 100vw); min-height: 460px; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); }
 
-.mono{ font-family: ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; }
-pre{ white-space: pre-wrap; word-break: break-word; }
+#app {
+  width: min(420px, 100vw);
+  min-height: 560px;                 /* keep the same “stop” feel as the share sheet */
+  padding-bottom: env(safe-area-inset-bottom);
+}
 
-.toolbar{
-  position: sticky; top: 0; z-index: 10;
-  display:flex; align-items:center; justify-content:space-between;
+.mono { font-family: ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; }
+pre { white-space: pre-wrap; word-break: break-word; }
+
+/* Toolbar (Cancel / Save) + Large Title */
+.toolbar {
+  position: sticky;
+  top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
   padding: env(safe-area-inset-top) var(--pad) var(--pad) var(--pad);
-  gap:12px; background:var(--bg);
+  background: var(--bg);
   border-bottom: 1px solid var(--hair);
 }
-.toolbar-title{ text-align:center; flex:1; font-weight:600; opacity:.9; }
-
-.pill{
-  border: none; outline: none; cursor:pointer;
-  background: var(--pill); color: var(--text);
-  padding: 8px 14px; border-radius: 20px; font-weight:600;
+.toolbar-title {
+  text-align: left;
+  font-weight: 800;
+  font-size: var(--title-lg);
+  letter-spacing: -0.2px;
+  margin: 2px 0 0 0;
+  flex: 1;
 }
-.pill.primary{ background: var(--accent); color:white; }
-.soft{ background: #1b1c20; color: var(--text); border:none; padding:8px 12px; border-radius: 10px; }
+.pill {
+  border: none; outline: none; cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  font-weight: 600;
+  background: var(--pill-secondary);
+  color: var(--text);
+}
+.pill.primary {
+  background: linear-gradient(135deg, var(--accent), rgba(10,132,255,0.9));
+  color: #fff;
+}
 
-.view{ display:none; padding: 0 var(--pad) var(--pad) var(--pad); }
-.view.active{ display:block; }
+/* Views */
+.view { display: none; padding: 0 var(--pad) var(--pad) var(--pad); }
+.view.active { display: block; }
+.sheet-title { display: none; } /* we use the Large Title in the toolbar */
 
-.sheet-title{ font-size: 28px; font-weight:800; margin: 8px 0 14px 0; }
-.group-label{ color: var(--sub); margin: 14px 0 8px 0; font-weight:600; letter-spacing:.2px; }
+/* Labels */
+.group-label {
+  color: var(--sub);
+  margin: 16px 0 8px 0;
+  font-weight: 600; font-size: 12px; letter-spacing: .2px;
+}
 
-.form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
-.form-row.split > *{ flex:1; }
-.form-row input[type="text"],
-.form-row input[type="number"],
-.form-row input[type="datetime-local"],
-.form-row textarea{
-  appearance:none; width:100%;
-  background: var(--card); color:var(--text);
-  border:1px solid var(--hair); border-radius: var(--radiusSmall);
+/* Selection “card” */
+.selection {
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+/* Home action rows — 56pt pill buttons */
+.home-actions { display: grid; grid-auto-rows: var(--pill-h); row-gap: 12px; margin-top: 10px; }
+.home-actions .btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; height: var(--pill-h);
+  padding: 0 16px;
+  border-radius: 9999px;
+  border: 0.5px solid color-mix(in oklab, var(--hair) 18%, transparent);
+  background: var(--pill-secondary);
+  color: var(--text);
+  font: -apple-system-body;
+  font-weight: 600;
+  cursor: pointer;
+}
+.home-actions .btn.primary {
+  background: linear-gradient(135deg, var(--accent), rgba(10,132,255,0.9));
+  color: #fff;
+  border: none;
+}
+
+/* Forms (editors) */
+.form-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+.form-row.split > * { flex: 1; }
+input[type="text"], input[type="number"], input[type="datetime-local"], textarea {
+  appearance: none;
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-field);
   padding: 12px 14px;
 }
-.form-row textarea{ resize: vertical; }
+textarea { resize: vertical; }
 
-.inline{ color: var(--text); }
+/* Status */
+.status { min-height: 20px; margin: 10px 0 2px 0; font-weight: 600; }
+.status.ok { color: var(--ok); }
+.status.err { color: var(--err); }
 
-.selection{
-  background: var(--card); border:1px solid var(--hair); border-radius: var(--radius);
-  padding:12px; max-height: 140px; overflow:auto;
-}
-
-.grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-.tile{
-  border:none; border-radius: var(--radius); padding:14px; background:var(--card); color:var(--text);
-  text-align:center; cursor:pointer; border:1px solid var(--hair);
-}
-
-.status{ min-height: 20px; margin: 8px 0 2px 0; font-weight:600; }
-.status.ok{ color:var(--ok); }
-.status.err{ color:var(--err); }
-
-.home-block{ margin-top: 8px; }
-
-.bar{ display:flex; justify-content:flex-start; margin-top:8px; }
-
-.button-row{ display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
-.button-row.left{ justify-content:flex-start; }
+/* Footer rows */
+.button-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.button-row.left { justify-content: flex-start; }
 
 /* Contact list rows */
-.list .row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-.list .row input{ flex:1; }
-.list .row button{ border:none; background:#2a2c30; color:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; }
+.list .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.list .row input { flex: 1; }
+.list .row button {
+  border: none; background: var(--pill-secondary);
+  color: var(--text); border-radius: 8px; padding: 6px 10px; cursor: pointer;
+}
 
-/* iOS-like switch */
-.switch{ position:relative; width:48px; height:28px; display:inline-block; }
-.switch input{ opacity:0; width:0; height:0; }
-.slider{
-  position:absolute; cursor:pointer; inset:0;
-  background:#2b2d31; border-radius:999px; transition: all .2s ease;
-}
-.slider:before{
-  content:""; position:absolute; height:22px; width:22px; left:3px; top:3px;
-  background:white; border-radius:50%; transition: all .2s ease;
-}
-.switch input:checked + .slider{ background: var(--accent); }
-.switch input:checked + .slider:before{ transform: translateX(20px); }
+/* iOS-ish switch */
+.switch { position: relative; width: 48px; height: 28px; display: inline-block; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; inset: 0; border-radius: 999px; background: color-mix(in oklab, var(--hair) 60%, transparent); transition: all .2s; }
+.slider:before { content:""; position: absolute; height: 22px; width: 22px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: all .2s; }
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider:before { transform: translateX(20px); }
