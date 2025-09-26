@@ -229,14 +229,30 @@
     document.getElementById('csvInput').textContent = (prep.fieldsText || '') || '';
     document.getElementById('csvPreview').textContent = prep.csv || '';
   }
-  async function exportCSV() {
-    const status = document.getElementById('csvStatus');
-    status.textContent = 'Exporting…'; status.className = 'status';
-    const csv = document.getElementById('csvPreview').textContent || '';
-    const out = await bg.native('exportReceiptCSV', { csv });
-    if (out?.ok) { status.textContent = 'CSV exported.'; status.className = 'status ok'; await bg.native('hapticSuccess', {}); window.close?.(); }
-    else { status.textContent = out?.message || 'Export failed.'; status.className = 'status err'; }
-  }
+    async function exportCSV() {
+      const status = document.getElementById('csvStatus');
+      status.textContent = 'Exporting…';
+      status.className = 'status';
+
+      // Use the preview text (already built by prepareReceiptCSV)
+      const csv = document.getElementById('csvPreview').textContent || '';
+      const out = await bg.native('exportReceiptCSV', { csv });
+
+      if (out?.ok) {
+        // If native side gave us an app URL, open it so the Files save sheet appears in the app.
+        if (out.openURL) {
+          try { window.location.href = out.openURL; } catch (e) { /* best effort */ }
+        }
+        status.textContent = 'Switching to app…';
+        status.className = 'status ok';
+        await bg.native('hapticSuccess', {});
+        // The popup can close now; the user finishes in the app’s .fileExporter UI.
+        window.close?.();
+      } else {
+        status.textContent = out?.message || 'Export failed.';
+        status.className = 'status err';
+      }
+    }
 
   // ----- Wiring -----
   window.addEventListener('DOMContentLoaded', async () => {

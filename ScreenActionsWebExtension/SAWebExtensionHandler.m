@@ -4,7 +4,7 @@
 //
 //  Created by . . on 9/22/25.
 //
-//  Objective-C principal that **conforms** to NSExtensionRequestHandling
+//  Objective-C principal that conforms to NSExtensionRequestHandling
 //  and forwards to the Swift handler.
 //
 
@@ -16,8 +16,12 @@
 @end
 
 @implementation SAWebExtensionHandler
-- (void)beginRequestWithExtensionContext:(NSExtensionContext *)context {
+
+- (void)beginRequestWithExtensionContext:(NSExtensionContext *)context
+{
+    // Forward to the Swift principal that does the actual routing.
     SafariWebExtensionHandler *swiftHandler = [SafariWebExtensionHandler new];
     [swiftHandler beginRequestWithExtensionContext:context];
 }
+
 @end

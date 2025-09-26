@@ -65,7 +65,10 @@ final class SAWebBridge: NSObject {
         case "saveEvent":          return try await saveEvent(fields: (payload["fields"] as? [String: Any]) ?? [:])
         case "saveReminder":       return try await saveReminder(fields: (payload["fields"] as? [String: Any]) ?? [:])
         case "saveContact":        return try await saveContact(fields: (payload["fields"] as? [String: Any]) ?? [:])
-        case "exportReceiptCSV":   return try await exportReceiptCSV(csv: (payload["csv"] as? String) ?? "")
+        case "exportReceiptCSV":   return try await exportReceiptCSV(
+                                        csv: (payload["csv"] as? String) ?? "",
+                                        sourceText: text
+                                    )
 
         // ---- Geofencing permissions (called when toggles switch on) ----
         case "ensureGeofencingPermissions":
@@ -81,14 +84,28 @@ final class SAWebBridge: NSObject {
 
         // ---- Ping / legacy handoff (kept for compatibility) ----
         case "ping":              return ["ok": true, "message": "pong"]
-        case "addEvent":          Handoff.save(text: text, kind: .event);    return ["ok": true, "openURL": "screenactions://handoff?kind=event"]
-        case "createReminder":    Handoff.save(text: text, kind: .reminder); return ["ok": true, "openURL": "screenactions://handoff?kind=reminder"]
-        case "extractContact":    Handoff.save(text: text, kind: .contact);  return ["ok": true, "openURL": "screenactions://handoff?kind=contact"]
-        case "receiptCSV":        Handoff.save(text: text, kind: .csv);      return ["ok": true, "openURL": "screenactions://handoff?kind=csv"]
+
+        case "addEvent":
+            queueHandoff(text: text, kind: "event")
+            return ["ok": true, "openURL": "screenactions://handoff?kind=event"]
+
+        case "createReminder":
+            queueHandoff(text: text, kind: "reminder")
+            return ["ok": true, "openURL": "screenactions://handoff?kind=reminder"]
+
+        case "extractContact":
+            queueHandoff(text: text, kind: "contact")
+            return ["ok": true, "openURL": "screenactions://handoff?kind=contact"]
+
+        case "receiptCSV":
+            queueHandoff(text: text, kind: "csv")
+            return ["ok": true, "openURL": "screenactions://handoff?kind=csv"]
+
         case "autoDetect":
             let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !t.isEmpty else { return ["ok": false, "message": "No text selected."] }
-            Handoff.save(text: t, kind: .event) // app will still choose the right editor
+            // The app determines the final editor; we store as 'event' for now.
+            queueHandoff(text: t, kind: "event")
             return ["ok": true, "openURL": "screenactions://handoff?kind=auto"]
 
         default:
@@ -168,7 +185,8 @@ final class SAWebBridge: NSObject {
     private class func prepareReceiptCSV(from text: String) async throws -> [String: Any] {
         guard !text.isEmpty else { return ["ok": false, "message": "No text selected."] }
         let csv = CSVExporter.makeReceiptCSV(from: text)
-        return ["ok": true, "csv": csv]
+        // Include the input so the popup can show it (non-breaking addition).
+        return ["ok": true, "fieldsText": text, "csv": csv]
     }
 
     private class func prepareAutoDetect(from text: String) async throws -> [String: Any] {
@@ -290,14 +308,26 @@ final class SAWebBridge: NSObject {
         return ["ok": true, "message": "Contact saved (\(id))."]
     }
 
-    private class func exportReceiptCSV(csv: String) async throws -> [String: Any] {
+    /// CSV export from the popup:
+    /// - Keeps the existing quota + temp write (non-breaking).
+    /// - Also queues a Handoff to the app and returns an `openURL` so the popup can jump there.
+    private class func exportReceiptCSV(csv: String, sourceText: String) async throws -> [String: Any] {
         let isPro = (UserDefaults(suiteName: AppStorageService.appGroupID)?.bool(forKey: "iap.pro.active")) ?? false
         let gate = QuotaManager.consume(feature: .receiptCSVExport, isPro: isPro)
         guard gate.allowed else { return ["ok": false, "message": gate.message] }
 
+        // Preserve current behaviour: write a copy into the extension’s temp container.
         let filename = AppStorageService.shared.nextExportFilename(prefix: "receipt", ext: "csv")
         _ = try CSVExporter.writeCSVToAppGroup(filename: filename, csv: csv)
-        return ["ok": true, "message": "CSV exported."]
+
+        // New behaviour: bounce to the app so the user gets the native Files save sheet.
+        let trimmed = sourceText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            queueHandoff(text: trimmed, kind: "csv")
+        }
+
+        // Return `openURL` for the popup to open the app (existing callers that ignore this remain unaffected).
+        return ["ok": true, "message": "CSV exported.", "openURL": "screenactions://handoff?kind=csv"]
     }
 
     // MARK: - Geofencing permissions
@@ -364,5 +394,14 @@ final class SAWebBridge: NSObject {
 
     private class func clampRadius(_ r: Double) -> Double {
         return max(50, min(r, 2000))
+    }
+
+    /// Write a handoff payload straight to the App Group so the app can consume it.
+    private class func queueHandoff(text: String, kind: String) {
+        let defaults = UserDefaults(suiteName: AppStorageService.appGroupID) ?? .standard
+        defaults.set(text, forKey: "handoff.text")
+        defaults.set(kind, forKey: "handoff.kind")
+        defaults.set(true, forKey: "handoff.pending")
+        defaults.synchronize()
     }
 }
