@@ -166,8 +166,12 @@ pre{ white-space: pre-wrap; word-break: break-word; }
   border-radius: 0 !important;
   padding: 0;
   margin: 6px 2px 0 2px;
+  color: var(--text) !important;     /* ← ensure readable in dark mode */
+  caret-color: var(--text);          /* matching caret */
 }
-#remNotes::placeholder, #evtNotes::placeholder{ color: var(--sub); }
+#remNotes::placeholder, #evtNotes::placeholder{
+  color: var(--sub) !important;      /* placeholder readable in dark mode */
+}
 
 /* Status */
 .status{ min-height:20px; margin:10px 0 2px 0; font-weight:600; }
@@ -207,4 +211,3 @@ pre{ white-space: pre-wrap; word-break: break-word; }
 
 /* Range */
 .range{ width:100%; }
-    
