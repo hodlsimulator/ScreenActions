@@ -1,14 +1,5 @@
-/* popup.css — Share-sheet-accurate styling (pixel-match to iOS in dark mode)
-   Changes:
-   • Dark mode colours set to iOS system values:
-     – background  #1C1C1E  (system background)
-     – card/pills  #2C2C2E  (secondary system background)
-     – separator   #3A3A3C
-     – accent      #0A84FF  (systemBlue)
-   • Secondary action buttons (under Auto Detect) now use blue text + blue icons.
-   • Card corner radius tightened to 12px to match SwiftUI (.cornerRadius: 12).
-   • Toolbar title retained; our large title hidden.
-*/
+/* popup.css — iOS-like styling for the web extension sheet */
+
 :root{
   --radius-card:12px;
   --radius-field:12px;
@@ -19,41 +10,35 @@
   --text:#111111;
   --sub:#6e6e73;
 
-  /* Light mode (kept close to system) */
+  /* Light */
   --bg:#ffffff;
-  --card:#f2f2f7;       /* secondarySystemBackground (light) */
-  --hair:#d2d2d7;       /* separator (light) */
-  --accent:#0a84ff;     /* systemBlue */
-  --pill-secondary:#edf0f5;
-  --ok:#34c759;
+  --card:#f2f2f7;   /* secondarySystemBackground (light) */
+  --hair:#d2d2d7;   /* separator (light) */
+  --accent:#0a84ff; /* systemBlue */
+  --ok:#34c759;     /* systemGreen */
   --err:#ff3b30;
 
   font:-apple-system-body;
 }
+
 @media (prefers-color-scheme: dark){
   :root{
     --text:#e9eaed;
     --sub:#a2a6ad;
 
-    /* *** iOS dark values for pixel-match *** */
-    --bg:#1c1c1e;           /* systemBackground (dark) */
-    --card:#2c2c2e;         /* secondarySystemBackground (dark) */
-    --hair:#3a3a3c;         /* separator (dark) */
-    --pill-secondary:#2c2c2e;
+    --bg:#1c1c1e;   /* systemBackground (dark) */
+    --card:#2c2c2e; /* secondarySystemBackground (dark) */
+    --hair:#3a3a3c; /* separator (dark) */
   }
 }
 
 *{ box-sizing:border-box; }
-html,body{
-  margin:0; padding:0;
-  background:var(--bg);
-  color:var(--text);
-}
+html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); }
 
-/* Full-sheet height; add safe-area top now that the toolbar is gone */
+/* Full-sheet height */
 #app{
   width:min(440px,100vw);
-  min-height:92dvh; /* encourage large detent */
+  min-height:92dvh;
   padding-top:calc(env(safe-area-inset-top) + 6px);
   padding-bottom:env(safe-area-inset-bottom);
 }
@@ -62,15 +47,42 @@ html,body{
 .mono{ font-family:ui-monospace,Menlo,Consolas,monospace; white-space:pre-wrap; }
 pre{ white-space:pre-wrap; word-break:break-word; }
 
-/* ── Toolbar removed (hides big title + our Cancel) ───────────────────────── */
-.toolbar, .toolbar-title, .toolbar .pill{ display:none !important; }
+/* ── Toolbar is hidden; Safari provides chrome. Keep elements for IDs. ── */
+.toolbar, .toolbar-title{ display:none !important; }
+#navCancel{ display:none !important; } /* no top cancel */
 
-/* ── Views ─────────────────────────────────────────────────────────────────── */
+/* Floating round tick */
+.floating-confirm{
+  position:fixed;
+  top:calc(env(safe-area-inset-top) + 8px);
+  right:12px;
+  width:44px;
+  height:44px;
+  display:none; /* shown only on Reminder */
+  align-items:center;
+  justify-content:center;
+  border:none;
+  border-radius:999px;
+  background:var(--accent);
+  color:#fff;
+  font-weight:800;
+  font-size:22px;
+  z-index:999;
+}
+
+/* Views */
 .view{ display:none; padding:0 var(--pad) var(--pad) var(--pad); }
 .view.active{ display:block; }
-.sheet-title{ display:none; }
 
-/* group labels */
+/* Titles */
+.sheet-title{
+  margin:4px 0 12px 0;
+  font-weight:800;
+  font-size:var(--title-lg);
+  letter-spacing:-.2px;
+}
+
+/* Group labels */
 .group-label{
   color:var(--sub);
   margin:16px 0 8px 0;
@@ -79,7 +91,7 @@ pre{ white-space:pre-wrap; word-break:break-word; }
   letter-spacing:.2px;
 }
 
-/* selection “card” */
+/* selection card */
 .selection{
   background:var(--card);
   border:1px solid var(--hair);
@@ -90,7 +102,7 @@ pre{ white-space:pre-wrap; word-break:break-word; }
   white-space:pre-wrap;
 }
 
-/* home buttons */
+/* Home buttons */
 .home-actions{
   display:grid;
   grid-auto-rows:var(--pill-h);
@@ -98,34 +110,30 @@ pre{ white-space:pre-wrap; word-break:break-word; }
   margin-top:10px;
 }
 .home-actions .btn{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  width:100%;
-  height:var(--pill-h);
+  display:flex; align-items:center; gap:10px;
+  width:100%; height:var(--pill-h);
   padding:0 16px;
   border-radius:9999px;
   border:.5px solid color-mix(in oklab, var(--hair) 18%, transparent);
-  background:var(--pill-secondary);
-
-  /* Secondary actions: blue text + blue icons */
+  background:color-mix(in oklab, var(--card) 98%, transparent);
   color:var(--accent);
-
-  font:-apple-system-body;
-  font-weight:600;
+  font:-apple-system-body; font-weight:600;
   cursor:pointer;
 }
-/* Primary (Auto Detect): blue pill with white text */
 .home-actions .btn.primary{
   background:linear-gradient(135deg,var(--accent),rgba(10,132,255,0.9));
-  color:#fff;
-  border:none;
+  color:#fff; border:none;
 }
 
-/* forms */
+/* Form rows */
 .form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
 .form-row.split > *{ flex:1; }
-input[type="text"], input[type="number"], input[type="datetime-local"], textarea{
+.form-row .grow{ flex:1; }
+
+input[type="text"],
+input[type="number"],
+input[type="datetime-local"],
+textarea{
   appearance:none;
   width:100%;
   background:var(--card);
@@ -134,205 +142,46 @@ input[type="text"], input[type="number"], input[type="datetime-local"], textarea
   border-radius:var(--radius-field);
   padding:12px 14px;
 }
-textarea{ resize:vertical; }
 
-/* status */
+/* Make Notes comfy size */
+#remNotes{
+  min-height:140px;
+  line-height:1.35;
+  font-size:16px;
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "SF Pro Text", system-ui, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+  resize:vertical;
+}
+
+/* Status */
 .status{ min-height:20px; margin:10px 0 2px 0; font-weight:600; }
 .status.ok{ color:var(--ok); }
 .status.err{ color:var(--err); }
 
-/* footer rows */
+/* Footer rows */
 .button-row{ display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
 .button-row.left{ justify-content:flex-start; }
+.button-row.center{ justify-content:center; }
 
-/* contact list rows */
+/* Contact list rows */
 .list .row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 .list .row input{ flex:1; }
 .list .row button{
-  border:none; background:var(--pill-secondary); color:var(--text);
-  border-radius:8px; padding:6px 10px; cursor:pointer;
+  border:none; background:color-mix(in oklab, var(--card) 98%, transparent);
+  color:var(--text); border-radius:8px; padding:6px 10px; cursor:pointer;
 }
 
 /* iOS-style switch */
 .switch{ position:relative; width:48px; height:28px; display:inline-block; }
 .switch input{ opacity:0; width:0; height:0; }
 .slider{
-  position:absolute; inset:0; border-radius:999px;
+  position:absolute; inset:0;
+  border-radius:999px;
   background:color-mix(in oklab, var(--hair) 60%, transparent);
   transition:all .2s;
 }
 .slider:before{
   content:""; position:absolute; height:22px; width:22px; left:3px; top:3px;
-  background:white; border-radius:50%; transition:all .2s;
+  background:#fff; border-radius:50%; transition:all .2s;
 }
-.switch input:checked + .slider{ background:var(--accent); }
-.switch input:checked + .slider:before{ transform:translateX(20px); }
-/* popup.css — Share-sheet-accurate styling (pixel-match to iOS in dark mode)
-   Changes:
-   • Dark mode colours set to iOS system values:
-     – background  #1C1C1E  (system background)
-     – card/pills  #2C2C2E  (secondary system background)
-     – separator   #3A3A3C
-     – accent      #0A84FF  (systemBlue)
-   • Secondary action buttons (under Auto Detect) now use blue text + blue icons.
-   • Card corner radius tightened to 12px to match SwiftUI (.cornerRadius: 12).
-   • Toolbar title retained; our large title hidden.
-*/
-:root{
-  --radius-card:12px;
-  --radius-field:12px;
-  --pad:16px;
-  --pill-h:56px;
-  --title-lg:34px;
-
-  --text:#111111;
-  --sub:#6e6e73;
-
-  /* Light mode (kept close to system) */
-  --bg:#ffffff;
-  --card:#f2f2f7;       /* secondarySystemBackground (light) */
-  --hair:#d2d2d7;       /* separator (light) */
-  --accent:#0a84ff;     /* systemBlue */
-  --pill-secondary:#edf0f5;
-  --ok:#34c759;
-  --err:#ff3b30;
-
-  font:-apple-system-body;
-}
-@media (prefers-color-scheme: dark){
-  :root{
-    --text:#e9eaed;
-    --sub:#a2a6ad;
-
-    /* *** iOS dark values for pixel-match *** */
-    --bg:#1c1c1e;           /* systemBackground (dark) */
-    --card:#2c2c2e;         /* secondarySystemBackground (dark) */
-    --hair:#3a3a3c;         /* separator (dark) */
-    --pill-secondary:#2c2c2e;
-  }
-}
-
-*{ box-sizing:border-box; }
-html,body{
-  margin:0; padding:0;
-  background:var(--bg);
-  color:var(--text);
-}
-
-/* Full-sheet height; add safe-area top now that the toolbar is gone */
-#app{
-  width:min(440px,100vw);
-  min-height:92dvh; /* encourage large detent */
-  padding-top:calc(env(safe-area-inset-top) + 6px);
-  padding-bottom:env(safe-area-inset-bottom);
-}
-
-/* monospace utility */
-.mono{ font-family:ui-monospace,Menlo,Consolas,monospace; white-space:pre-wrap; }
-pre{ white-space:pre-wrap; word-break:break-word; }
-
-/* ── Toolbar removed (hides big title + our Cancel) ───────────────────────── */
-.toolbar, .toolbar-title, .toolbar .pill{ display:none !important; }
-
-/* ── Views ─────────────────────────────────────────────────────────────────── */
-.view{ display:none; padding:0 var(--pad) var(--pad) var(--pad); }
-.view.active{ display:block; }
-.sheet-title{ display:none; }
-
-/* group labels */
-.group-label{
-  color:var(--sub);
-  margin:16px 0 8px 0;
-  font-weight:600;
-  font-size:12px;
-  letter-spacing:.2px;
-}
-
-/* selection “card” */
-.selection{
-  background:var(--card);
-  border:1px solid var(--hair);
-  border-radius:var(--radius-card);
-  padding:12px;
-  max-height:160px;
-  overflow:auto;
-  white-space:pre-wrap;
-}
-
-/* home buttons */
-.home-actions{
-  display:grid;
-  grid-auto-rows:var(--pill-h);
-  row-gap:12px;
-  margin-top:10px;
-}
-.home-actions .btn{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  width:100%;
-  height:var(--pill-h);
-  padding:0 16px;
-  border-radius:9999px;
-  border:.5px solid color-mix(in oklab, var(--hair) 18%, transparent);
-  background:var(--pill-secondary);
-
-  /* Secondary actions: blue text + blue icons */
-  color:var(--accent);
-
-  font:-apple-system-body;
-  font-weight:600;
-  cursor:pointer;
-}
-/* Primary (Auto Detect): blue pill with white text */
-.home-actions .btn.primary{
-  background:linear-gradient(135deg,var(--accent),rgba(10,132,255,0.9));
-  color:#fff;
-  border:none;
-}
-
-/* forms */
-.form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
-.form-row.split > *{ flex:1; }
-input[type="text"], input[type="number"], input[type="datetime-local"], textarea{
-  appearance:none;
-  width:100%;
-  background:var(--card);
-  color:var(--text);
-  border:1px solid var(--hair);
-  border-radius:var(--radius-field);
-  padding:12px 14px;
-}
-textarea{ resize:vertical; }
-
-/* status */
-.status{ min-height:20px; margin:10px 0 2px 0; font-weight:600; }
-.status.ok{ color:var(--ok); }
-.status.err{ color:var(--err); }
-
-/* footer rows */
-.button-row{ display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
-.button-row.left{ justify-content:flex-start; }
-
-/* contact list rows */
-.list .row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-.list .row input{ flex:1; }
-.list .row button{
-  border:none; background:var(--pill-secondary); color:var(--text);
-  border-radius:8px; padding:6px 10px; cursor:pointer;
-}
-
-/* iOS-style switch */
-.switch{ position:relative; width:48px; height:28px; display:inline-block; }
-.switch input{ opacity:0; width:0; height:0; }
-.slider{
-  position:absolute; inset:0; border-radius:999px;
-  background:color-mix(in oklab, var(--hair) 60%, transparent);
-  transition:all .2s;
-}
-.slider:before{
-  content:""; position:absolute; height:22px; width:22px; left:3px; top:3px;
-  background:white; border-radius:50%; transition:all .2s;
-}
-.switch input:checked + .slider{ background:var(--accent); }
+.switch input:checked + .slider{ background:var(--ok); }   /* green when on */
 .switch input:checked + .slider:before{ transform:translateX(20px); }

@@ -1,157 +1,168 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Screen Actions</title>
-  <link rel="stylesheet" href="popup.css">
-  <script defer src="popup.js"></script>
+  <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <nav class="toolbar">
-    <div id="navTitle" class="toolbar-title">Screen Actions</div>
-    <button id="navCancel" class="pill" type="button">Cancel</button>
-  </nav>
-
   <div id="app">
-    <!-- HOME -->
-    <section id="home" class="view active">
-      <div class="group-label">Selected Text</div>
-      <div id="selText" class="selection"></div>
+    <!-- Floating confirm (round tick) – visible only on the Reminder editor -->
+    <button id="navConfirm" class="floating-confirm" aria-label="Save">✓</button>
 
-      <div id="statusHome" class="status"></div>
+    <!-- (Toolbar exists for structure but is visually hidden by CSS; keep IDs for code parity) -->
+    <div class="toolbar">
+      <div id="navTitle" class="toolbar-title">Screen Actions</div>
+      <button id="navCancel" class="pill">Cancel</button>
+    </div>
+
+    <!-- ▸ HOME (unchanged behaviour) -->
+    <div id="home" class="view active" role="region" aria-labelledby="homeTitle">
+      <h2 id="homeTitle" class="sheet-title">Screen Actions</h2>
+
+      <div class="group-label">Selected Text</div>
+      <div id="selText" class="selection" aria-live="polite"></div>
 
       <div class="home-actions">
-        <button id="btnAuto" class="btn primary" type="button">✨ Auto Detect</button>
-        <button id="btnReminder" class="btn" type="button">✔︎ Create Reminder</button>
-        <button id="btnEvent" class="btn" type="button">📅 Add Calendar Event</button>
-        <button id="btnContact" class="btn" type="button">👤 Extract Contact</button>
-        <button id="btnCSV" class="btn" type="button">🧾 Receipt → CSV</button>
+        <button id="btnAuto" class="btn primary">✨ Auto Detect</button>
+        <button id="btnReminder" class="btn">✔︎ Create Reminder</button>
+        <button id="btnEvent" class="btn">Add Calendar Event</button>
+        <button id="btnContact" class="btn">Extract Contact</button>
+        <button id="btnCSV" class="btn">Receipt → CSV</button>
       </div>
-    </section>
 
-    <!-- REMINDER EDITOR -->
-    <section id="reminder" class="view">
+      <div id="statusHome" class="status" aria-live="polite"></div>
+    </div>
+
+    <!-- ▸ REMINDER (reworked to match Share sheet) -->
+    <div id="reminder" class="view" role="region" aria-labelledby="reminderTitle">
+      <h2 id="reminderTitle" class="sheet-title">New Reminder</h2>
+
       <div class="group-label">Details</div>
       <div class="form-row">
-        <input id="remTitle" type="text" placeholder="Todo">
+        <input id="remTitle" type="text" placeholder="Title" autocomplete="off" />
       </div>
 
-      <div class="group-label">Due date</div>
       <div class="form-row">
-        <label class="switch">
-          <input id="remHasDue" type="checkbox">
+        <label for="remHasDue" class="grow">Due date</label>
+        <label class="switch" aria-label="Due date toggle">
+          <input id="remHasDue" type="checkbox" />
           <span class="slider"></span>
         </label>
-        <input id="remDue" type="datetime-local" disabled>
+      </div>
+
+      <div id="remDueRow" class="form-row split">
+        <label for="remDue">Due</label>
+        <input id="remDue" type="datetime-local" />
       </div>
 
       <div class="group-label">Notes</div>
+      <textarea id="remNotes" rows="7" spellcheck="true"></textarea>
+
+      <div id="statusReminder" class="status" aria-live="polite"></div>
+
+      <div class="button-row center">
+        <button id="cancelReminder" type="button">Cancel</button>
+      </div>
+    </div>
+
+    <!-- ▸ EVENT (unchanged) -->
+    <div id="event" class="view" role="region" aria-labelledby="eventTitle">
+      <h2 id="eventTitle" class="sheet-title">New Event</h2>
+
+      <div class="group-label">Details</div>
       <div class="form-row">
-        <textarea id="remNotes" rows="4" spellcheck="false"></textarea>
+        <input id="evTitle" type="text" placeholder="Title" />
+      </div>
+      <div class="form-row split">
+        <label for="evStart">Start</label>
+        <input id="evStart" type="datetime-local" />
+      </div>
+      <div class="form-row split">
+        <label for="evEnd">End</label>
+        <input id="evEnd" type="datetime-local" />
+      </div>
+      <div class="form-row split">
+        <label for="evLocation">Location</label>
+        <input id="evLocation" type="text" placeholder="Location" />
+      </div>
+      <div class="form-row">
+        <label for="evInferTZ" class="grow">Infer time zone</label>
+        <input id="evInferTZ" type="checkbox" />
+      </div>
+      <div class="form-row split">
+        <label for="evAlert">Alert (mins)</label>
+        <input id="evAlert" type="number" inputmode="numeric" />
       </div>
 
-      <div id="statusReminder" class="status"></div>
+      <div id="statusEvent" class="status" aria-live="polite"></div>
 
       <div class="button-row left">
-        <button id="backReminder" class="pill" type="button">Back</button>
-        <span style="flex:1"></span>
-        <button id="saveReminder" class="pill primary" type="button">Done</button>
+        <button id="backEvent" type="button">Back</button>
+        <div style="flex:1"></div>
+        <button id="saveEvent" type="button">Done</button>
       </div>
-    </section>
+    </div>
 
-    <!-- EVENT EDITOR -->
-    <section id="event" class="view">
-      <div class="group-label">Title</div>
-      <div class="form-row">
-        <input id="evTitle" type="text" placeholder="Event">
-      </div>
+    <!-- ▸ CONTACT (unchanged) -->
+    <div id="contact" class="view" role="region" aria-labelledby="contactTitle">
+      <h2 id="contactTitle" class="sheet-title">New Contact</h2>
 
-      <div class="group-label">Start / End</div>
+      <div class="group-label">Details</div>
       <div class="form-row split">
-        <input id="evStart" type="datetime-local">
-        <input id="evEnd" type="datetime-local">
-      </div>
-
-      <div class="group-label">Location</div>
-      <div class="form-row">
-        <input id="evLocation" type="text" placeholder="">
-      </div>
-
-      <div class="form-row">
-        <label class="switch">
-          <input id="evInferTZ" type="checkbox">
-          <span class="slider"></span>
-        </label>
-        <span>Infer time zone</span>
-        <span style="flex:1"></span>
-        <input id="evAlert" type="number" min="0" inputmode="numeric" placeholder="Alert (mins)">
-      </div>
-
-      <div id="statusEvent" class="status"></div>
-
-      <div class="button-row left">
-        <button id="backEvent" class="pill" type="button">Back</button>
-        <span style="flex:1"></span>
-        <button id="saveEvent" class="pill primary" type="button">Done</button>
-      </div>
-    </section>
-
-    <!-- CONTACT EDITOR -->
-    <section id="contact" class="view">
-      <div class="form-row split">
-        <input id="ctGiven" type="text" placeholder="Given name">
-        <input id="ctFamily" type="text" placeholder="Family name">
+        <input id="ctGiven" type="text" placeholder="Given name" />
+        <input id="ctFamily" type="text" placeholder="Family name" />
       </div>
 
       <div class="group-label">Emails</div>
       <div id="emails" class="list"></div>
-      <div class="button-row left"><button id="addEmail" class="pill" type="button">Add email</button></div>
+      <div class="button-row left"><button id="addEmail" type="button" onclick="return false;">Add email</button></div>
 
       <div class="group-label">Phones</div>
       <div id="phones" class="list"></div>
-      <div class="button-row left"><button id="addPhone" class="pill" type="button">Add phone</button></div>
+      <div class="button-row left"><button id="addPhone" type="button" onclick="return false;">Add phone</button></div>
 
       <div class="group-label">Address</div>
+      <div class="form-row"><input id="ctStreet" type="text" placeholder="Street" /></div>
       <div class="form-row split">
-        <input id="ctStreet" type="text" placeholder="Street">
-        <input id="ctCity"   type="text" placeholder="City">
+        <input id="ctCity" type="text" placeholder="City" />
+        <input id="ctState" type="text" placeholder="State" />
       </div>
       <div class="form-row split">
-        <input id="ctState"  type="text" placeholder="State/County">
-        <input id="ctPostal" type="text" placeholder="Postal code">
-      </div>
-      <div class="form-row">
-        <input id="ctCountry" type="text" placeholder="Country">
+        <input id="ctPostal" type="text" placeholder="Postal code" />
+        <input id="ctCountry" type="text" placeholder="Country" />
       </div>
 
-      <div id="statusContact" class="status"></div>
+      <div id="statusContact" class="status" aria-live="polite"></div>
 
       <div class="button-row left">
-        <button id="backContact" class="pill" type="button">Back</button>
-        <span style="flex:1"></span>
-        <button id="saveContact" class="pill primary" type="button">Done</button>
+        <button id="backContact" type="button">Back</button>
+        <div style="flex:1"></div>
+        <button id="saveContact" type="button">Done</button>
       </div>
-    </section>
+    </div>
 
-    <!-- RECEIPT → CSV -->
-    <section id="csv" class="view">
+    <!-- ▸ RECEIPT → CSV (unchanged) -->
+    <div id="csv" class="view" role="region" aria-labelledby="csvTitle">
+      <h2 id="csvTitle" class="sheet-title">Receipt → CSV</h2>
+
       <div class="group-label">Parse</div>
-      <div class="form-row">
-        <textarea id="csvInput" rows="6" spellcheck="false"></textarea>
-      </div>
+      <textarea id="csvInput" rows="5" class="mono"></textarea>
 
       <div class="group-label">Preview</div>
-      <pre id="csvOut" class="selection mono"></pre>
+      <pre id="csvOut" class="mono"></pre>
 
-      <div id="statusCSV" class="status"></div>
+      <div id="statusCSV" class="status" aria-live="polite"></div>
 
       <div class="button-row left">
-        <button id="backCSV" class="pill" type="button">Back</button>
-        <span style="flex:1"></span>
-        <button id="exportCSV" class="pill primary" type="button">Export CSV</button>
+        <button id="backCSV" type="button">Back</button>
+        <div style="flex:1"></div>
+        <button id="exportCSV" type="button">Export CSV</button>
       </div>
-    </section>
+    </div>
   </div>
+
+  <script src="popup.js"></script>
 </body>
 </html>
