@@ -663,6 +663,7 @@
 				E12A855A2E760EBD00E07869 /* Sources */,
 				E12A855B2E760EBD00E07869 /* Frameworks */,
 				E12A855C2E760EBD00E07869 /* Resources */,
+				E17FE4AB2E8613A6004E125D /* Verify packaged manifest == source */,
 				0F8C6C136193424B97CBF85E /* Pack WebRes – root */,
 				956D9B91C2CD9703DC787376 /* Pack WebRes – locales */,
 				DBAEEE5CAD78A1561D5C4150 /* Pack WebRes – images */,
@@ -863,6 +864,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "set -euo pipefail\n\nMANIFEST_SRC=\"${PROJECT_DIR}/ScreenActionsWebExtension/WebRes/manifest.json\"\nLOCK=\"${PROJECT_DIR}/tools/lock_manifest.rb\"\n\nOUT_STAMP=\"${SCRIPT_OUTPUT_FILE_0:-$TARGET_TEMP_DIR/webres_manifest_sanitised.stamp}\"\n\n[[ -f \"$MANIFEST_SRC\" ]] || { echo \"ERROR: missing $MANIFEST_SRC\" >&2; exit 1; }\n[[ -f \"$LOCK\" ]] || { echo \"ERROR: missing $LOCK\" >&2; exit 1; }\n\nruby \"$LOCK\" \"$MANIFEST_SRC\"\n\necho \"----- SOURCE manifest.json (head) -----\"\nsed -n '1,120p' \"$MANIFEST_SRC\" || true\necho \"--------------------------------------\"\n\nmkdir -p \"$(dirname \"$OUT_STAMP\")\"\ndate > \"$OUT_STAMP\"\n";
+		};
+		E17FE4AB2E8613A6004E125D /* Verify packaged manifest == source */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(PROJECT_DIR)/ScreenActionsWebExtension/WebRes/manifest.json",
+				"$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/WebRes/manifest.json",
+			);
+			name = "Verify packaged manifest == source";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/webres_manifest_verified.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/tools/verify_packaged_manifest_readonly.zsh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
