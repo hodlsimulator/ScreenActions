@@ -1,4 +1,4 @@
-// popup.js — editors + saves. All native calls go **via background**.
+// popup.js — share-sheet style for Reminders: header Cancel/Save, no in-form Done
 (() => {
   'use strict';
 
@@ -11,26 +11,57 @@
   if (!RT) return;
 
   const el = (id)=>document.getElementById(id);
-  const pad2=(n)=>String(n).padStart(2,'0');
-  const toInputLocal=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-  const fromInputLocal=(s)=>{ const d=new Date(s); return isNaN(d)?null:d.toISOString(); };
+  const $  = (sel)=>document.querySelector(sel);
 
+  // Toolbar
+  const navCancel = el('navCancel');
+  const navSave   = el('navSave');
+  const navTitle  = el('navTitle');
+
+  // Views
+  let currentView = 'home';
+  function showView(name){
+    currentView = name;
+    for (const s of document.querySelectorAll('.view')) s.classList.remove('active');
+    el(name)?.classList.add('active');
+
+    // Header config
+    if (name === 'home') {
+      navTitle.textContent = 'Screen Actions';
+      navCancel.hidden = true;
+      navSave.hidden   = true;
+    } else if (name === 'reminder') {
+      navTitle.textContent = '';   // share sheet has empty centre
+      navCancel.hidden = false;
+      navSave.hidden   = false;
+    } else {
+      navTitle.textContent = '';
+      navCancel.hidden = false;
+      navSave.hidden   = true;     // only reminders use header Save for now
+    }
+  }
+
+  // Status helpers
   function setStatus(where,msg,ok){
     const n=el(where); if(!n) return;
     n.textContent=msg||'';
     n.classList.remove('ok','err');
     if (msg) n.classList.add(ok?'ok':'err');
   }
-
-  function showView(name){
-    for (const s of document.querySelectorAll('.view')) s.classList.remove('active');
-    el(name)?.classList.add('active');
+  function flashStatus(where, msg, ok=true, ms=1600){
+    setStatus(where,msg,ok);
+    if (ms>0) setTimeout(()=>setStatus(where,'',true), ms);
   }
 
-  // ---- Native (always via background) ----
+  // Date helpers
+  const pad2=(n)=>String(n).padStart(2,'0');
+  const toInputLocal=(d)=>`${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+  const fromInputLocal=(s)=>{ const d=new Date(s); return isNaN(d)?null:d.toISOString(); };
+
+  // Native bridge (always via background)
   const nativeCall = (action, payload={}) => RT.sendMessage({ cmd:'native', action, payload });
 
-  // ---- Context (selection/title/url) ----
+  // Context (selection/title/url)
   let cachedCtx={selection:'',title:'',url:'',structured:undefined};
 
   async function getCtxFromBG(){
@@ -56,7 +87,15 @@
     el('selText').textContent=cachedCtx.selection||cachedCtx.title||cachedCtx.url||'';
   }
 
-  // ---- Prefill helpers ----
+  // ----- Prefill helpers -----
+  function fillReminderFields(f){
+    el('remTitle').value = f.title || 'Todo';
+    el('remHasDue').checked = !!f.hasDue;
+    el('remDue').disabled = !el('remHasDue').checked;
+    el('remDue').value = f.dueISO ? toInputLocal(new Date(f.dueISO)) : '';
+    el('remNotes').value = f.notes || '';
+  }
+
   function fillEventFields(f){
     el('evTitle').value = f.title || 'Event';
     const s = f.startISO? new Date(f.startISO): new Date();
@@ -69,22 +108,13 @@
     el('evNotes').value = f.notes || '';
   }
 
-  function fillReminderFields(f){
-    el('remTitle').value = f.title || 'Todo';
-    el('remHasDue').checked = !!f.hasDue;
-    el('remDue').disabled = !el('remHasDue').checked;
-    el('remDue').value = f.dueISO ? toInputLocal(new Date(f.dueISO)) : '';
-    el('remNotes').value = f.notes || '';
-  }
-
-  function rowFor(listId,val,ph){
-    const row=document.createElement('div'); row.className='row';
-    const input=document.createElement('input'); input.type='text'; input.value=val||''; input.placeholder=ph;
-    const btn=document.createElement('button'); btn.type='button'; btn.textContent='✕'; btn.addEventListener('click',()=>row.remove());
-    row.appendChild(input); row.appendChild(btn); el(listId).appendChild(row);
-  }
-
   function fillContactFields(f){
+    const rowFor=(listId,val,ph)=>{
+      const row=document.createElement('div'); row.className='row';
+      const input=document.createElement('input'); input.type='text'; input.value=val||''; input.placeholder=ph;
+      const btn=document.createElement('button'); btn.type='button'; btn.textContent='✕'; btn.addEventListener('click',()=>row.remove());
+      row.appendChild(input); row.appendChild(btn); el(listId).appendChild(row);
+    };
     el('ctGiven').value=f.givenName||''; el('ctFamily').value=f.familyName||'';
     el('emails').textContent=''; (Array.isArray(f.emails)&&f.emails.length?f.emails:['']).forEach(e=>rowFor('emails',e,'name@example.com'));
     el('phones').textContent=''; (Array.isArray(f.phones)&&f.phones.length?f.phones:['']).forEach(p=>rowFor('phones',p,'+353 1 234 5678'));
@@ -96,7 +126,15 @@
     el('csvInput').value=text||''; el('csvOut').textContent=csv||'';
   }
 
-  // ---- Gatherers ----
+  // ----- Gatherers -----
+  function gatherReminderFields(){
+    const title=el('remTitle').value.trim()||'Todo';
+    const hasDue=el('remHasDue').checked;
+    const dueISO=hasDue?fromInputLocal(el('remDue').value):undefined;
+    const notes=el('remNotes').value;
+    return {title,hasDue,dueISO,notes};
+  }
+
   function gatherEventFields(){
     const title=el('evTitle').value.trim()||'Event';
     const startISO=fromInputLocal(el('evStart').value);
@@ -106,14 +144,6 @@
     const alertMinutes=el('evAlert').value?parseInt(el('evAlert').value,10):undefined;
     const notes=el('evNotes').value;
     return {title,startISO,endISO,location,inferTZ,alertMinutes,notes};
-  }
-
-  function gatherReminderFields(){
-    const title=el('remTitle').value.trim()||'Todo';
-    const hasDue=el('remHasDue').checked;
-    const dueISO=hasDue?fromInputLocal(el('remDue').value):undefined;
-    const notes=el('remNotes').value;
-    return {title,hasDue,dueISO,notes};
   }
 
   function gatherContactFields(){
@@ -126,12 +156,7 @@
             postalCode:el('ctPostal').value,country:el('ctCountry').value};
   }
 
-  // ---- UX helpers ----
-  function flashStatus(where, msg, ok=true, ms=1600){
-    setStatus(where,msg,ok);
-    if (ms>0) setTimeout(()=>setStatus(where,'',true), ms);
-  }
-
+  // ----- UX helpers -----
   async function confirmAndReturn(kind, message){
     showView('home');
     flashStatus('statusHome', message || (kind==='reminder' ? 'Reminder created.' :
@@ -140,25 +165,59 @@
     try { await nativeCall('hapticSuccess'); } catch { try { navigator.vibrate?.(10); } catch {} }
   }
 
-  // ---- Actions ----
-  async function doPrepare(kind){
+  // ----- Prepare actions -----
+  const doPrepare = async(kind) => {
     const action = ({ event:'prepareEvent', reminder:'prepareReminder', contact:'prepareContact', csv:'prepareReceiptCSV', auto:'prepareAutoDetect' })[kind];
     return await nativeCall(action, cachedCtx||{});
-  }
+  };
 
+  // ----- Init & handlers -----
   async function init(){
-    // Back buttons
+    // Header actions
+    navCancel.addEventListener('click', ()=>{
+      if (currentView !== 'home') showView('home');
+    });
+
+    navSave.addEventListener('click', async ()=>{
+      if (currentView !== 'reminder') return;            // Save is only for Reminder right now
+      navSave.disabled = true;
+      setStatus('statusReminder','Saving…',true);
+      try{
+        const r = await nativeCall('saveReminder',{ fields:gatherReminderFields() });
+        if(r?.ok){
+          setStatus('statusReminder','',true);
+          await confirmAndReturn('reminder', r.message||'Reminder created.');
+        }else{
+          setStatus('statusReminder',r?.message||'Failed.',false);
+        }
+      }catch(e){
+        setStatus('statusReminder',e?.message||'Native error.',false);
+      }finally{
+        navSave.disabled = false;
+      }
+    });
+
+    // Back buttons for other editors (unchanged)
     el('backEvent').addEventListener('click',()=>{showView('home');setStatus('statusEvent','');});
-    el('backReminder').addEventListener('click',()=>{showView('home');setStatus('statusReminder','');});
     el('backContact').addEventListener('click',()=>{showView('home');setStatus('statusContact','');});
     el('backCSV').addEventListener('click',()=>{showView('home');setStatus('statusCSV','');});
 
-    // Reminder: enable/disable Due input
+    // Toggle Due enable/disable
     el('remHasDue').addEventListener('change',()=>{ el('remDue').disabled = !el('remHasDue').checked; });
 
     // Contact adders
-    el('addEmail').addEventListener('click',()=>rowFor('emails','', 'name@example.com'));
-    el('addPhone').addEventListener('click',()=>rowFor('phones','', '+353 1 234 5678'));
+    el('addEmail').addEventListener('click',()=>{
+      const row=document.createElement('div'); row.className='row';
+      const input=document.createElement('input'); input.type='text'; input.placeholder='name@example.com';
+      const btn=document.createElement('button'); btn.type='button'; btn.textContent='✕'; btn.addEventListener('click',()=>row.remove());
+      row.appendChild(input); row.appendChild(btn); el('emails').appendChild(row);
+    });
+    el('addPhone').addEventListener('click',()=>{
+      const row=document.createElement('div'); row.className='row';
+      const input=document.createElement('input'); input.type='text'; input.placeholder='+353 1 234 5678';
+      const btn=document.createElement('button'); btn.type='button'; btn.textContent='✕'; btn.addEventListener('click',()=>row.remove());
+      row.appendChild(input); row.appendChild(btn); el('phones').appendChild(row);
+    });
 
     // Home buttons
     el('btnAuto').addEventListener('click',async()=>{
@@ -174,17 +233,17 @@
       }catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
     });
 
-    el('btnEvent').addEventListener('click',async()=>{
-      setStatus('statusHome','',true);
-      try{ const r=await doPrepare('event'); if(!r?.ok) return setStatus('statusHome',r?.message||'Failed.',false);
-           fillEventFields(r.fields||{}); showView('event'); }
-      catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
-    });
-
     el('btnReminder').addEventListener('click',async()=>{
       setStatus('statusHome','',true);
       try{ const r=await doPrepare('reminder'); if(!r?.ok) return setStatus('statusHome',r?.message||'Failed.',false);
            fillReminderFields(r.fields||{}); showView('reminder'); }
+      catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
+    });
+
+    el('btnEvent').addEventListener('click',async()=>{
+      setStatus('statusHome','',true);
+      try{ const r=await doPrepare('event'); if(!r?.ok) return setStatus('statusHome',r?.message||'Failed.',false);
+           fillEventFields(r.fields||{}); showView('event'); }
       catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
     });
 
@@ -202,8 +261,8 @@
       catch(e){ setStatus('statusHome',e.message||'Native error.',false); }
     });
 
-    // Saves — no window.close(); return to home with confirmation + haptic.
-    el('saveEvent').addEventListener('click',async()=>{
+    // Event & Contact saves stay in-form for now (unchanged)
+    el('saveEvent')?.addEventListener('click',async()=>{
       setStatus('statusEvent','Saving…',true);
       try{
         const r=await nativeCall('saveEvent',{ fields:gatherEventFields() });
@@ -212,16 +271,7 @@
       }catch(e){ setStatus('statusEvent',e.message||'Native error.',false); }
     });
 
-    el('saveReminder').addEventListener('click',async()=>{
-      setStatus('statusReminder','Saving…',true);
-      try{
-        const r=await nativeCall('saveReminder',{ fields:gatherReminderFields() });
-        if(r?.ok){ setStatus('statusReminder','',true); await confirmAndReturn('reminder', r.message||'Reminder created.'); }
-        else setStatus('statusReminder',r?.message||'Failed.',false);
-      }catch(e){ setStatus('statusReminder',e.message||'Native error.',false); }
-    });
-
-    el('saveContact').addEventListener('click',async()=>{
+    el('saveContact')?.addEventListener('click',async()=>{
       setStatus('statusContact','Saving…',true);
       try{
         const r=await nativeCall('saveContact',{ fields:gatherContactFields() });
@@ -230,27 +280,8 @@
       }catch(e){ setStatus('statusContact',e.message||'Native error.',false); }
     });
 
-    el('reparseCSV').addEventListener('click',async()=>{
-      setStatus('statusCSV','Parsing…',true);
-      try{
-        const text=el('csvInput').value||(cachedCtx?.selection||'');
-        const r=await nativeCall('prepareReceiptCSV',{ selection:text, title:cachedCtx?.title||'', url:cachedCtx?.url||'' });
-        if(r?.ok){ el('csvOut').textContent=r.csv||''; setStatus('statusCSV','Parsed.',true); }
-        else setStatus('statusCSV',r?.message||'Failed.',false);
-      }catch(e){ setStatus('statusCSV',e.message||'Native error.',false); }
-    });
-
-    el('exportCSV').addEventListener('click',async()=>{
-      setStatus('statusCSV','Exporting…',true);
-      try{
-        const csv=el('csvOut').textContent||'';
-        const r=await nativeCall('exportReceiptCSV',{ csv });
-        if(r?.ok){ setStatus('statusCSV','',true); await confirmAndReturn('csv', r.message||'CSV exported.'); }
-        else setStatus('statusCSV',r?.message||'Failed.',false);
-      }catch(e){ setStatus('statusCSV',e.message||'Native error.',false); }
-    });
-
     await ensureCtx();
+    showView('home');
   }
 
   document.addEventListener('DOMContentLoaded', init);

@@ -1,185 +1,167 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>Screen Actions</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- IMPORTANT: these are relative to THIS file inside WebRes/ -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <header class="hdr">
-    <img class="hdr-icon" src="images/icon-48-squircle.png" alt="">
-    <h1 class="hdr-title">Screen Actions</h1>
-  </header>
+  <div id="app">
 
-  <!-- HOME (unchanged first sheet) -->
-  <section id="home" class="view active">
-    <div class="card">
-      <label>Selected Text</label>
-      <div id="selText" class="selection mono">(Loading…)</div>
-    </div>
+    <!-- Top toolbar (share-sheet style) -->
+    <header class="toolbar">
+      <button id="navCancel" class="pill" aria-label="Cancel" hidden>Cancel</button>
+      <div id="navTitle" class="toolbar-title">Screen Actions</div>
+      <button id="navSave" class="pill primary" aria-label="Save" hidden>Save</button>
+    </header>
 
-    <div class="buttons">
-      <button id="btnAuto" class="btn primary">Auto Detect</button>
-      <button id="btnReminder" class="btn">Create Reminder</button>
-      <button id="btnEvent" class="btn">Add Calendar Event</button>
-      <button id="btnContact" class="btn">Extract Contact</button>
-      <button id="btnCSV" class="btn">Receipt → CSV</button>
-    </div>
+    <!-- HOME -->
+    <section id="home" class="view active" aria-labelledby="navTitle">
+      <div id="statusHome" class="status"></div>
 
-    <div id="statusHome" class="status"></div>
-  </section>
-
-  <!-- EVENT EDITOR (opens only after tapping) -->
-  <section id="event" class="view">
-    <div class="nav">
-      <button id="backEvent" class="btn nav-back">Cancel</button>
-      <div class="nav-title">New Event</div>
-      <button id="saveEvent" class="nav-save">Done</button>
-    </div>
-
-    <form id="eventForm" class="form" autocomplete="off">
-      <div class="section">
-        <div class="field">
-          <label>Title</label>
-          <input id="evTitle" type="text" inputmode="latin" maxlength="128" placeholder="Event">
-        </div>
-        <div class="field">
-          <label>Starts</label>
-          <input id="evStart" type="datetime-local">
-        </div>
-        <div class="field">
-          <label>Ends</label>
-          <input id="evEnd" type="datetime-local">
-        </div>
-        <div class="field">
-          <label>Location</label>
-          <input id="evLocation" type="text" inputmode="latin" placeholder="Optional">
-        </div>
-        <div class="field switch">
-          <input id="evInferTZ" type="checkbox" checked>
-          <span>Infer time zone from location</span>
-        </div>
-        <div class="field">
-          <label>Alert</label>
-          <select id="evAlert">
-            <option value="">None</option>
-            <option value="5">5 minutes before</option>
-            <option value="10">10 minutes before</option>
-            <option value="15">15 minutes before</option>
-            <option value="30">30 minutes before</option>
-            <option value="60">1 hour before</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Notes</label>
-          <textarea id="evNotes" rows="5" class="mono" placeholder="Optional"></textarea>
-        </div>
+      <div class="home-block">
+        <div class="label">Selected text / page</div>
+        <pre id="selText" class="selection"></pre>
       </div>
-    </form>
-    <div id="statusEvent" class="status"></div>
-  </section>
 
-  <!-- REMINDER EDITOR -->
-  <section id="reminder" class="view">
-    <div class="nav">
-      <button id="backReminder" class="btn nav-back">Cancel</button>
-      <div class="nav-title">New Reminder</div>
-      <button id="saveReminder" class="nav-save">Done</button>
-    </div>
-
-    <form id="remForm" class="form" autocomplete="off">
-      <div class="section">
-        <div class="field">
-          <label>Title</label>
-          <input id="remTitle" type="text" inputmode="latin" maxlength="128" placeholder="Todo">
-        </div>
-        <div class="field switch">
-          <input id="remHasDue" type="checkbox">
-          <span>Due</span>
-        </div>
-        <div class="field">
-          <label>Due date</label>
-          <input id="remDue" type="datetime-local" disabled>
-        </div>
-        <div class="field">
-          <label>Notes</label>
-          <textarea id="remNotes" rows="5" class="mono" placeholder="Optional"></textarea>
-        </div>
+      <div class="grid">
+        <button id="btnAuto" class="tile">Auto</button>
+        <button id="btnReminder" class="tile">Create Reminder</button>
+        <button id="btnEvent" class="tile">Create Event</button>
+        <button id="btnContact" class="tile">Extract Contact</button>
+        <button id="btnCSV" class="tile">Receipt → CSV</button>
       </div>
-    </form>
-    <div id="statusReminder" class="status"></div>
-  </section>
+    </section>
 
-  <!-- CONTACT EDITOR -->
-  <section id="contact" class="view">
-    <div class="nav">
-      <button id="backContact" class="btn nav-back">Cancel</button>
-      <div class="nav-title">New Contact</div>
-      <button id="saveContact" class="nav-save">Done</button>
-    </div>
+    <!-- REMINDER (share-sheet style header: Cancel / Save) -->
+    <section id="reminder" class="view" aria-label="New Reminder">
+      <h1 class="sheet-title">New Reminder</h1>
 
-    <form id="contactForm" class="form" autocomplete="off">
-      <div class="section">
-        <div class="field">
-          <label>Name</label>
-          <div class="row">
-            <input id="ctGiven" type="text" placeholder="Given name">
-            <input id="ctFamily" type="text" placeholder="Family name">
-          </div>
-        </div>
-
-        <div class="section-title">Emails</div>
-        <div id="emails"></div>
-        <button id="addEmail" type="button" class="row-button">Add email</button>
-
-        <div class="section-title" style="margin-top:12px;">Phones</div>
-        <div id="phones"></div>
-        <button id="addPhone" type="button" class="row-button">Add phone</button>
-
-        <div class="section-title" style="margin-top:12px;">Address</div>
-        <div class="field"><input id="ctStreet" type="text" placeholder="Street"></div>
-        <div class="row">
-          <input id="ctCity" type="text" placeholder="City">
-          <input id="ctState" type="text" placeholder="State">
-        </div>
-        <div class="row">
-          <input id="ctPostal" type="text" placeholder="Postal code">
-          <input id="ctCountry" type="text" placeholder="Country">
-        </div>
+      <div class="group-label">Details</div>
+      <div class="form-row">
+        <input id="remTitle" type="text" inputmode="text" autocomplete="off" placeholder="Title">
       </div>
-    </form>
-    <div id="statusContact" class="status"></div>
-  </section>
 
-  <!-- RECEIPT → CSV -->
-  <section id="csv" class="view">
-    <div class="nav">
-      <button id="backCSV" class="btn nav-back">Cancel</button>
-      <div class="nav-title">Receipt → CSV</div>
-      <button id="exportCSV" class="nav-save">Export</button>
-    </div>
-
-    <div class="section">
-      <div class="field">
-        <label>Input</label>
-        <textarea id="csvInput" rows="8" class="mono"></textarea>
+      <div class="form-row split">
+        <label for="remHasDue" class="inline">Due date</label>
+        <label class="switch">
+          <input id="remHasDue" type="checkbox" aria-label="Has due date">
+          <span class="slider"></span>
+        </label>
       </div>
-      <button id="reparseCSV" class="btn">Re-parse</button>
-    </div>
 
-    <div class="section">
-      <div class="field">
-        <label>CSV Preview</label>
-        <pre id="csvOut" class="mono" style="white-space:pre-wrap;"></pre>
+      <div class="form-row">
+        <input id="remDue" type="datetime-local" disabled>
       </div>
-    </div>
 
-    <div id="statusCSV" class="status"></div>
-  </section>
+      <div class="group-label">Notes</div>
+      <div class="form-row">
+        <textarea id="remNotes" rows="6" spellcheck="false"></textarea>
+      </div>
 
-  <!-- IMPORTANT: path is relative to this file -->
+      <div id="statusReminder" class="status"></div>
+    </section>
+
+    <!-- EVENT (unchanged layout for now) -->
+    <section id="event" class="view" aria-label="New Event">
+      <div class="bar">
+        <button id="backEvent" class="soft">Back</button>
+      </div>
+
+      <h1 class="sheet-title">New Event</h1>
+      <div id="statusEvent" class="status"></div>
+
+      <div class="form-row"><input id="evTitle" type="text" placeholder="Title"></div>
+
+      <div class="form-row"><label class="inline">Start</label><input id="evStart" type="datetime-local"></div>
+      <div class="form-row"><label class="inline">End</label><input id="evEnd" type="datetime-local"></div>
+
+      <div class="form-row"><input id="evLocation" type="text" placeholder="Location"></div>
+
+      <div class="form-row split">
+        <label for="evInferTZ" class="inline">Infer time zone</label>
+        <input id="evInferTZ" type="checkbox">
+      </div>
+
+      <div class="form-row"><input id="evAlert" type="number" min="0" step="1" placeholder="Alert minutes (optional)"></div>
+
+      <div class="form-row"><textarea id="evNotes" rows="6" placeholder="Notes"></textarea></div>
+
+      <div class="button-row">
+        <button id="saveEvent" class="pill primary">Done</button>
+      </div>
+    </section>
+
+    <!-- CONTACT (unchanged layout for now) -->
+    <section id="contact" class="view" aria-label="New Contact">
+      <div class="bar">
+        <button id="backContact" class="soft">Back</button>
+      </div>
+
+      <h1 class="sheet-title">New Contact</h1>
+      <div id="statusContact" class="status"></div>
+
+      <div class="form-row split">
+        <input id="ctGiven" type="text" placeholder="First name">
+        <input id="ctFamily" type="text" placeholder="Last name">
+      </div>
+
+      <div class="group-label">Emails</div>
+      <div id="emails" class="list"></div>
+      <div class="button-row left">
+        <button id="addEmail" class="soft">Add email</button>
+      </div>
+
+      <div class="group-label">Phones</div>
+      <div id="phones" class="list"></div>
+      <div class="button-row left">
+        <button id="addPhone" class="soft">Add phone</button>
+      </div>
+
+      <div class="group-label">Address</div>
+      <div class="form-row"><input id="ctStreet" type="text" placeholder="Street"></div>
+      <div class="form-row split">
+        <input id="ctCity" type="text" placeholder="City">
+        <input id="ctState" type="text" placeholder="State">
+      </div>
+      <div class="form-row split">
+        <input id="ctPostal" type="text" placeholder="Post code">
+        <input id="ctCountry" type="text" placeholder="Country">
+      </div>
+
+      <div class="button-row">
+        <button id="saveContact" class="pill primary">Done</button>
+      </div>
+    </section>
+
+    <!-- CSV -->
+    <section id="csv" class="view" aria-label="Receipt to CSV">
+      <div class="bar">
+        <button id="backCSV" class="soft">Back</button>
+      </div>
+
+      <h1 class="sheet-title">Receipt → CSV</h1>
+      <div id="statusCSV" class="status"></div>
+
+      <div class="form-row">
+        <textarea id="csvInput" rows="6" placeholder="Paste receipt text…"></textarea>
+      </div>
+
+      <div class="button-row left">
+        <button id="reparseCSV" class="pill">Parse</button>
+      </div>
+
+      <div class="form-row">
+        <pre id="csvOut" class="mono"></pre>
+      </div>
+
+      <div class="button-row">
+        <button id="exportCSV" class="pill primary">Export CSV</button>
+      </div>
+    </section>
+
+  </div>
   <script src="popup.js" defer></script>
 </body>
 </html>
