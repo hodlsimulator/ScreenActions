@@ -1,4 +1,4 @@
-// popup.js — Home icons restored; Reminder title row cleaned; Save + Cancel at bottom.
+// popup.js — Home icons retained; Reminder title row aligned; Save + Cancel at bottom.
 
 (() => {
   'use strict';

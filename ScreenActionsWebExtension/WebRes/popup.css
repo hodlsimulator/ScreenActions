@@ -151,21 +151,29 @@ textarea{
 
 /* plain title/labels to match iOS */
 .field-plain{
-  flex:1;
+  /* kill any iOS default field look so the row is "clean" and aligned */
+  -webkit-appearance:none !important;
+  appearance:none !important;
   background:transparent !important;
   border:none !important;
   border-radius:0 !important;
   box-shadow:none !important;
-  outline:none;
-  padding:0;                 /* no inner padding, aligns with labels */
+  outline:none !important;
+
+  /* align with label rows */
+  margin:0 !important;
+  padding:0 2px !important;     /* tiny left inset, matches SF list look */
+  height:24px;                  /* steady baseline */
+  line-height:24px;
   font-size:17px;
-  line-height:22px;
   color:var(--text);
 }
 .field-plain::placeholder{ color:var(--sub); }
 
 .label-plain{
   font-size:17px;
+  line-height:24px;
+  padding-left:2px;             /* match the 2px inset used by the title */
   color:var(--text);
 }
 
