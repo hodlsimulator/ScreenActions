@@ -1,5 +1,4 @@
-// popup.js — Reminder editor: Save + Cancel at the bottom.
-// Save uses the same handler as the old Done button: create → go Home → show confirmation.
+// popup.js — Home icons restored; Reminder title row cleaned; Save + Cancel at bottom.
 
 (() => {
   'use strict';
@@ -281,7 +280,7 @@
       $('#remDueRow').style.display = on ? '' : 'none';
     });
 
-    // Bottom Save (wired like the old Done)
+    // Bottom Save
     $('#saveReminder').addEventListener('click', () => onSave && onSave());
 
     // Bottom Cancel (acts like Back)

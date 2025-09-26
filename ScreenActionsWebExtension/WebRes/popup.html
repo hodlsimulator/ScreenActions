@@ -8,12 +8,12 @@
 </head>
 <body>
   <div id="app">
-    <!-- Safari draws its own chrome; this toolbar is kept only for title text parity if needed -->
+    <!-- Safari draws its own chrome; toolbar kept only for title text parity if needed -->
     <div class="toolbar">
       <div id="navTitle" class="toolbar-title">Screen Actions</div>
     </div>
 
-    <!-- ▸ HOME (unchanged behaviour) -->
+    <!-- ▸ HOME -->
     <div id="home" class="view active" role="region" aria-labelledby="homeTitle">
       <h2 id="homeTitle" class="sheet-title">Screen Actions</h2>
 
@@ -21,17 +21,27 @@
       <div id="selText" class="selection" aria-live="polite"></div>
 
       <div class="home-actions">
-        <button id="btnAuto" class="btn primary">✨ Auto Detect</button>
-        <button id="btnReminder" class="btn">✔︎ Create Reminder</button>
-        <button id="btnEvent" class="btn">Add Calendar Event</button>
-        <button id="btnContact" class="btn">Extract Contact</button>
-        <button id="btnCSV" class="btn">Receipt → CSV</button>
+        <button id="btnAuto" class="btn primary">
+          <span class="icon" aria-hidden="true">✨</span><span>Auto Detect</span>
+        </button>
+        <button id="btnReminder" class="btn">
+          <span class="icon" aria-hidden="true">✔︎</span><span>Create Reminder</span>
+        </button>
+        <button id="btnEvent" class="btn">
+          <span class="icon" aria-hidden="true">📅</span><span>Add Calendar Event</span>
+        </button>
+        <button id="btnContact" class="btn">
+          <span class="icon" aria-hidden="true">👤</span><span>Extract Contact</span>
+        </button>
+        <button id="btnCSV" class="btn">
+          <span class="icon" aria-hidden="true">🧾</span><span>Receipt → CSV</span>
+        </button>
       </div>
 
       <div id="statusHome" class="status" aria-live="polite"></div>
     </div>
 
-    <!-- ▸ REMINDER (rebuilt to match Share sheet) -->
+    <!-- ▸ REMINDER -->
     <div id="reminder" class="view" role="region" aria-labelledby="reminderTitle">
       <h2 id="reminderTitle" class="sheet-title">New Reminder</h2>
 
@@ -39,12 +49,12 @@
 
       <!-- Enclosed card with three rows -->
       <div class="card" id="remDetailsCard">
-        <!-- Title row -->
+        <!-- Title row (clean, no inner border) -->
         <div class="row">
           <input id="remTitle" class="field-plain" type="text" placeholder="Title" autocomplete="off" />
         </div>
 
-        <!-- Due date + toggle row -->
+        <!-- Due date + toggle -->
         <div class="row">
           <label for="remHasDue" class="label-plain">Due date</label>
           <label class="switch" aria-label="Due date toggle">
@@ -53,7 +63,7 @@
           </label>
         </div>
 
-        <!-- Due (date + time chips on RIGHT) -->
+        <!-- Due (date + time chips at RIGHT) -->
         <div id="remDueRow" class="row">
           <label class="label-plain" for="remDueDate">Due</label>
           <div class="chip-row">

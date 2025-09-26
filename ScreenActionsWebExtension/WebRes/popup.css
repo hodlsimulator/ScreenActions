@@ -104,6 +104,13 @@ pre{ white-space:pre-wrap; word-break:break-word; }
   background:linear-gradient(135deg,var(--accent),rgba(10,132,255,0.9));
   color:#fff; border:none;
 }
+.home-actions .btn .icon{
+  width:22px;
+  display:inline-flex;
+  justify-content:center;
+  font-size:18px;
+  line-height:1;
+}
 
 /* Generic form rows (Event/Contact use these) */
 .form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
@@ -145,9 +152,12 @@ textarea{
 /* plain title/labels to match iOS */
 .field-plain{
   flex:1;
-  background:transparent;
-  border:none;
-  padding:4px 2px;
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  outline:none;
+  padding:0;                 /* no inner padding, aligns with labels */
   font-size:17px;
   line-height:22px;
   color:var(--text);
