@@ -1,6 +1,5 @@
-// popup.js — Reminder editor matches the Share sheet.
-// Safari supplies the top-right tick; we just provide an onSave handler.
-// Bottom-centre Cancel returns to Home (acts like Back).
+// popup.js — Reminder editor: Save + Cancel at the bottom.
+// Save uses the same handler as the old Done button: create → go Home → show confirmation.
 
 (() => {
   'use strict';
@@ -134,9 +133,11 @@
   }
 
   function fillEventFields(fields){
+    const s = isoToLocalParts(fields.startISO);
+    const e = isoToLocalParts(fields.endISO);
     $('#evTitle').value = fields.title || '';
-    $('#evStart').value = fields.startISO ? isoToLocalParts(fields.startISO).d + 'T' + isoToLocalParts(fields.startISO).t : '';
-    $('#evEnd').value   = fields.endISO   ? isoToLocalParts(fields.endISO).d   + 'T' + isoToLocalParts(fields.endISO).t   : '';
+    $('#evStart').value = (s.d && s.t) ? `${s.d}T${s.t}` : '';
+    $('#evEnd').value   = (e.d && e.t) ? `${e.d}T${e.t}` : '';
     $('#evLocation').value = fields.location || '';
     $('#evInferTZ').checked = !!fields.inferTZ;
     $('#evAlert').value = (fields.alertMinutes != null) ? String(fields.alertMinutes) : '';
@@ -280,6 +281,9 @@
       $('#remDueRow').style.display = on ? '' : 'none';
     });
 
+    // Bottom Save (wired like the old Done)
+    $('#saveReminder').addEventListener('click', () => onSave && onSave());
+
     // Bottom Cancel (acts like Back)
     $('#cancelReminder').addEventListener('click', () => {
       show('home');
@@ -300,16 +304,6 @@
     $('#btnEvent').addEventListener('click', openEvent);
     $('#btnContact').addEventListener('click', openContact);
     $('#btnCSV').addEventListener('click', openCSV);
-
-    // Expose onSave for Safari’s native tick if you dispatch to the page from background.
-    // Use: window.postMessage({type:'SA_TICK'}, '*') → we listen below.
-    window.__saOnSave = () => onSave && onSave();
-
-    window.addEventListener('message', (e) => {
-      try{
-        if (e && e.data && e.data.type === 'SA_TICK') { onSave && onSave(); }
-      }catch{}
-    });
 
     // Start on Home
     showHome();

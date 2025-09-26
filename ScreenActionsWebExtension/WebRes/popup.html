@@ -8,12 +8,12 @@
 </head>
 <body>
   <div id="app">
-    <!-- (Toolbar placeholder for title text only; Safari draws its own chrome & tick) -->
+    <!-- Safari draws its own chrome; this toolbar is kept only for title text parity if needed -->
     <div class="toolbar">
       <div id="navTitle" class="toolbar-title">Screen Actions</div>
     </div>
 
-    <!-- ▸ HOME (unchanged behaviour/structure) -->
+    <!-- ▸ HOME (unchanged behaviour) -->
     <div id="home" class="view active" role="region" aria-labelledby="homeTitle">
       <h2 id="homeTitle" class="sheet-title">Screen Actions</h2>
 
@@ -31,7 +31,7 @@
       <div id="statusHome" class="status" aria-live="polite"></div>
     </div>
 
-    <!-- ▸ REMINDER (rebuilt like the Share sheet) -->
+    <!-- ▸ REMINDER (rebuilt to match Share sheet) -->
     <div id="reminder" class="view" role="region" aria-labelledby="reminderTitle">
       <h2 id="reminderTitle" class="sheet-title">New Reminder</h2>
 
@@ -46,16 +46,16 @@
 
         <!-- Due date + toggle row -->
         <div class="row">
-          <label for="remHasDue" class="grow label-plain">Due date</label>
+          <label for="remHasDue" class="label-plain">Due date</label>
           <label class="switch" aria-label="Due date toggle">
             <input id="remHasDue" type="checkbox" />
             <span class="slider"></span>
           </label>
         </div>
 
-        <!-- Due (date + time “chips”) -->
+        <!-- Due (date + time chips on RIGHT) -->
         <div id="remDueRow" class="row">
-          <label class="grow label-plain" for="remDueDate">Due</label>
+          <label class="label-plain" for="remDueDate">Due</label>
           <div class="chip-row">
             <input id="remDueDate" class="chip-input" type="date" />
             <input id="remDueTime" class="chip-input" type="time" step="60" />
@@ -68,8 +68,9 @@
 
       <div id="statusReminder" class="status" aria-live="polite"></div>
 
-      <div class="button-row center">
-        <button id="cancelReminder" type="button" class="btn-capsule">Cancel</button>
+      <div class="button-row dual">
+        <button id="cancelReminder" type="button" class="btn-capsule secondary">Cancel</button>
+        <button id="saveReminder"   type="button" class="btn-capsule primary">Save</button>
       </div>
     </div>
 

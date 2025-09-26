@@ -138,6 +138,7 @@ textarea{
   padding:14px 14px;
   min-height:52px;
   border-top:1px solid var(--hair);
+  justify-content:space-between; /* spread: label left, controls right */
 }
 .card .row:first-child{ border-top:none; }
 
@@ -158,8 +159,8 @@ textarea{
   color:var(--text);
 }
 
-/* right-side "chips" (date + time) */
-.chip-row{ display:flex; gap:10px; }
+/* right-side “chips” (date + time) anchored RIGHT */
+.chip-row{ display:flex; gap:10px; margin-left:auto; }
 .chip-input{
   -webkit-appearance:none; appearance:none;
   background:color-mix(in oklab, var(--bg) 50%, var(--card) 50%);
@@ -171,9 +172,7 @@ textarea{
   color:var(--text);
   font-size:16px;
 }
-.chip-input::-webkit-calendar-picker-indicator{
-  filter:opacity(.7);
-}
+.chip-input::-webkit-calendar-picker-indicator{ filter:opacity(.7); }
 
 /* Notes — comfy size */
 #remNotes{
@@ -190,19 +189,27 @@ textarea{
 .status.err{ color:var(--err); }
 
 /* Footer rows */
-.button-row{ display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+.button-row{ display:flex; gap:12px; margin-top:14px; }
 .button-row.left{ justify-content:flex-start; }
 .button-row.center{ justify-content:center; }
+.button-row.dual{ justify-content:center; }
 
-/* Bigger Cancel (capsule) */
+/* Cancel/Save capsules */
 .btn-capsule{
   height:44px; min-width:140px;
   padding:0 18px;
   border-radius:9999px;
+  font-weight:700;
+}
+.btn-capsule.secondary{
   border:1px solid var(--hair);
   background:color-mix(in oklab, var(--card) 98%, transparent);
   color:var(--text);
-  font-weight:600;
+}
+.btn-capsule.primary{
+  border:none;
+  background:var(--accent);
+  color:#fff;
 }
 
 /* iOS-style switch */
