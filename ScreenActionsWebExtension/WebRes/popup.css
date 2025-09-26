@@ -1,39 +1,51 @@
-/* popup.css — iOS share-sheet styling; no custom title and no Cancel button */
-
+/* popup.css — Share-sheet-accurate styling (pixel-match to iOS in dark mode)
+   Changes:
+   • Dark mode colours set to iOS system values:
+     – background  #1C1C1E  (system background)
+     – card/pills  #2C2C2E  (secondary system background)
+     – separator   #3A3A3C
+     – accent      #0A84FF  (systemBlue)
+   • Secondary action buttons (under Auto Detect) now use blue text + blue icons.
+   • Card corner radius tightened to 12px to match SwiftUI (.cornerRadius: 12).
+   • Toolbar title retained; our large title hidden.
+*/
 :root{
-  --radius-card:18px;
+  --radius-card:12px;
   --radius-field:12px;
   --pad:16px;
   --pill-h:56px;
   --title-lg:34px;
+
   --text:#111111;
   --sub:#6e6e73;
+
+  /* Light mode (kept close to system) */
   --bg:#ffffff;
-  --card:#f2f2f7;          /* secondarySystemBackground */
-  --hair:#d2d2d7;          /* separator */
-  --accent:#0a84ff;        /* systemBlue */
+  --card:#f2f2f7;       /* secondarySystemBackground (light) */
+  --hair:#d2d2d7;       /* separator (light) */
+  --accent:#0a84ff;     /* systemBlue */
   --pill-secondary:#edf0f5;
-  --ok:#3ddc84;
-  --err:#ff453a;
+  --ok:#34c759;
+  --err:#ff3b30;
+
   font:-apple-system-body;
 }
-
 @media (prefers-color-scheme: dark){
   :root{
     --text:#e9eaed;
     --sub:#a2a6ad;
-    --bg:#0b0c0d;
-    --card:#17181a;
-    --hair:#2a2c30;
-    --pill-secondary:#222427;
+
+    /* *** iOS dark values for pixel-match *** */
+    --bg:#1c1c1e;           /* systemBackground (dark) */
+    --card:#2c2c2e;         /* secondarySystemBackground (dark) */
+    --hair:#3a3a3c;         /* separator (dark) */
+    --pill-secondary:#2c2c2e;
   }
 }
 
 *{ box-sizing:border-box; }
-
 html,body{
-  margin:0;
-  padding:0;
+  margin:0; padding:0;
   background:var(--bg);
   color:var(--text);
 }
@@ -41,7 +53,7 @@ html,body{
 /* Full-sheet height; add safe-area top now that the toolbar is gone */
 #app{
   width:min(440px,100vw);
-  min-height:92dvh;                         /* encourage large detent */
+  min-height:92dvh; /* encourage large detent */
   padding-top:calc(env(safe-area-inset-top) + 6px);
   padding-bottom:env(safe-area-inset-bottom);
 }
@@ -51,13 +63,9 @@ html,body{
 pre{ white-space:pre-wrap; word-break:break-word; }
 
 /* ── Toolbar removed (hides big title + our Cancel) ───────────────────────── */
-
-.toolbar,
-.toolbar-title,
-.toolbar .pill{ display:none !important; }
+.toolbar, .toolbar-title, .toolbar .pill{ display:none !important; }
 
 /* ── Views ─────────────────────────────────────────────────────────────────── */
-
 .view{ display:none; padding:0 var(--pad) var(--pad) var(--pad); }
 .view.active{ display:block; }
 .sheet-title{ display:none; }
@@ -99,11 +107,15 @@ pre{ white-space:pre-wrap; word-break:break-word; }
   border-radius:9999px;
   border:.5px solid color-mix(in oklab, var(--hair) 18%, transparent);
   background:var(--pill-secondary);
-  color:var(--text);
+
+  /* Secondary actions: blue text + blue icons */
+  color:var(--accent);
+
   font:-apple-system-body;
   font-weight:600;
   cursor:pointer;
 }
+/* Primary (Auto Detect): blue pill with white text */
 .home-actions .btn.primary{
   background:linear-gradient(135deg,var(--accent),rgba(10,132,255,0.9));
   color:#fff;
@@ -113,11 +125,176 @@ pre{ white-space:pre-wrap; word-break:break-word; }
 /* forms */
 .form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
 .form-row.split > *{ flex:1; }
+input[type="text"], input[type="number"], input[type="datetime-local"], textarea{
+  appearance:none;
+  width:100%;
+  background:var(--card);
+  color:var(--text);
+  border:1px solid var(--hair);
+  border-radius:var(--radius-field);
+  padding:12px 14px;
+}
+textarea{ resize:vertical; }
 
-input[type="text"],
-input[type="number"],
-input[type="datetime-local"],
-textarea{
+/* status */
+.status{ min-height:20px; margin:10px 0 2px 0; font-weight:600; }
+.status.ok{ color:var(--ok); }
+.status.err{ color:var(--err); }
+
+/* footer rows */
+.button-row{ display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+.button-row.left{ justify-content:flex-start; }
+
+/* contact list rows */
+.list .row{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.list .row input{ flex:1; }
+.list .row button{
+  border:none; background:var(--pill-secondary); color:var(--text);
+  border-radius:8px; padding:6px 10px; cursor:pointer;
+}
+
+/* iOS-style switch */
+.switch{ position:relative; width:48px; height:28px; display:inline-block; }
+.switch input{ opacity:0; width:0; height:0; }
+.slider{
+  position:absolute; inset:0; border-radius:999px;
+  background:color-mix(in oklab, var(--hair) 60%, transparent);
+  transition:all .2s;
+}
+.slider:before{
+  content:""; position:absolute; height:22px; width:22px; left:3px; top:3px;
+  background:white; border-radius:50%; transition:all .2s;
+}
+.switch input:checked + .slider{ background:var(--accent); }
+.switch input:checked + .slider:before{ transform:translateX(20px); }
+/* popup.css — Share-sheet-accurate styling (pixel-match to iOS in dark mode)
+   Changes:
+   • Dark mode colours set to iOS system values:
+     – background  #1C1C1E  (system background)
+     – card/pills  #2C2C2E  (secondary system background)
+     – separator   #3A3A3C
+     – accent      #0A84FF  (systemBlue)
+   • Secondary action buttons (under Auto Detect) now use blue text + blue icons.
+   • Card corner radius tightened to 12px to match SwiftUI (.cornerRadius: 12).
+   • Toolbar title retained; our large title hidden.
+*/
+:root{
+  --radius-card:12px;
+  --radius-field:12px;
+  --pad:16px;
+  --pill-h:56px;
+  --title-lg:34px;
+
+  --text:#111111;
+  --sub:#6e6e73;
+
+  /* Light mode (kept close to system) */
+  --bg:#ffffff;
+  --card:#f2f2f7;       /* secondarySystemBackground (light) */
+  --hair:#d2d2d7;       /* separator (light) */
+  --accent:#0a84ff;     /* systemBlue */
+  --pill-secondary:#edf0f5;
+  --ok:#34c759;
+  --err:#ff3b30;
+
+  font:-apple-system-body;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --text:#e9eaed;
+    --sub:#a2a6ad;
+
+    /* *** iOS dark values for pixel-match *** */
+    --bg:#1c1c1e;           /* systemBackground (dark) */
+    --card:#2c2c2e;         /* secondarySystemBackground (dark) */
+    --hair:#3a3a3c;         /* separator (dark) */
+    --pill-secondary:#2c2c2e;
+  }
+}
+
+*{ box-sizing:border-box; }
+html,body{
+  margin:0; padding:0;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* Full-sheet height; add safe-area top now that the toolbar is gone */
+#app{
+  width:min(440px,100vw);
+  min-height:92dvh; /* encourage large detent */
+  padding-top:calc(env(safe-area-inset-top) + 6px);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+/* monospace utility */
+.mono{ font-family:ui-monospace,Menlo,Consolas,monospace; white-space:pre-wrap; }
+pre{ white-space:pre-wrap; word-break:break-word; }
+
+/* ── Toolbar removed (hides big title + our Cancel) ───────────────────────── */
+.toolbar, .toolbar-title, .toolbar .pill{ display:none !important; }
+
+/* ── Views ─────────────────────────────────────────────────────────────────── */
+.view{ display:none; padding:0 var(--pad) var(--pad) var(--pad); }
+.view.active{ display:block; }
+.sheet-title{ display:none; }
+
+/* group labels */
+.group-label{
+  color:var(--sub);
+  margin:16px 0 8px 0;
+  font-weight:600;
+  font-size:12px;
+  letter-spacing:.2px;
+}
+
+/* selection “card” */
+.selection{
+  background:var(--card);
+  border:1px solid var(--hair);
+  border-radius:var(--radius-card);
+  padding:12px;
+  max-height:160px;
+  overflow:auto;
+  white-space:pre-wrap;
+}
+
+/* home buttons */
+.home-actions{
+  display:grid;
+  grid-auto-rows:var(--pill-h);
+  row-gap:12px;
+  margin-top:10px;
+}
+.home-actions .btn{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  height:var(--pill-h);
+  padding:0 16px;
+  border-radius:9999px;
+  border:.5px solid color-mix(in oklab, var(--hair) 18%, transparent);
+  background:var(--pill-secondary);
+
+  /* Secondary actions: blue text + blue icons */
+  color:var(--accent);
+
+  font:-apple-system-body;
+  font-weight:600;
+  cursor:pointer;
+}
+/* Primary (Auto Detect): blue pill with white text */
+.home-actions .btn.primary{
+  background:linear-gradient(135deg,var(--accent),rgba(10,132,255,0.9));
+  color:#fff;
+  border:none;
+}
+
+/* forms */
+.form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+.form-row.split > *{ flex:1; }
+input[type="text"], input[type="number"], input[type="datetime-local"], textarea{
   appearance:none;
   width:100%;
   background:var(--card);
