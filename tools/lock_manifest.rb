@@ -23,8 +23,7 @@ icons = {
 }
 icons.each { |k,v| changed |= (m.dig("icons",k) != v); m["icons"][k] = v }
 
-act = m["action"]
-act["default_icon"] ||= {}
+act = m["action"]; act["default_icon"] ||= {}
 changed |= (act["default_title"] != "Screen Actions"); act["default_title"] = "Screen Actions"
 changed |= (act["default_popup"] != "WebRes/popup.html"); act["default_popup"] = "WebRes/popup.html"
 icons.slice("48","96","128").each { |k,v| changed |= (act["default_icon"][k] != v); act["default_icon"][k] = v }
@@ -35,7 +34,7 @@ changed |= (bg["service_worker"] != "WebRes/background.js"); bg["service_worker"
 needed_perms = %w[activeTab tabs scripting clipboardWrite nativeMessaging storage]
 changed |= (Array(m["permissions"]).sort != needed_perms.sort); m["permissions"] = needed_perms
 
-# *** Preserve real patterns; if missing/blank, default to <all_urls> ***
+# Preserve existing patterns; if missing/blank, default to <all_urls>
 def ensure_all_urls!(arr_key, obj)
   cur = Array(obj[arr_key]).map(&:to_s).map(&:strip)
   if cur.empty? || cur == [""] then obj[arr_key] = ["<all_urls>"]; true else false end
@@ -43,9 +42,9 @@ end
 changed |= ensure_all_urls!("host_permissions", m)
 
 cs_template = {
-  "matches" => ["<all_urls>"],
-  "js" => ["WebRes/content_selection.js"],
-  "run_at" => "document_idle",
+  "matches"    => ["<all_urls>"],
+  "js"         => ["WebRes/content_selection.js"],
+  "run_at"     => "document_idle",
   "all_frames" => true
 }
 if !m["content_scripts"].is_a?(Array) || m["content_scripts"].empty?
@@ -58,7 +57,7 @@ else
   changed |= (first["all_frames"] != true); first["all_frames"] = true
 end
 
-# default_locale is omitted because _locales is under WebRes/ not the root.
+# default_locale omitted — locales live under WebRes/_locales
 if m.key?("default_locale"); m.delete("default_locale"); changed = true; end
 
 File.write(path, JSON.pretty_generate(m)) if changed

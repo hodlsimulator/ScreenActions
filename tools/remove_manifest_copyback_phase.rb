@@ -1,89 +1,75 @@
 #!/usr/bin/env ruby
-# Remove any Copy Files phase in the *ScreenActionsWebExtension* target that
-# copies the packaged manifest back into the repo (causes a build cycle).
+# Remove any Copy Files phase in the ScreenActionsWebExtension target that tries to
+# copy the packaged manifest back into the repo (causes cycles / key stripping).
+# Updated to use `plutil -convert objc` (modern replacement for the old "openstep").
 
 require "json"
 
-proj = File.join(__dir__, "..", "Screen Actions.xcodeproj", "project.pbxproj")
-json = JSON.parse(`plutil -convert json -o - "#{proj}"`)
-objs = json.fetch("objects")
+ROOT = File.expand_path(File.join(__dir__, ".."))
+PROJ = File.join(ROOT, "Screen Actions.xcodeproj", "project.pbxproj")
 
-# 1) Find the WebExtension target
-tgt = objs.values.find { |o|
-  o["isa"] == "PBXNativeTarget" && o["name"] == "ScreenActionsWebExtension"
-}
-abort "Target ScreenActionsWebExtension not found" unless tgt
+def run_plutil_to_json(path)
+  out = `plutil -convert json -o - "#{path}" 2>&1`
+  unless $?.success?
+    abort "plutil→json failed:\n#{out}"
+  end
+  out
+end
 
-bp_ids = Array(tgt["buildPhases"])
+def write_pbxproj_from_json(json_str, dest_path)
+  # Write back in ObjC/OpenStep syntax (modern plutil uses 'objc' not 'openstep')
+  IO.popen(%W[plutil -convert objc -o #{dest_path} -], "w") do |io|
+    io.write(json_str)
+  end
+  io_status = $?.exitstatus
+  abort "plutil→objc failed (exit #{io_status})" unless io_status == 0
+end
+
+raw = run_plutil_to_json(PROJ)
+pbx = JSON.parse(raw)
+objects = pbx.fetch("objects")
+
+# Find the WebExtension target
+tgt = objects.values.find { |o| o["isa"] == "PBXNativeTarget" && o["name"] == "ScreenActionsWebExtension" }
+abort "Target ScreenActionsWebExtension not found in #{PROJ}" unless tgt
+
+phase_ids = Array(tgt["buildPhases"]).dup
 removed = []
 
-bp_ids.dup.each do |bid|
-  ph = objs[bid] or next
+phase_ids.each do |pid|
+  ph = objects[pid] or next
   next unless ph["isa"] == "PBXCopyFilesBuildPhase"
 
-  name = (ph["name"] || "").downcase
-  dst  = (ph["dstPath"] || "").to_s
-  spec = (ph["dstSubfolderSpec"] || "").to_s
+  name    = (ph["name"] || "").to_s
+  dst     = (ph["dstPath"] || "").to_s
+  subspec = ph["dstSubfolderSpec"]
 
-  # Legit phases copy into the product's Resources with dstSubfolderSpec=7 and
-  # relative dstPath ("WebRes", "WebRes/_locales/en", "WebRes/images").
-  # The bad phase copies from product → SRCROOT (absolute path).
-  bad_absolute_dst = dst.start_with?("/") && dst.include?("/ScreenActionsWebExtension/WebRes")
-  wrong_place      = spec != "7" && spec != 7
+  # Heuristics: any Copy Files phase that appears to push files back into the repo
+  # or is clearly a “verify/copy manifest back” thing.
+  suspicious =
+    name.match?(/copy\s*back|manifest/i) ||
+    dst.start_with?("/") && dst.include?("/ScreenActionsWebExtension/WebRes") ||
+    dst.include?("ScreenActionsWebExtension/WebRes") && dst.include?("SRCROOT")
 
-  if bad_absolute_dst || wrong_place || name.include?("verify packaged manifest")
-    removed << [bid, ph["name"], dst, spec]
-    objs.delete(bid)
-    bp_ids.delete(bid)
+  if suspicious
+    # Remove the PBXCopyFilesBuildPhase and its PBXBuildFile children (if any)
+    Array(ph["files"]).each do |bfid|
+      bf = objects[bfid]
+      objects.delete(bfid) if bf && bf["isa"] == "PBXBuildFile"
+    end
+    objects.delete(pid)
+    tgt["buildPhases"].delete(pid)
+    removed << "#{name.empty? ? pid : name} (dst=#{dst.inspect} spec=#{subspec.inspect})"
   end
 end
 
-tgt["buildPhases"] = bp_ids
+# Write back
+write_pbxproj_from_json(JSON.pretty_generate(pbx), PROJ)
 
-# 2) Make/repair the read-only verify script phase (no writes, no cycle)
-verify_phase = objs.values.find { |o|
-  o["isa"] == "PBXShellScriptBuildPhase" &&
-  (o["name"] || "") =~ /Verify packaged manifest/i
-}
-
-if verify_phase
-  verify_phase["shellPath"]  = "/bin/zsh"
-  verify_phase["shellScript"] = %Q{"$SRCROOT/tools/verify_packaged_manifest_readonly.zsh"\n}
-  verify_phase["inputPaths"]  = [
-    '$(SRCROOT)/ScreenActionsWebExtension/WebRes/manifest.json',
-    '$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/WebRes/manifest.json'
-  ]
-  verify_phase["outputPaths"] = [
-    '$(DERIVED_FILE_DIR)/webres_manifest_verified.stamp'
-  ]
-  verify_phase["runOnlyForDeploymentPostprocessing"] = "0"
+if removed.empty?
+  STDERR.puts "No copy-back phases found. Nothing to remove."
 else
-  # Create a small, safe verify phase at the end
-  def gen_id
-    (0...24).map { ("0".."9").to_a.concat(("A".."F").to_a).sample }.join
-  end
-  vid = gen_id
-  objs[vid] = {
-    "isa"=>"PBXShellScriptBuildPhase",
-    "buildActionMask"=>"2147483647",
-    "files"=>[],
-    "inputPaths"=>[
-      '$(SRCROOT)/ScreenActionsWebExtension/WebRes/manifest.json',
-      '$(TARGET_BUILD_DIR)/$(WRAPPER_NAME)/WebRes/manifest.json'
-    ],
-    "name"=>"Verify packaged manifest == source",
-    "outputPaths"=>['$(DERIVED_FILE_DIR)/webres_manifest_verified.stamp'],
-    "runOnlyForDeploymentPostprocessing"=>"0",
-    "shellPath"=>"/bin/zsh",
-    "shellScript"=>%Q{"$SRCROOT/tools/verify_packaged_manifest_readonly.zsh"\n},
-    "showEnvVarsInLog"=>"0"
-  }
-  tgt["buildPhases"] << vid
+  STDERR.puts "Removed phases:"
+  removed.each { |r| STDERR.puts "- #{r}" }
 end
-
-IO.popen(%W[plutil -convert openstep -o #{proj} -], "w") { |io|
-  io.write(JSON.pretty_generate(json))
-}
-
-STDERR.puts "Removed phases:\n" + removed.map { |r| "- #{r[1]} (dst=#{r[2]} spec=#{r[3]}) [#{r[0]}]" }.join("\n")
 STDERR.puts "OK: fixed build phases for ScreenActionsWebExtension."
