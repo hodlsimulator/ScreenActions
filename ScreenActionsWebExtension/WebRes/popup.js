@@ -1,310 +1,314 @@
-// popup.js — Home icons retained; Reminder title row aligned; Save + Cancel at bottom.
+// popup.js — routes + UI glue for Home/Reminder/Event/etc.
+// Focus: Event sheet updated to 5 sections mirroring the share-sheet look.
 
 (() => {
   'use strict';
 
-  const RT =
-    (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime :
-    (typeof chrome !== 'undefined' && chrome.runtime) ? chrome.runtime : null;
-  if (!RT) return;
+  // ------- Runtime helpers -------
+  const RT = (typeof browser !== 'undefined' && browser.runtime)
+    ? browser.runtime
+    : (typeof chrome !== 'undefined' && chrome.runtime)
+      ? chrome.runtime
+      : undefined;
 
-  const $  = (sel) => document.querySelector(sel);
-  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
-
-  // ----- Messaging
-  function send(req){
-    return new Promise((resolve, reject) => {
+  async function sendMessage(msg) {
+    if (!RT || !RT.sendMessage) throw new Error('runtime not available');
+    return await new Promise((resolve) => {
       try {
-        RT.sendMessage(req, (out) => {
-          const err = (chrome && chrome.runtime && chrome.runtime.lastError) ||
-                      (browser && browser.runtime && browser.runtime.lastError);
-          if (err) reject(new Error(err.message || 'runtime error'));
-          else resolve(out);
-        });
-      } catch (e) { reject(e); }
+        RT.sendMessage(msg, (resp) => resolve(resp || {}));
+      } catch {
+        resolve({});
+      }
     });
   }
-  const native  = (action, payload={}) => send({ cmd: 'native', action, payload });
-  const pageCtx = async () => {
-    const out = await send({ cmd: 'getPageCtx' });
-    return (out && out.ctx) ? out.ctx : { selection:'', title:'', url:'' };
+
+  const bg = {
+    getPageCtx: () => sendMessage({ cmd: 'getPageCtx' }),
+    native: (action, payload = {}) => sendMessage({ cmd: 'native', action, payload })
   };
 
-  // ----- UI helpers
-  function show(id){
-    $$('.view').forEach(v => v.classList.toggle('active', v.id === id));
-  }
-  function setStatus(sel, msg, ok){
-    const el = (typeof sel === 'string') ? $(sel) : sel;
-    if (!el) return;
-    el.textContent = msg || '';
-    el.className = 'status ' + (ok ? 'ok' : 'err');
+  // ------- View routing -------
+  const views = ['home', 'reminder', 'event', 'contact', 'csv'];
+  function show(id) {
+    for (const v of views) {
+      const el = document.getElementById(`view-${v}`);
+      if (el) el.classList.toggle('active', v === id);
+    }
   }
 
-  const pad = n => String(n).padStart(2,'0');
+  // ------- Time helpers (local <-> ISO) -------
+  function pad(n) { return String(n).padStart(2, '0'); }
 
-  // ISO <-> local helpers
-  const isoToLocalParts = (iso) => {
-    if (!iso) return { d:'', t:'' };
-    const dt = new Date(iso);
-    if (isNaN(dt.getTime())) return { d:'', t:'' };
-    const d = `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
-    const t = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
-    return { d, t };
-  };
-  const localPartsToISO = (d, t) => {
-    if (!d) return null;
-    const hhmm = (t && /^\d{2}:\d{2}$/.test(t)) ? t : '09:00';
-    const iso = new Date(`${d}T${hhmm}`);
-    return isNaN(iso.getTime()) ? null : iso.toISOString();
-  };
-
-  // ----- Contact list helpers
-  function clearList(sel){ const el = $(sel); el.innerHTML = ''; return el; }
-  function addListRow(container, value=''){
-    const el = (typeof container === 'string') ? $(container) : container;
-    const row = document.createElement('div');
-    row.className = 'row';
-    const input = document.createElement('input');
-    input.type = 'text'; input.value = value;
-    const del = document.createElement('button');
-    del.type = 'button'; del.textContent = 'Remove';
-    del.addEventListener('click', () => row.remove());
-    row.appendChild(input); row.appendChild(del); el.appendChild(row);
-  }
-
-  // ----- HOME
-  async function showHome(){
-    $('#navTitle').textContent = 'Screen Actions';
-    show('home');
-    const ctx = await pageCtx();
-    const text = `${(ctx.selection || ctx.title || '').trim()}${ctx.url ? `\n${ctx.url}` : ''}`.trim();
-    $('#selText').textContent = text;
-  }
-
-  // ----- Editors
-  let onSave = null; // set by the currently presented editor
-
-  // Present Reminder (shared by openReminder + AutoDetect route)
-  function presentReminder(fields){
-    $('#remTitle').value = fields.title || '';
-
-    $('#remHasDue').checked = !!fields.hasDue;
-    $('#remDueRow').style.display = $('#remHasDue').checked ? '' : 'none';
-
-    const parts = isoToLocalParts(fields.dueISO);
-    $('#remDueDate').value = parts.d;
-    $('#remDueTime').value = parts.t;
-
-    $('#remNotes').value = fields.notes || '';
-
-    $('#navTitle').textContent = 'New Reminder';
-    show('reminder');
-
-    onSave = async () => {
-      const hasDue = !!$('#remHasDue').checked;
-      const dueISO = hasDue ? localPartsToISO($('#remDueDate').value, $('#remDueTime').value) : null;
-
-      const payload = {
-        title:  $('#remTitle').value,
-        hasDue,
-        dueISO,
-        notes:  $('#remNotes').value
+  function isoToLocalParts(iso) {
+    // robust parse for ISO with/without fractional seconds
+    const d = iso ? new Date(iso) : new Date();
+    if (isNaN(d.getTime())) {
+      const fallback = new Date();
+      return {
+        date: `${fallback.getFullYear()}-${pad(fallback.getMonth()+1)}-${pad(fallback.getDate())}`,
+        time: `${pad(fallback.getHours())}:${pad(fallback.getMinutes())}`
       };
-
-      const res = await native('saveReminder', { fields: payload });
-      if (res?.ok){
-        setStatus('#statusHome', res?.message || 'Reminder created.', true);
-        showHome();
-      } else {
-        setStatus('#statusReminder', res?.message || 'Failed.', false);
-      }
+    }
+    return {
+      date: `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,
+      time: `${pad(d.getHours())}:${pad(d.getMinutes())}`
     };
   }
 
-  async function openReminder(){
-    const out = await native('prepareReminder', {});
-    if (!out?.ok){
-      setStatus('#statusHome', out?.message || 'Failed.', false);
+  function localPartsToISO(dateStr, timeStr) {
+    const t = (timeStr && /^\d{2}:\d{2}$/.test(timeStr)) ? `${timeStr}:00` : '00:00:00';
+    // Construct local time then send as ISO string
+    const d = new Date(`${dateStr}T${t}`);
+    return d.toISOString();
+  }
+
+  // ------- Populate Home selection -------
+  async function populateHomeSelection() {
+    const out = await bg.getPageCtx();
+    const text = out?.ctx?.selection || '';
+    const pre = document.getElementById('home-selection');
+    pre.textContent = text ? text : '(no selection)';
+  }
+
+  // ------- Reminder sheet -------
+  async function openReminder() {
+    show('reminder');
+    const status = document.getElementById('remStatus');
+    status.textContent = '';
+    const prep = await bg.native('prepareReminder', {});
+    if (!prep?.ok) {
+      status.textContent = prep?.message || 'Failed to prepare.';
+      status.className = 'status err';
       return;
     }
-    presentReminder(out.fields);
+    const f = prep.fields || {};
+    document.getElementById('remTitle').value = f.title || '';
+    const hasDue = !!f.hasDue;
+    document.getElementById('remHasDue').checked = hasDue;
+    const parts = isoToLocalParts(f.dueISO);
+    document.getElementById('remDueDate').value = parts.date;
+    document.getElementById('remDueTime').value = parts.time;
+    document.getElementById('remNotes').value = f.notes || '';
+
+    // Enable/disable date/time by toggle
+    const toggleDueEnabled = () => {
+      const enabled = document.getElementById('remHasDue').checked;
+      document.getElementById('remDueDate').disabled = !enabled;
+      document.getElementById('remDueTime').disabled = !enabled;
+    };
+    document.getElementById('remHasDue').onchange = toggleDueEnabled;
+    toggleDueEnabled();
   }
 
-  function fillEventFields(fields){
-    const s = isoToLocalParts(fields.startISO);
-    const e = isoToLocalParts(fields.endISO);
-    $('#evTitle').value = fields.title || '';
-    $('#evStart').value = (s.d && s.t) ? `${s.d}T${s.t}` : '';
-    $('#evEnd').value   = (e.d && e.t) ? `${e.d}T${e.t}` : '';
-    $('#evLocation').value = fields.location || '';
-    $('#evInferTZ').checked = !!fields.inferTZ;
-    $('#evAlert').value = (fields.alertMinutes != null) ? String(fields.alertMinutes) : '';
-  }
-
-  async function saveEventWithNotes(notes){
+  async function saveReminder() {
     const fields = {
-      title: $('#evTitle').value,
-      startISO: $('#evStart').value ? new Date($('#evStart').value).toISOString() : null,
-      endISO:   $('#evEnd').value   ? new Date($('#evEnd').value).toISOString()   : null,
-      location: $('#evLocation').value,
-      inferTZ:  $('#evInferTZ').checked,
-      alertMinutes: parseInt($('#evAlert').value || '0', 10) || 0,
-      notes
+      title: document.getElementById('remTitle').value.trim(),
+      hasDue: document.getElementById('remHasDue').checked,
+      dueISO: localPartsToISO(
+        document.getElementById('remDueDate').value,
+        document.getElementById('remDueTime').value
+      ),
+      notes: document.getElementById('remNotes').value
     };
-    const res = await native('saveEvent', { fields });
-    setStatus('#statusEvent', res?.message || (res?.ok ? 'Saved.' : ''), !!res?.ok);
-    if (res?.ok) setTimeout(showHome, 450);
-  }
-
-  async function openEvent(){
-    const out = await native('prepareEvent', {});
-    if (!out?.ok){ setStatus('#statusHome', out?.message || 'Failed.', false); return; }
-    fillEventFields(out.fields);
-    $('#navTitle').textContent = 'New Event';
-    show('event');
-    onSave = async () => saveEventWithNotes(out.fields.notes || '');
-  }
-
-  async function openContact(){
-    const out = await native('prepareContact', {});
-    if (!out?.ok){ setStatus('#statusHome', out?.message || 'Failed.', false); return; }
-
-    $('#ctGiven').value = out.fields.givenName || '';
-    $('#ctFamily').value = out.fields.familyName || '';
-
-    const emails = clearList('#emails'); (out.fields.emails || ['']).forEach(v => addListRow(emails, v));
-    const phones = clearList('#phones'); (out.fields.phones || ['']).forEach(v => addListRow(phones, v));
-
-    $('#ctStreet').value = out.fields.street || '';
-    $('#ctCity').value = out.fields.city || '';
-    $('#ctState').value = out.fields.state || '';
-    $('#ctPostal').value = out.fields.postalCode || '';
-    $('#ctCountry').value = out.fields.country || '';
-
-    $('#navTitle').textContent = 'New Contact';
-    show('contact');
-
-    onSave = async () => {
-      const fields = {
-        givenName: $('#ctGiven').value,
-        familyName: $('#ctFamily').value,
-        emails: $$('#emails .row input').map(i => i.value).filter(Boolean),
-        phones: $$('#phones .row input').map(i => i.value).filter(Boolean),
-        street: $('#ctStreet').value, city: $('#ctCity').value, state: $('#ctState').value,
-        postalCode: $('#ctPostal').value, country: $('#ctCountry').value
-      };
-      const res = await native('saveContact', { fields });
-      setStatus('#statusContact', res?.message || (res?.ok ? 'Saved.' : ''), !!res?.ok);
-      if (res?.ok) setTimeout(showHome, 450);
-    };
-  }
-
-  async function openCSV(){
-    const ctx = await pageCtx();
-    $('#csvInput').value = `${(ctx.selection || ctx.title || '').trim()}${ctx.url ? `\n${ctx.url}` : ''}`.trim();
-    const out = await native('prepareReceiptCSV', {});
-    if (out?.ok) $('#csvOut').textContent = out.csv || '';
-    else setStatus('#statusHome', out?.message || 'Failed.', false);
-
-    $('#navTitle').textContent = 'Receipt → CSV';
-    show('csv');
-
-    onSave = async () => {
-      const res = await native('exportReceiptCSV', { csv: $('#csvOut').textContent || '' });
-      setStatus('#statusCSV', res?.message || (res?.ok ? 'Exported.' : ''), !!res?.ok);
-      if (res?.ok) setTimeout(showHome, 450);
-    };
-  }
-
-  // Auto Detect
-  async function openAuto(){
-    const out = await native('prepareAutoDetect', {});
-    if (!out?.ok){ setStatus('#statusHome', out?.message || 'Failed.', false); return; }
-    switch (out.route) {
-      case 'event':
-        fillEventFields(out.fields);
-        $('#navTitle').textContent = 'New Event';
-        show('event');
-        onSave = async () => saveEventWithNotes(out.fields.notes || '');
-        break;
-      case 'reminder':
-        presentReminder(out.fields);
-        break;
-      case 'contact':
-        $('#ctGiven').value = out.fields.givenName || '';
-        $('#ctFamily').value = out.fields.familyName || '';
-        const emails = clearList('#emails'); (out.fields.emails || ['']).forEach(v => addListRow(emails, v));
-        const phones = clearList('#phones'); (out.fields.phones || ['']).forEach(v => addListRow(phones, v));
-        $('#ctStreet').value = out.fields.street || '';
-        $('#ctCity').value = out.fields.city || '';
-        $('#ctState').value = out.fields.state || '';
-        $('#ctPostal').value = out.fields.postalCode || '';
-        $('#ctCountry').value = out.fields.country || '';
-        $('#navTitle').textContent = 'New Contact';
-        show('contact');
-        onSave = async () => {
-          const fields = {
-            givenName: $('#ctGiven').value,
-            familyName: $('#ctFamily').value,
-            emails: $$('#emails .row input').map(i => i.value).filter(Boolean),
-            phones: $$('#phones .row input').map(i => i.value).filter(Boolean),
-            street: $('#ctStreet').value, city: $('#ctCity').value, state: $('#ctState').value,
-            postalCode: $('#ctPostal').value, country: $('#ctCountry').value
-          };
-          const res = await native('saveContact', { fields });
-          setStatus('#statusContact', res?.message || (res?.ok ? 'Saved.' : ''), !!res?.ok);
-          if (res?.ok) setTimeout(showHome, 450);
-        };
-        break;
-      case 'csv':
-        $('#navTitle').textContent = 'Receipt → CSV';
-        show('csv');
-        $('#csvOut').textContent = out.csv || '';
-        onSave = async () => {
-          const res = await native('exportReceiptCSV', { csv: $('#csvOut').textContent || '' });
-          setStatus('#statusCSV', res?.message || (res?.ok ? 'Exported.' : ''), !!res?.ok);
-          if (res?.ok) setTimeout(showHome, 450);
-        };
-        break;
-      default:
-        setStatus('#statusHome', 'Could not route selection.', false);
+    const status = document.getElementById('remStatus');
+    status.textContent = 'Saving…'; status.className = 'status';
+    const out = await bg.native('saveReminder', { fields });
+    if (out?.ok) {
+      status.textContent = 'Reminder saved.'; status.className = 'status ok';
+      await bg.native('hapticSuccess', {});
+      window.close?.();
+    } else {
+      status.textContent = out?.message || 'Save failed.'; status.className = 'status err';
     }
   }
 
-  // Wire up
-  document.addEventListener('DOMContentLoaded', () => {
-    // Reminder toggle → show/hide Due row
-    $('#remHasDue').addEventListener('change', (e) => {
-      const on = !!e.target.checked;
-      $('#remDueRow').style.display = on ? '' : 'none';
-    });
+  // ------- Event sheet (UPDATED) -------
+  async function openEvent() {
+    show('event');
+    const status = document.getElementById('evtStatus');
+    status.textContent = '';
+    const prep = await bg.native('prepareEvent', {});
+    if (!prep?.ok) {
+      status.textContent = prep?.message || 'Failed to prepare.'; status.className = 'status err';
+      return;
+    }
+    const f = prep.fields || {};
+    // Details
+    document.getElementById('evtTitle').value = f.title || '';
+    const sParts = isoToLocalParts(f.startISO);
+    const eParts = isoToLocalParts(f.endISO);
+    document.getElementById('evtStartDate').value = sParts.date;
+    document.getElementById('evtStartTime').value = sParts.time;
+    document.getElementById('evtEndDate').value = eParts.date;
+    document.getElementById('evtEndTime').value = eParts.time;
 
-    // Bottom Save
-    $('#saveReminder').addEventListener('click', () => onSave && onSave());
+    // Location
+    document.getElementById('evtLocation').value = f.location || '';
+    document.getElementById('evtInferTZ').checked = !!f.inferTZ;
 
-    // Bottom Cancel (acts like Back)
-    $('#cancelReminder').addEventListener('click', () => {
-      show('home');
-      setStatus('#statusReminder','');
-    });
+    // Geofencing defaults off (native will ignore if both off)
+    document.getElementById('evtGeoArrive').checked = false;
+    document.getElementById('evtGeoDepart').checked = false;
 
-    // Event/Contact/CSV existing buttons (unchanged)
-    $('#backEvent').addEventListener('click', () => { show('home'); setStatus('#statusEvent',''); });
-    $('#backContact').addEventListener('click', () => { show('home'); setStatus('#statusContact',''); });
-    $('#backCSV').addEventListener('click', () => { show('home'); setStatus('#statusCSV',''); });
-    $('#saveEvent').addEventListener('click', () => onSave && onSave());
-    $('#saveContact').addEventListener('click', () => onSave && onSave());
-    $('#exportCSV').addEventListener('click', () => onSave && onSave());
+    // Alert
+    const alert = Number(f.alertMinutes || 0);
+    document.getElementById('evtAlert').value = String(isFinite(alert) ? alert : 0);
 
-    // Home buttons
-    $('#btnAuto').addEventListener('click', openAuto);
-    $('#btnReminder').addEventListener('click', openReminder);
-    $('#btnEvent').addEventListener('click', openEvent);
-    $('#btnContact').addEventListener('click', openContact);
-    $('#btnCSV').addEventListener('click', openCSV);
+    // Notes
+    document.getElementById('evtNotes').value = f.notes || '';
+  }
 
-    // Start on Home
-    showHome();
+  async function saveEvent() {
+    const status = document.getElementById('evtStatus');
+
+    // Build ISO start/end from separate date/time fields
+    const startISO = localPartsToISO(
+      document.getElementById('evtStartDate').value,
+      document.getElementById('evtStartTime').value
+    );
+    const endISO = localPartsToISO(
+      document.getElementById('evtEndDate').value,
+      document.getElementById('evtEndTime').value
+    );
+
+    const fields = {
+      title: document.getElementById('evtTitle').value.trim() || 'Event',
+      startISO, endISO,
+      location: document.getElementById('evtLocation').value,
+      inferTZ: document.getElementById('evtInferTZ').checked,
+      alertMinutes: parseInt(document.getElementById('evtAlert').value, 10) || 0,
+      notes: document.getElementById('evtNotes').value,
+      // New geofencing toggles (native will ignore if both false)
+      geoArrive: document.getElementById('evtGeoArrive').checked,
+      geoDepart: document.getElementById('evtGeoDepart').checked
+    };
+
+    status.textContent = 'Saving…'; status.className = 'status';
+
+    const out = await bg.native('saveEvent', { fields });
+    if (out?.ok) {
+      status.textContent = 'Event saved.'; status.className = 'status ok';
+      await bg.native('hapticSuccess', {});
+      window.close?.();
+    } else {
+      status.textContent = out?.message || 'Save failed.'; status.className = 'status err';
+    }
+  }
+
+  // ------- Contact sheet (minimal; unchanged behaviour) -------
+  async function openContact() {
+    show('contact');
+    const status = document.getElementById('ctStatus');
+    status.textContent = '';
+    const prep = await bg.native('prepareContact', {});
+    if (!prep?.ok) {
+      status.textContent = prep?.message || 'Failed to prepare.'; status.className = 'status err';
+      return;
+    }
+    const f = prep.fields || {};
+    document.getElementById('ctGiven').value  = f.givenName || '';
+    document.getElementById('ctFamily').value = f.familyName || '';
+    const emails = f.emails || [];
+    document.getElementById('ctEmail1').value = emails[0] || '';
+    document.getElementById('ctEmail2').value = emails[1] || '';
+    const phones = f.phones || [];
+    document.getElementById('ctPhone1').value = phones[0] || '';
+    document.getElementById('ctPhone2').value = phones[1] || '';
+    document.getElementById('ctStreet').value = f.street || '';
+    document.getElementById('ctCity').value   = f.city || '';
+    document.getElementById('ctState').value  = f.state || '';
+    document.getElementById('ctPostal').value = f.postalCode || '';
+    document.getElementById('ctCountry').value= f.country || '';
+  }
+
+  async function saveContact() {
+    const status = document.getElementById('ctStatus');
+    status.textContent = 'Saving…'; status.className = 'status';
+    const fields = {
+      givenName: document.getElementById('ctGiven').value,
+      familyName: document.getElementById('ctFamily').value,
+      emails: [document.getElementById('ctEmail1').value, document.getElementById('ctEmail2').value].filter(Boolean),
+      phones: [document.getElementById('ctPhone1').value, document.getElementById('ctPhone2').value].filter(Boolean),
+      street: document.getElementById('ctStreet').value,
+      city: document.getElementById('ctCity').value,
+      state: document.getElementById('ctState').value,
+      postalCode: document.getElementById('ctPostal').value,
+      country: document.getElementById('ctCountry').value
+    };
+    const out = await bg.native('saveContact', { fields });
+    if (out?.ok) {
+      status.textContent = 'Contact saved.'; status.className = 'status ok';
+      await bg.native('hapticSuccess', {});
+      window.close?.();
+    } else {
+      status.textContent = out?.message || 'Save failed.'; status.className = 'status err';
+    }
+  }
+
+  // ------- CSV sheet (minimal; unchanged behaviour) -------
+  async function openCSV() {
+    show('csv');
+    const status = document.getElementById('csvStatus');
+    status.textContent = '';
+    const prep = await bg.native('prepareReceiptCSV', {});
+    if (!prep?.ok) {
+      status.textContent = prep?.message || 'Failed to prepare.'; status.className = 'status err';
+      return;
+    }
+    document.getElementById('csvInput').textContent = (prep.fieldsText || '') || '';
+    document.getElementById('csvPreview').textContent = prep.csv || '';
+  }
+  async function exportCSV() {
+    const status = document.getElementById('csvStatus');
+    status.textContent = 'Exporting…'; status.className = 'status';
+    const csv = document.getElementById('csvPreview').textContent || '';
+    const out = await bg.native('exportReceiptCSV', { csv });
+    if (out?.ok) {
+      status.textContent = 'CSV exported.'; status.className = 'status ok';
+      await bg.native('hapticSuccess', {});
+      window.close?.();
+    } else {
+      status.textContent = out?.message || 'Export failed.'; status.className = 'status err';
+    }
+  }
+
+  // ------- Wire up buttons -------
+  window.addEventListener('DOMContentLoaded', async () => {
+    // Home
+    document.getElementById('btn-auto').onclick    = async () => {
+      const out = await bg.native('prepareAutoDetect', {});
+      if (out?.ok && out?.route) {
+        // jump to the chosen sheet
+        if (out.route === 'event') return openEvent();
+        if (out.route === 'reminder') return openReminder();
+        if (out.route === 'contact') return openContact();
+        if (out.route === 'csv') return openCSV();
+      }
+      // fallback
+      openEvent();
+    };
+    document.getElementById('btn-rem').onclick     = openReminder;
+    document.getElementById('btn-evt').onclick     = openEvent;
+    document.getElementById('btn-contact').onclick = openContact;
+    document.getElementById('btn-csv').onclick     = openCSV;
+
+    // Reminder buttons
+    document.getElementById('btnRemCancel').onclick = () => show('home');
+    document.getElementById('btnRemSave').onclick   = saveReminder;
+
+    // Event buttons
+    document.getElementById('btnEvtCancel').onclick = () => show('home');
+    document.getElementById('btnEvtSave').onclick   = saveEvent;
+
+    // Contact buttons
+    document.getElementById('btnCtCancel').onclick  = () => show('home');
+    document.getElementById('btnCtSave').onclick    = saveContact;
+
+    // CSV buttons
+    document.getElementById('btnCsvBack').onclick   = () => show('home');
+    document.getElementById('btnCsvExport').onclick = exportCSV;
+
+    // Home selection text
+    await populateHomeSelection();
   });
 })();

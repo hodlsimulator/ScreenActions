@@ -2,158 +2,227 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Screen Actions</title>
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
   <div id="app">
-    <!-- Safari draws its own chrome; toolbar kept only for title text parity if needed -->
-    <div class="toolbar">
-      <div id="navTitle" class="toolbar-title">Screen Actions</div>
-    </div>
 
-    <!-- ▸ HOME -->
-    <div id="home" class="view active" role="region" aria-labelledby="homeTitle">
-      <h2 id="homeTitle" class="sheet-title">Screen Actions</h2>
+    <!-- ========= HOME ========= -->
+    <section id="view-home" class="view active" aria-labelledby="home-title">
+      <h1 id="home-title" class="sheet-title">Screen Actions</h1>
 
       <div class="group-label">Selected Text</div>
-      <div id="selText" class="selection" aria-live="polite"></div>
+      <pre id="home-selection" class="selection" tabindex="0">(fetching selection…)</pre>
 
-      <div class="home-actions">
-        <button id="btnAuto" class="btn primary">
-          <span class="icon" aria-hidden="true">✨</span><span>Auto Detect</span>
-        </button>
-        <button id="btnReminder" class="btn">
-          <span class="icon" aria-hidden="true">✔︎</span><span>Create Reminder</span>
-        </button>
-        <button id="btnEvent" class="btn">
-          <span class="icon" aria-hidden="true">📅</span><span>Add Calendar Event</span>
-        </button>
-        <button id="btnContact" class="btn">
-          <span class="icon" aria-hidden="true">👤</span><span>Extract Contact</span>
-        </button>
-        <button id="btnCSV" class="btn">
-          <span class="icon" aria-hidden="true">🧾</span><span>Receipt → CSV</span>
-        </button>
+      <div class="home-actions" role="group" aria-label="Actions">
+        <button id="btn-auto" class="btn primary"><span class="icon">✨</span>Auto Detect</button>
+        <button id="btn-rem" class="btn"><span class="icon">✔︎</span>Create Reminder</button>
+        <button id="btn-evt" class="btn"><span class="icon">📅</span>Add Calendar Event</button>
+        <button id="btn-contact" class="btn"><span class="icon">👤</span>Extract Contact</button>
+        <button id="btn-csv" class="btn"><span class="icon">🧾</span>Receipt → CSV</button>
       </div>
+    </section>
 
-      <div id="statusHome" class="status" aria-live="polite"></div>
-    </div>
-
-    <!-- ▸ REMINDER -->
-    <div id="reminder" class="view" role="region" aria-labelledby="reminderTitle">
-      <h2 id="reminderTitle" class="sheet-title">New Reminder</h2>
+    <!-- ========= REMINDER ========= -->
+    <section id="view-reminder" class="view" aria-labelledby="rem-title">
+      <h1 id="rem-title" class="sheet-title">New Reminder</h1>
 
       <div class="group-label">Details</div>
-
-      <!-- Enclosed card with three rows -->
-      <div class="card" id="remDetailsCard">
-        <!-- Title row (clean, no inner border; aligned with labels) -->
+      <div class="card" role="group" aria-label="Reminder details">
         <div class="row">
           <input id="remTitle" class="field-plain" type="text" placeholder="Title" autocomplete="off" />
         </div>
-
-        <!-- Due date + toggle -->
         <div class="row">
-          <label for="remHasDue" class="label-plain">Due date</label>
-          <label class="switch" aria-label="Due date toggle">
+          <span class="label-plain">Due date</span>
+          <label class="switch" title="Has due date">
             <input id="remHasDue" type="checkbox" />
             <span class="slider"></span>
           </label>
         </div>
-
-        <!-- Due (date + time chips at RIGHT) -->
-        <div id="remDueRow" class="row">
-          <label class="label-plain" for="remDueDate">Due</label>
+        <div class="row">
+          <span class="label-plain">Due</span>
           <div class="chip-row">
             <input id="remDueDate" class="chip-input" type="date" />
-            <input id="remDueTime" class="chip-input" type="time" step="60" />
+            <input id="remDueTime" class="chip-input" type="time" />
           </div>
         </div>
       </div>
 
       <div class="group-label">Notes</div>
-      <textarea id="remNotes" rows="7" spellcheck="true"></textarea>
+      <div class="card">
+        <div class="row">
+          <textarea id="remNotes" placeholder="Notes…"></textarea>
+        </div>
+      </div>
 
-      <div id="statusReminder" class="status" aria-live="polite"></div>
-
+      <div id="remStatus" class="status" role="status" aria-live="polite"></div>
       <div class="button-row dual">
-        <button id="cancelReminder" type="button" class="btn-capsule secondary">Cancel</button>
-        <button id="saveReminder"   type="button" class="btn-capsule primary">Save</button>
+        <button id="btnRemCancel" class="btn-capsule secondary">Cancel</button>
+        <button id="btnRemSave" class="btn-capsule primary">Save</button>
       </div>
-    </div>
+    </section>
 
-    <!-- ▸ EVENT (unchanged) -->
-    <div id="event" class="view" role="region" aria-labelledby="eventTitle">
-      <h2 id="eventTitle" class="sheet-title">New Event</h2>
+    <!-- ========= EVENT (UPDATED) ========= -->
+    <section id="view-event" class="view" aria-labelledby="evt-title">
+      <h1 id="evt-title" class="sheet-title">New Event</h1>
+
+      <!-- Details -->
+      <div class="group-label">Details</div>
+      <div class="card" role="group" aria-label="Event details">
+        <!-- Title -->
+        <div class="row">
+          <input id="evtTitle" class="field-plain" type="text" placeholder="Title" autocomplete="off" />
+        </div>
+        <!-- Starts -->
+        <div class="row">
+          <span class="label-plain">Starts</span>
+          <div class="chip-row">
+            <input id="evtStartDate" class="chip-input" type="date" />
+            <input id="evtStartTime" class="chip-input" type="time" />
+          </div>
+        </div>
+        <!-- Ends -->
+        <div class="row">
+          <span class="label-plain">Ends</span>
+          <div class="chip-row">
+            <input id="evtEndDate" class="chip-input" type="date" />
+            <input id="evtEndTime" class="chip-input" type="time" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="group-label">Location</div>
+      <div class="card" role="group" aria-label="Event location">
+        <div class="row">
+          <input id="evtLocation" class="field-plain" type="text" placeholder="Place or address (optional)" autocomplete="off" />
+        </div>
+        <div class="row">
+          <span class="label-plain">Infer time zone from location</span>
+          <label class="switch">
+            <input id="evtInferTZ" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Geofencing -->
+      <div class="group-label">Geofencing</div>
+      <div class="card" role="group" aria-label="Event geofencing">
+        <div class="row">
+          <span class="label-plain">Notify on arrival</span>
+          <label class="switch">
+            <input id="evtGeoArrive" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="row">
+          <span class="label-plain">Notify on departure</span>
+          <label class="switch">
+            <input id="evtGeoDepart" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Alert -->
+      <div class="group-label">Alert</div>
+      <div class="card" role="group" aria-label="Event alert">
+        <div class="row">
+          <span class="label-plain">Alert</span>
+          <select id="evtAlert" class="chip-input" aria-label="Alert minutes">
+            <option value="0">None</option>
+            <option value="5">5 minutes</option>
+            <option value="10">10 minutes</option>
+            <option value="15">15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 hour</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="group-label">Notes</div>
+      <div class="card">
+        <div class="row">
+          <textarea id="evtNotes" placeholder="Notes…"></textarea>
+        </div>
+      </div>
+
+      <div id="evtStatus" class="status" role="status" aria-live="polite"></div>
+      <div class="button-row dual">
+        <button id="btnEvtCancel" class="btn-capsule secondary">Cancel</button>
+        <button id="btnEvtSave" class="btn-capsule primary">Save</button>
+      </div>
+    </section>
+
+    <!-- ========= CONTACT ========= -->
+    <section id="view-contact" class="view" aria-labelledby="contact-title">
+      <h1 id="contact-title" class="sheet-title">New Contact</h1>
 
       <div class="group-label">Details</div>
-      <div class="form-row"><input id="evTitle" type="text" placeholder="Title" /></div>
-      <div class="form-row split"><label for="evStart">Start</label><input id="evStart" type="datetime-local" /></div>
-      <div class="form-row split"><label for="evEnd">End</label><input id="evEnd" type="datetime-local" /></div>
-      <div class="form-row split"><label for="evLocation">Location</label><input id="evLocation" type="text" placeholder="Location" /></div>
-      <div class="form-row"><label for="evInferTZ" class="grow">Infer time zone</label><input id="evInferTZ" type="checkbox" /></div>
-      <div class="form-row split"><label for="evAlert">Alert (mins)</label><input id="evAlert" type="number" inputmode="numeric" /></div>
-
-      <div id="statusEvent" class="status" aria-live="polite"></div>
-
-      <div class="button-row left">
-        <button id="backEvent" type="button">Back</button>
-        <div style="flex:1"></div>
-        <button id="saveEvent" type="button">Done</button>
+      <div class="card" role="group" aria-label="Contact details">
+        <div class="row"><input id="ctGiven" class="field-plain" type="text" placeholder="Given name" /></div>
+        <div class="row"><input id="ctFamily" class="field-plain" type="text" placeholder="Family name" /></div>
       </div>
-    </div>
-
-    <!-- ▸ CONTACT (unchanged) -->
-    <div id="contact" class="view" role="region" aria-labelledby="contactTitle">
-      <h2 id="contactTitle" class="sheet-title">New Contact</h2>
-
-      <div class="group-label">Details</div>
-      <div class="form-row split"><input id="ctGiven" type="text" placeholder="Given name" /><input id="ctFamily" type="text" placeholder="Family name" /></div>
 
       <div class="group-label">Emails</div>
-      <div id="emails" class="list"></div>
-      <div class="button-row left"><button id="addEmail" type="button" onclick="return false;">Add email</button></div>
+      <div class="card">
+        <div class="row"><input id="ctEmail1" class="field-plain" type="email" placeholder="Email" /></div>
+        <div class="row"><input id="ctEmail2" class="field-plain" type="email" placeholder="Email (optional)" /></div>
+      </div>
 
       <div class="group-label">Phones</div>
-      <div id="phones" class="list"></div>
-      <div class="button-row left"><button id="addPhone" type="button" onclick="return false;">Add phone</button></div>
+      <div class="card">
+        <div class="row"><input id="ctPhone1" class="field-plain" type="tel" placeholder="Phone" /></div>
+        <div class="row"><input id="ctPhone2" class="field-plain" type="tel" placeholder="Phone (optional)" /></div>
+      </div>
 
       <div class="group-label">Address</div>
-      <div class="form-row"><input id="ctStreet" type="text" placeholder="Street" /></div>
-      <div class="form-row split"><input id="ctCity" type="text" placeholder="City" /><input id="ctState" type="text" placeholder="State" /></div>
-      <div class="form-row split"><input id="ctPostal" type="text" placeholder="Postal code" /><input id="ctCountry" type="text" placeholder="Country" /></div>
-
-      <div id="statusContact" class="status" aria-live="polite"></div>
-
-      <div class="button-row left">
-        <button id="backContact" type="button">Back</button>
-        <div style="flex:1"></div>
-        <button id="saveContact" type="button">Done</button>
+      <div class="card">
+        <div class="row"><input id="ctStreet" class="field-plain" type="text" placeholder="Street" /></div>
+        <div class="row"><input id="ctCity" class="field-plain" type="text" placeholder="City" /></div>
+        <div class="row"><input id="ctState" class="field-plain" type="text" placeholder="State/County" /></div>
+        <div class="row"><input id="ctPostal" class="field-plain" type="text" placeholder="Postal code" /></div>
+        <div class="row"><input id="ctCountry" class="field-plain" type="text" placeholder="Country" /></div>
       </div>
-    </div>
 
-    <!-- ▸ RECEIPT → CSV (unchanged) -->
-    <div id="csv" class="view" role="region" aria-labelledby="csvTitle">
-      <h2 id="csvTitle" class="sheet-title">Receipt → CSV</h2>
+      <div id="ctStatus" class="status" role="status" aria-live="polite"></div>
+      <div class="button-row dual">
+        <button id="btnCtCancel" class="btn-capsule secondary">Back</button>
+        <button id="btnCtSave" class="btn-capsule primary">Save</button>
+      </div>
+    </section>
+
+    <!-- ========= RECEIPT → CSV ========= -->
+    <section id="view-csv" class="view" aria-labelledby="csv-title">
+      <h1 id="csv-title" class="sheet-title">Receipt → CSV</h1>
 
       <div class="group-label">Parse</div>
-      <textarea id="csvInput" rows="5" class="mono"></textarea>
+      <div class="card">
+        <div class="row">
+          <pre id="csvInput" class="mono grow"></pre>
+        </div>
+      </div>
 
       <div class="group-label">Preview</div>
-      <pre id="csvOut" class="mono"></pre>
-
-      <div id="statusCSV" class="status" aria-live="polite"></div>
-
-      <div class="button-row left">
-        <button id="backCSV" type="button">Back</button>
-        <div style="flex:1"></div>
-        <button id="exportCSV" type="button">Export CSV</button>
+      <div class="card">
+        <div class="row">
+          <pre id="csvPreview" class="mono grow"></pre>
+        </div>
       </div>
-    </div>
-  </div>
 
+      <div id="csvStatus" class="status" role="status" aria-live="polite"></div>
+      <div class="button-row dual">
+        <button id="btnCsvBack" class="btn-capsule secondary">Back</button>
+        <button id="btnCsvExport" class="btn-capsule primary">Export CSV</button>
+      </div>
+    </section>
+
+  </div>
   <script src="popup.js"></script>
 </body>
 </html>

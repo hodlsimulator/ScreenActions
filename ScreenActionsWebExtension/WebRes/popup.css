@@ -1,51 +1,56 @@
 /* popup.css — iOS-like styling for the web extension sheet */
 
 :root{
-  --radius-card:16px;
-  --radius-field:12px;
-  --pad:16px;
-  --pill-h:56px;
-  --title-lg:34px;
+  --radius-card: 20px;
+  --radius-field: 12px;
+  --pad: 16px;
+  --pill-h: 56px;
+  --title-lg: 34px;
 
-  --text:#111111;
-  --sub:#6e6e73;
+  --text: #111111;
+  --sub: #6e6e73;
 
   /* Light */
-  --bg:#ffffff;
-  --card:#f2f2f7;    /* secondarySystemBackground (light) */
-  --hair:#d2d2d7;    /* separator (light) */
-  --accent:#0a84ff;  /* systemBlue */
-  --ok:#34c759;      /* systemGreen */
-  --err:#ff3b30;     /* systemRed */
+  --bg:   #ffffff;
+  --card: #f2f2f7; /* secondarySystemBackground (light) */
+  --hair: #d2d2d7; /* separator (light) */
+  --accent: #0a84ff; /* systemBlue */
+  --ok:    #34c759; /* systemGreen */
+  --err:   #ff3b30; /* systemRed */
 
-  font:-apple-system-body;
+  font: -apple-system-body;
 }
 
 @media (prefers-color-scheme: dark){
   :root{
-    --text:#e9eaed;
-    --sub:#a2a6ad;
-
-    --bg:#1c1c1e;    /* systemBackground (dark) */
-    --card:#2c2c2e;  /* secondarySystemBackground (dark) */
-    --hair:#3a3a3c;  /* separator (dark) */
+    --text: #e9eaed;
+    --sub:  #a2a6ad;
+    --bg:   #1c1c1e; /* systemBackground (dark) */
+    --card: #2c2c2e; /* secondarySystemBackground (dark) */
+    --hair: #3a3a3c; /* separator (dark) */
   }
 }
 
-*{ box-sizing:border-box; }
-html,body{ margin:0; padding:0; background:var(--bg); color:var(--text); }
+*{ box-sizing: border-box; }
+
+html, body{
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+}
 
 /* Full-sheet height */
 #app{
-  width:min(440px,100vw);
-  min-height:92dvh;
-  padding-top:calc(env(safe-area-inset-top) + 6px);
-  padding-bottom:env(safe-area-inset-bottom);
+  width: min(440px, 100vw);
+  min-height: 92dvh;
+  padding-top: calc(env(safe-area-inset-top) + 6px);
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* monospace utility */
-.mono{ font-family:ui-monospace,Menlo,Consolas,monospace; white-space:pre-wrap; }
-pre{ white-space:pre-wrap; word-break:break-word; }
+.mono{ font-family: ui-monospace,Menlo,Consolas,monospace; white-space: pre-wrap; }
+pre{ white-space: pre-wrap; word-break: break-word; }
 
 /* Toolbar is hidden; Safari provides chrome */
 .toolbar, .toolbar-title{ display:none !important; }
@@ -56,94 +61,84 @@ pre{ white-space:pre-wrap; word-break:break-word; }
 
 /* Titles */
 .sheet-title{
-  margin:4px 0 12px 0;
-  font-weight:800;
-  font-size:var(--title-lg);
-  letter-spacing:-.2px;
+  margin: 4px 0 12px 0;
+  font-weight: 800;
+  font-size: var(--title-lg);
+  letter-spacing: -.2px;
 }
 
 /* Group labels */
 .group-label{
-  color:var(--sub);
-  margin:16px 0 8px 0;
-  font-weight:600;
-  font-size:12px;
-  letter-spacing:.2px;
+  color: var(--sub);
+  margin: 16px 0 8px 0;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: .2px;
 }
 
 /* selection card */
 .selection{
-  background:var(--card);
-  border:1px solid var(--hair);
-  border-radius:var(--radius-card);
-  padding:12px;
-  max-height:160px;
-  overflow:auto;
-  white-space:pre-wrap;
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-card);
+  padding: 12px;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
 }
 
 /* Home buttons */
 .home-actions{
-  display:grid;
-  grid-auto-rows:var(--pill-h);
-  row-gap:12px;
-  margin-top:10px;
+  display: grid;
+  grid-auto-rows: var(--pill-h);
+  row-gap: 12px;
+  margin-top: 10px;
 }
 .home-actions .btn{
-  display:flex; align-items:center; gap:10px;
-  width:100%; height:var(--pill-h);
-  padding:0 16px;
-  border-radius:9999px;
-  border:.5px solid color-mix(in oklab, var(--hair) 18%, transparent);
-  background:color-mix(in oklab, var(--card) 98%, transparent);
-  color:var(--accent);
-  font:-apple-system-body; font-weight:600;
-  cursor:pointer;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; height: var(--pill-h); padding: 0 16px;
+  border-radius: 9999px;
+  border: .5px solid color-mix(in oklab, var(--hair) 18%, transparent);
+  background: color-mix(in oklab, var(--card) 98%, transparent);
+  color: var(--accent);
+  font: -apple-system-body; font-weight: 600;
+  cursor: pointer;
 }
 .home-actions .btn.primary{
-  background:linear-gradient(135deg,var(--accent),rgba(10,132,255,0.9));
-  color:#fff; border:none;
+  background: linear-gradient(135deg, var(--accent), rgba(10,132,255,0.9));
+  color: #fff;
+  border: none;
 }
-.home-actions .btn .icon{
-  width:22px;
-  display:inline-flex;
-  justify-content:center;
-  font-size:18px;
-  line-height:1;
-}
+.home-actions .btn .icon{ width:22px; display:inline-flex; justify-content:center; font-size:18px; line-height:1; }
 
 /* Generic form rows (Event/Contact use these) */
 .form-row{ display:flex; gap:10px; align-items:center; margin-bottom:10px; }
 .form-row.split > *{ flex:1; }
 .form-row .grow{ flex:1; }
 
-input[type="text"],
-input[type="number"],
-input[type="datetime-local"],
-textarea{
-  appearance:none; -webkit-appearance:none;
-  width:100%;
-  background:var(--card);
-  color:var(--text);
-  border:1px solid var(--hair);
-  border-radius:var(--radius-field);
-  padding:12px 14px;
+input[type="text"], input[type="email"], input[type="tel"], input[type="number"],
+input[type="date"], input[type="time"], input[type="datetime-local"], textarea, select{
+  appearance: none; -webkit-appearance: none;
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--hair);
+  border-radius: var(--radius-field);
+  padding: 12px 14px;
 }
 
-/* ---------------- REMINDER CARD (Share-sheet style) ---------------- */
-
+/* ---------------- SHARE-SHEET STYLE CARDS ---------------- */
 .card{
-  background:var(--card);
-  border:1px solid var(--hair);
-  border-radius:20px;
-  overflow:hidden;      /* clip separators */
+  background: var(--card);
+  border: 1px solid var(--hair);
+  border-radius: 20px;
+  overflow: hidden; /* clip separators */
 }
 
 /* each row inside the card */
 .card .row{
   display:flex; align-items:center; gap:12px;
-  padding:14px 14px;
-  min-height:52px;
+  padding:14px 14px; min-height:52px;
   border-top:1px solid var(--hair);
   justify-content:space-between; /* spread: label left, controls right */
 }
@@ -151,60 +146,41 @@ textarea{
 
 /* plain title/labels to match iOS */
 .field-plain{
-  /* kill any iOS default field look so the row is "clean" and aligned */
-  -webkit-appearance:none !important;
-  appearance:none !important;
-  background:transparent !important;
-  border:none !important;
-  border-radius:0 !important;
-  box-shadow:none !important;
-  outline:none !important;
-
-  /* align with label rows */
-  margin:0 !important;
-  padding:0 2px !important;     /* tiny left inset, matches SF list look */
-  height:24px;                  /* steady baseline */
-  line-height:24px;
-  font-size:17px;
-  color:var(--text);
+  -webkit-appearance:none !important; appearance:none !important;
+  background:transparent !important; border:none !important; border-radius:0 !important;
+  box-shadow:none !important; outline:none !important;
+  margin:0 !important; padding:0 2px !important; /* tiny left inset */
+  height:24px; line-height:24px; font-size:17px; color:var(--text);
 }
 .field-plain::placeholder{ color:var(--sub); }
 
 .label-plain{
-  font-size:17px;
-  line-height:24px;
-  padding-left:2px;             /* match the 2px inset used by the title */
-  color:var(--text);
+  font-size:17px; line-height:24px; padding-left:2px; color:var(--text);
 }
 
 /* right-side “chips” (date + time) anchored RIGHT */
 .chip-row{ display:flex; gap:10px; margin-left:auto; }
 .chip-input{
   -webkit-appearance:none; appearance:none;
-  background:color-mix(in oklab, var(--bg) 50%, var(--card) 50%);
+  background: color-mix(in oklab, var(--bg) 50%, var(--card) 50%);
   border:1px solid var(--hair);
   border-radius:18px;
   padding:8px 12px;
-  height:36px;
-  line-height:20px;
-  color:var(--text);
-  font-size:16px;
+  height:36px; line-height:20px; font-size:16px; color:var(--text);
 }
 .chip-input::-webkit-calendar-picker-indicator{ filter:opacity(.7); }
 
 /* Notes — comfy size */
-#remNotes{
-  min-height:140px;
-  line-height:1.35;
-  font-size:16px;
+#remNotes, #evtNotes{
+  min-height:140px; line-height:1.35; font-size:16px;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
-  resize:vertical;
+  resize: vertical;
 }
 
 /* Status */
 .status{ min-height:20px; margin:10px 0 2px 0; font-weight:600; }
-.status.ok{ color:var(--ok); }
-.status.err{ color:var(--err); }
+.status.ok{ color: var(--ok); }
+.status.err{ color: var(--err); }
 
 /* Footer rows */
 .button-row{ display:flex; gap:12px; margin-top:14px; }
@@ -214,34 +190,28 @@ textarea{
 
 /* Cancel/Save capsules */
 .btn-capsule{
-  height:44px; min-width:140px;
-  padding:0 18px;
-  border-radius:9999px;
-  font-weight:700;
+  height:44px; min-width:140px; padding:0 18px; border-radius:9999px; font-weight:700;
 }
 .btn-capsule.secondary{
   border:1px solid var(--hair);
-  background:color-mix(in oklab, var(--card) 98%, transparent);
+  background: color-mix(in oklab, var(--card) 98%, transparent);
   color:var(--text);
 }
 .btn-capsule.primary{
-  border:none;
-  background:var(--accent);
-  color:#fff;
+  border:none; background:var(--accent); color:#fff;
 }
 
 /* iOS-style switch */
 .switch{ position:relative; width:48px; height:28px; display:inline-block; }
 .switch input{ opacity:0; width:0; height:0; }
 .slider{
-  position:absolute; inset:0;
-  border-radius:999px;
-  background:color-mix(in oklab, var(--hair) 60%, transparent);
-  transition:all .2s;
+  position:absolute; inset:0; border-radius:999px;
+  background: color-mix(in oklab, var(--hair) 60%, transparent);
+  transition: all .2s;
 }
 .slider:before{
   content:""; position:absolute; height:22px; width:22px; left:3px; top:3px;
-  background:#fff; border-radius:50%; transition:all .2s;
+  background:#fff; border-radius:50%; transition: all .2s;
 }
-.switch input:checked + .slider{ background:var(--ok); }   /* green when on */
-.switch input:checked + .slider:before{ transform:translateX(20px); }
+.switch input:checked + .slider{ background: var(--ok); }      /* green when on */
+.switch input:checked + .slider:before{ transform: translateX(20px); }
